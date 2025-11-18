@@ -300,17 +300,72 @@
 
             <!-- Editor -->
             <div class="editor-area">
-                <div class="tabs" id="tabs"></div>
-                <div id="editor-container">
-                    <div class="welcome" id="welcome">
-                        <h1>🚀 ArmEditor</h1>
-                        <p>Professional ARM Development IDE<br>Better than Keil/IAR, completely free!</p>
-                        <div class="welcome-actions">
-                            <button class="btn" onclick="openFile()">Open File</button>
-                            <button class="btn success" onclick="openProject()">Open Project</button>
+                <div class="tabs" id="tabs">
+                    <button onclick="toggleSidePanel()" title="Toggle Disassembly Panel (Ctrl+D)"
+                        style="margin-left: auto; padding: 8px 16px; background: #0e639c; border: none; color: white; cursor: pointer; font-size: 12px;">
+                        ⚙️ ASM/HEX
+                    </button>
+                </div>
+                <div id="editor-container" style="display: flex; flex: 1; overflow: hidden;">
+                    <div style="display: flex; flex-direction: column; flex: 1;">
+                        <div class="welcome" id="welcome">
+                            <h1>🚀 ArmEditor</h1>
+                            <p>Professional ARM Development IDE<br>Better than Keil/IAR, completely free!</p>
+                            <div class="welcome-actions">
+                                <button class="btn" onclick="openFile()">Open File</button>
+                                <button class="btn success" onclick="openProject()">Open Project</button>
+                            </div>
+                        </div>
+                        <div id="editor" style="display: none; flex: 1;"></div>
+                    </div>
+
+                    <!-- Disassembly/Hex View Panel (Keil-style) -->
+                    <div id="side-panel" style="display: none; width: 450px; border-left: 1px solid #3e3e42; background: #1e1e1e; flex-direction: column;">
+                        <div style="background: #2d2d30; border-bottom: 1px solid #3e3e42; display: flex;">
+                            <div class="output-tab active" id="tab-disasm" onclick="switchSidePanel('disasm')">DISASSEMBLY</div>
+                            <div class="output-tab" id="tab-hex" onclick="switchSidePanel('hex')">HEX VIEW</div>
+                            <div class="output-tab" id="tab-mixed" onclick="switchSidePanel('mixed')">MIXED</div>
+                            <button onclick="toggleSidePanel()" style="margin-left: auto; background: transparent; border: none; color: #d4d4d4; padding: 8px; cursor: pointer; font-size: 16px;">✕</button>
+                        </div>
+
+                        <!-- Disassembly view -->
+                        <div id="disasm-panel" style="flex: 1; overflow-y: auto; padding: 12px; font-family: 'Consolas', monospace; font-size: 12px; display: flex; flex-direction: column;">
+                            <div style="color: #888; margin-bottom: 12px;">Assembly Disassembly (Keil-style)</div>
+                            <div id="disasm-content" style="flex: 1; overflow-y: auto;">
+                                <div style="color: #569CD6;">; Start debugging to view disassembly</div>
+                                <div style="color: #888; margin-top: 8px;">; Press F5 or click Debug → Start</div>
+                            </div>
+                        </div>
+
+                        <!-- Hex view -->
+                        <div id="hex-panel" style="flex: 1; overflow-y: auto; padding: 12px; font-family: 'Consolas', monospace; font-size: 11px; display: none; flex-direction: column;">
+                            <div style="margin-bottom: 12px;">
+                                <span style="color: #888;">Address:</span>
+                                <input type="text" id="hex-address" placeholder="0x08000000" value="0x08000000"
+                                    style="width: 120px; padding: 4px; background: #2d2d30; border: 1px solid #3e3e42; color: #d4d4d4; font-family: monospace; margin: 0 8px;">
+                                <button class="btn" style="padding: 4px 12px;" onclick="loadHexView()">Load</button>
+                                <span style="color: #888; margin-left: 16px;">Length:</span>
+                                <select id="hex-length" style="padding: 4px; background: #2d2d30; border: 1px solid #3e3e42; color: #d4d4d4; margin-left: 8px;">
+                                    <option value="256">256 bytes</option>
+                                    <option value="512">512 bytes</option>
+                                    <option value="1024">1 KB</option>
+                                    <option value="4096">4 KB</option>
+                                </select>
+                            </div>
+                            <div id="hex-content" style="flex: 1; overflow-y: auto; line-height: 1.6; font-size: 11px;">
+                                <!-- Hex dump will appear here -->
+                                <div style="color: #888;">Click "Load" to view memory/flash contents</div>
+                            </div>
+                        </div>
+
+                        <!-- Mixed mode (C + Assembly) -->
+                        <div id="mixed-panel" style="flex: 1; overflow-y: auto; padding: 12px; font-family: 'Consolas', monospace; font-size: 12px; display: none; flex-direction: column;">
+                            <div style="color: #888; margin-bottom: 12px;">Source + Disassembly (Keil Mixed Mode)</div>
+                            <div id="mixed-content" style="flex: 1; overflow-y: auto;">
+                                <div style="color: #569CD6;">; Debug to see C code + assembly side-by-side</div>
+                            </div>
                         </div>
                     </div>
-                    <div id="editor" style="display: none;"></div>
                 </div>
             </div>
         </div>
@@ -543,6 +598,125 @@
             });
             event.target.classList.add('active');
         }
+
+        // Side panel (Disassembly/Hex) toggle
+        let sidePanelVisible = false;
+
+        function toggleSidePanel() {
+            const panel = document.getElementById('side-panel');
+            sidePanelVisible = !sidePanelVisible;
+
+            if (sidePanelVisible) {
+                panel.style.display = 'flex';
+            } else {
+                panel.style.display = 'none';
+            }
+        }
+
+        function switchSidePanel(panelName) {
+            // Hide all panels
+            const panels = ['disasm-panel', 'hex-panel', 'mixed-panel'];
+            panels.forEach(p => {
+                const el = document.getElementById(p);
+                if (el) el.style.display = 'none';
+            });
+
+            // Show selected panel
+            const selected = document.getElementById(panelName + '-panel');
+            if (selected) selected.style.display = 'flex';
+
+            // Update tab active state
+            ['tab-disasm', 'tab-hex', 'tab-mixed'].forEach(id => {
+                document.getElementById(id)?.classList.remove('active');
+            });
+            document.getElementById('tab-' + panelName)?.classList.add('active');
+        }
+
+        // Load hex view
+        function loadHexView() {
+            const address = document.getElementById('hex-address').value;
+            const length = parseInt(document.getElementById('hex-length').value);
+
+            // Parse address
+            let addr = 0;
+            if (address.startsWith('0x')) {
+                addr = parseInt(address, 16);
+            } else {
+                addr = parseInt(address);
+            }
+
+            // Request memory from backend
+            ipcRenderer.send('memory-read', addr);
+        }
+
+        // Display hex dump
+        ipcRenderer.on('memory-data', (event, memoryData) => {
+            const hexContent = document.getElementById('hex-content');
+            let html = '<div style="font-family: Consolas, monospace; font-size: 11px;">';
+
+            if (!memoryData || !memoryData.address) {
+                html += '<div style="color: #CE9178;">No data received</div>';
+            } else {
+                // Format: ADDRESS | HEX BYTES | ASCII
+                const bytes = parseHexString(memoryData.contents);
+                let addr = parseInt(memoryData.address, 16);
+
+                for (let i = 0; i < bytes.length; i += 16) {
+                    const lineAddr = (addr + i).toString(16).toUpperCase().padStart(8, '0');
+                    const lineBytes = bytes.slice(i, i + 16);
+
+                    // Hex bytes
+                    const hexPart = lineBytes.map((b, idx) => {
+                        const hex = b.toString(16).toUpperCase().padStart(2, '0');
+                        return `<span style="color: ${idx % 4 === 0 ? '#4EC9B0' : '#D4D4D4'}">${hex}</span>`;
+                    }).join(' ').padEnd(48, ' ');
+
+                    // ASCII part
+                    const asciiPart = lineBytes.map(b => {
+                        return (b >= 32 && b <= 126) ? String.fromCharCode(b) : '.';
+                    }).join('');
+
+                    html += `<div style="line-height: 1.8;">`;
+                    html += `<span style="color: #569CD6;">${lineAddr}</span>  `;
+                    html += `${hexPart}  `;
+                    html += `<span style="color: #CE9178;">${asciiPart}</span>`;
+                    html += `</div>`;
+                }
+            }
+
+            html += '</div>';
+            hexContent.innerHTML = html;
+        });
+
+        function parseHexString(hexStr) {
+            const bytes = [];
+            for (let i = 0; i < hexStr.length; i += 2) {
+                bytes.push(parseInt(hexStr.substr(i, 2), 16));
+            }
+            return bytes;
+        }
+
+        // Display disassembly
+        ipcRenderer.on('disassembly-data', (event, asmData) => {
+            const disasmContent = document.getElementById('disasm-content');
+            let html = '';
+
+            for (const instr of asmData) {
+                const addr = instr.address || '0x00000000';
+                const opcode = instr.opcode || '';
+                const mnemonic = instr.mnemonic || '';
+                const operands = instr.operands || '';
+
+                html += `<div style="line-height: 1.8; font-family: Consolas, monospace;">`;
+                html += `<span style="color: #569CD6;">${addr}</span>  `;
+                html += `<span style="color: #888;">${opcode.padEnd(8)}</span>  `;
+                html += `<span style="color: #DCDCAA;">${mnemonic.padEnd(8)}</span> `;
+                html += `<span style="color: #9CDCFE;">${operands}</span>`;
+                html += `</div>`;
+            }
+
+            disasmContent.innerHTML = html;
+        });
 
         function updateUI() {
             if (currentFile) {
