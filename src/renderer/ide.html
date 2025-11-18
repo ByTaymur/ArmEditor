@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArmEditor - Professional ARM IDE</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            background: #2d2d30;
+            padding: 8px;
+            border-bottom: 1px solid #3e3e42;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .btn {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            background: #1177bb;
+        }
+
+        .btn.success {
+            background: #107c10;
+        }
+
+        .btn.success:hover {
+            background: #13a10e;
+        }
+
+        .btn.danger {
+            background: #c5000b;
+        }
+
+        .btn.danger:hover {
+            background: #e81123;
+        }
+
+        .separator {
+            width: 1px;
+            height: 24px;
+            background: #3e3e42;
+        }
+
+        /* Main area */
+        .main {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background: #252526;
+            border-right: 1px solid #3e3e42;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 12px;
+            background: #2d2d30;
+            border-bottom: 1px solid #3e3e42;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .project-name {
+            padding: 8px;
+            background: #37373d;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        /* Editor */
+        .editor-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tabs {
+            background: #2d2d30;
+            border-bottom: 1px solid #3e3e42;
+            display: flex;
+            min-height: 36px;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            cursor: pointer;
+            border-right: 1px solid #3e3e42;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab.active {
+            background: #1e1e1e;
+        }
+
+        .tab:hover {
+            background: #2a2d2e;
+        }
+
+        #editor {
+            flex: 1;
+            background: #1e1e1e;
+        }
+
+        .welcome {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .welcome h1 {
+            font-size: 32px;
+            margin-bottom: 16px;
+            color: #ffffff;
+        }
+
+        .welcome p {
+            font-size: 16px;
+            color: #cccccc;
+            margin-bottom: 32px;
+        }
+
+        .welcome-actions {
+            display: flex;
+            gap: 16px;
+        }
+
+        /* Output */
+        .output {
+            height: 200px;
+            background: #1e1e1e;
+            border-top: 1px solid #3e3e42;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .output-tabs {
+            background: #2d2d30;
+            border-bottom: 1px solid #3e3e42;
+            display: flex;
+        }
+
+        .output-tab {
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .output-tab.active {
+            background: #1e1e1e;
+            border-bottom: 2px solid #007acc;
+        }
+
+        .output-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        /* Status bar */
+        .statusbar {
+            background: #007acc;
+            color: white;
+            padding: 4px 12px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #424242;
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4e4e4e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <button class="btn" onclick="openFile()">📂 Open File</button>
+            <button class="btn" onclick="openProject()">📁 Open Project</button>
+            <button class="btn" onclick="saveFile()">💾 Save</button>
+            <div class="separator"></div>
+            <button class="btn success" onclick="buildProject()">🔨 Build (F7)</button>
+            <button class="btn" onclick="cleanProject()">🧹 Clean</button>
+            <div class="separator"></div>
+            <button class="btn success" onclick="flashDevice()">⚡ Flash</button>
+            <div class="separator"></div>
+            <button class="btn" onclick="analyzeCode()">🤖 AI Analyze</button>
+        </div>
+
+        <!-- Main -->
+        <div class="main">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="sidebar-header">PROJECT</div>
+                <div class="sidebar-content">
+                    <div id="project-info" class="project-name">No project opened</div>
+                    <div id="file-info"></div>
+                </div>
+            </div>
+
+            <!-- Editor -->
+            <div class="editor-area">
+                <div class="tabs" id="tabs"></div>
+                <div id="editor-container">
+                    <div class="welcome" id="welcome">
+                        <h1>🚀 ArmEditor</h1>
+                        <p>Professional ARM Development IDE<br>Better than Keil/IAR, completely free!</p>
+                        <div class="welcome-actions">
+                            <button class="btn" onclick="openFile()">Open File</button>
+                            <button class="btn success" onclick="openProject()">Open Project</button>
+                        </div>
+                    </div>
+                    <div id="editor" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Output -->
+        <div class="output">
+            <div class="output-tabs">
+                <div class="output-tab active">OUTPUT</div>
+            </div>
+            <div class="output-content" id="output"></div>
+        </div>
+
+        <!-- Status bar -->
+        <div class="statusbar">
+            <div id="status-left">Ready</div>
+            <div id="status-right">ArmEditor v1.0.0</div>
+        </div>
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+
+        let editor = null;
+        let currentFile = null;
+
+        // Load Monaco Editor from CDN
+        const loaderScript = document.createElement('script');
+        loaderScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js';
+        loaderScript.onload = () => {
+            require.config({
+                paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' }
+            });
+            require(['vs/editor/editor.main'], initMonaco);
+        };
+        document.head.appendChild(loaderScript);
+
+        function initMonaco() {
+            editor = monaco.editor.create(document.getElementById('editor'), {
+                value: '',
+                language: 'c',
+                theme: 'vs-dark',
+                automaticLayout: true,
+                fontSize: 14,
+                minimap: { enabled: true }
+            });
+
+            outputAppend('✅ Editor ready\n');
+        }
+
+        // IPC Listeners
+        ipcRenderer.on('new-file', () => {
+            if (editor) {
+                editor.setValue('');
+                currentFile = null;
+                updateUI();
+            }
+        });
+
+        ipcRenderer.on('open-file', (event, data) => {
+            if (editor) {
+                editor.setValue(data.content);
+                currentFile = data;
+                updateUI();
+                document.getElementById('welcome').style.display = 'none';
+                document.getElementById('editor').style.display = 'block';
+            }
+        });
+
+        ipcRenderer.on('open-project', (event, data) => {
+            document.getElementById('project-info').textContent = data.path;
+            outputAppend(`📁 Opened project: ${data.path}\n`);
+        });
+
+        ipcRenderer.on('get-editor-content', (event, action) => {
+            if (editor) {
+                const content = editor.getValue();
+                if (action === 'save') {
+                    ipcRenderer.send('save-file-content', content);
+                } else if (action === 'save-as') {
+                    ipcRenderer.send('save-file-as-content', content);
+                }
+            }
+        });
+
+        ipcRenderer.on('file-saved', (event, path) => {
+            outputAppend(`💾 Saved: ${path}\n`);
+        });
+
+        ipcRenderer.on('output-clear', () => {
+            document.getElementById('output').textContent = '';
+        });
+
+        ipcRenderer.on('output-append', (event, text) => {
+            outputAppend(text);
+        });
+
+        // UI Functions
+        function openFile() {
+            ipcRenderer.send('open-file-dialog');
+        }
+
+        function openProject() {
+            ipcRenderer.send('open-project-dialog');
+        }
+
+        function saveFile() {
+            if (editor) {
+                ipcRenderer.send('get-editor-content', 'save');
+            }
+        }
+
+        function buildProject() {
+            outputAppend('\n🔨 Building...\n');
+        }
+
+        function cleanProject() {
+            outputAppend('🧹 Cleaning...\n');
+        }
+
+        function flashDevice() {
+            outputAppend('⚡ Flashing...\n');
+        }
+
+        function analyzeCode() {
+            outputAppend('\n🤖 Running AI analysis...\n');
+        }
+
+        function outputAppend(text) {
+            const output = document.getElementById('output');
+            output.textContent += text;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function updateUI() {
+            if (currentFile) {
+                document.getElementById('file-info').innerHTML =
+                    `<div style="padding: 8px; font-size: 12px;">
+                        📄 ${currentFile.name}
+                    </div>`;
+            }
+        }
+
+        // Initial message
+        outputAppend('ArmEditor - Professional ARM IDE\n');
+        outputAppend('Better than Keil/IAR, completely free!\n');
+        outputAppend('Loading Monaco Editor...\n');
+    </script>
+</body>
+</html>

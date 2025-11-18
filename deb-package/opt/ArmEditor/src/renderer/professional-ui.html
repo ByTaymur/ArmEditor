@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ArmEditor Professional - ARM Development IDE</title>
+    <link rel="stylesheet" href="professional-ui.css">
+</head>
+<body>
+    <div class="ide-container">
+        <!-- Top Menu Bar (like Keil) -->
+        <div class="menu-bar">
+            <div class="menu-items">
+                <div class="menu-item">File</div>
+                <div class="menu-item">Edit</div>
+                <div class="menu-item">View</div>
+                <div class="menu-item">Project</div>
+                <div class="menu-item">Build</div>
+                <div class="menu-item">Debug</div>
+                <div class="menu-item">Flash</div>
+                <div class="menu-item">Tools</div>
+                <div class="menu-item">Window</div>
+                <div class="menu-item">Help</div>
+            </div>
+        </div>
+
+        <!-- Toolbar (Professional icons) -->
+        <div class="toolbar-professional">
+            <div class="toolbar-group">
+                <button class="tool-btn" title="New Project (Ctrl+N)">
+                    <svg width="20" height="20"><use href="#icon-new"/></svg>
+                </button>
+                <button class="tool-btn" title="Open Project (Ctrl+O)">
+                    <svg width="20" height="20"><use href="#icon-open"/></svg>
+                </button>
+                <button class="tool-btn" title="Save (Ctrl+S)">
+                    <svg width="20" height="20"><use href="#icon-save"/></svg>
+                </button>
+                <button class="tool-btn" title="Save All (Ctrl+Shift+S)">
+                    <svg width="20" height="20"><use href="#icon-save-all"/></svg>
+                </button>
+            </div>
+            <div class="toolbar-separator"></div>
+            <div class="toolbar-group">
+                <button class="tool-btn" title="Cut (Ctrl+X)">
+                    <svg width="20" height="20"><use href="#icon-cut"/></svg>
+                </button>
+                <button class="tool-btn" title="Copy (Ctrl+C)">
+                    <svg width="20" height="20"><use href="#icon-copy"/></svg>
+                </button>
+                <button class="tool-btn" title="Paste (Ctrl+V)">
+                    <svg width="20" height="20"><use href="#icon-paste"/></svg>
+                </button>
+            </div>
+            <div class="toolbar-separator"></div>
+            <div class="toolbar-group">
+                <button class="tool-btn build" title="Build (F7)">
+                    <svg width="20" height="20"><use href="#icon-build"/></svg>
+                    <span>Build</span>
+                </button>
+                <button class="tool-btn" title="Rebuild (Shift+F7)">
+                    <svg width="20" height="20"><use href="#icon-rebuild"/></svg>
+                    <span>Rebuild</span>
+                </button>
+                <button class="tool-btn" title="Clean">
+                    <svg width="20" height="20"><use href="#icon-clean"/></svg>
+                    <span>Clean</span>
+                </button>
+            </div>
+            <div class="toolbar-separator"></div>
+            <div class="toolbar-group">
+                <button class="tool-btn debug" title="Start/Stop Debug (F5)">
+                    <svg width="20" height="20"><use href="#icon-debug"/></svg>
+                    <span>Debug</span>
+                </button>
+                <button class="tool-btn" title="Step Over (F10)">
+                    <svg width="20" height="20"><use href="#icon-step-over"/></svg>
+                </button>
+                <button class="tool-btn" title="Step Into (F11)">
+                    <svg width="20" height="20"><use href="#icon-step-into"/></svg>
+                </button>
+                <button class="tool-btn" title="Step Out (Shift+F11)">
+                    <svg width="20" height="20"><use href="#icon-step-out"/></svg>
+                </button>
+                <button class="tool-btn" title="Run to Cursor">
+                    <svg width="20" height="20"><use href="#icon-run-cursor"/></svg>
+                </button>
+            </div>
+            <div class="toolbar-separator"></div>
+            <div class="toolbar-group">
+                <button class="tool-btn flash" title="Download to Flash">
+                    <svg width="20" height="20"><use href="#icon-flash"/></svg>
+                    <span>Flash</span>
+                </button>
+            </div>
+            <div class="toolbar-spacer"></div>
+            <div class="toolbar-group">
+                <select class="config-select">
+                    <option>Debug</option>
+                    <option>Release</option>
+                </select>
+                <select class="target-select">
+                    <option>STM32F407VG</option>
+                    <option>STM32F103C8</option>
+                    <option>STM32F746ZG</option>
+                    <option>Custom...</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Main IDE Layout -->
+        <div class="ide-main">
+            <!-- Left Sidebar - Project Explorer -->
+            <div class="sidebar-left">
+                <div class="panel project-panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Project</span>
+                        <div class="panel-actions">
+                            <button class="panel-btn" title="Collapse All">⊟</button>
+                            <button class="panel-btn" title="Refresh">↻</button>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div class="project-tree" id="project-tree">
+                            <!-- Project tree structure -->
+                            <div class="tree-node expanded">
+                                <div class="tree-item project-root">
+                                    <span class="tree-icon">📦</span>
+                                    <span class="tree-label">MySTM32Project</span>
+                                </div>
+                                <div class="tree-children">
+                                    <div class="tree-node expanded">
+                                        <div class="tree-item folder">
+                                            <span class="tree-icon">📁</span>
+                                            <span class="tree-label">Source Group 1</span>
+                                        </div>
+                                        <div class="tree-children">
+                                            <div class="tree-item file active">
+                                                <span class="tree-icon">📄</span>
+                                                <span class="tree-label">main.c</span>
+                                            </div>
+                                            <div class="tree-item file">
+                                                <span class="tree-icon">📄</span>
+                                                <span class="tree-label">startup.s</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="tree-node">
+                                        <div class="tree-item folder">
+                                            <span class="tree-icon">📁</span>
+                                            <span class="tree-label">Headers</span>
+                                        </div>
+                                    </div>
+                                    <div class="tree-node">
+                                        <div class="tree-item folder">
+                                            <span class="tree-icon">📁</span>
+                                            <span class="tree-label">Libraries</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel functions-panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Functions</span>
+                    </div>
+                    <div class="panel-content">
+                        <div class="functions-list" id="functions-list">
+                            <div class="function-item">
+                                <span class="function-icon">ƒ</span>
+                                <span class="function-name">main</span>
+                                <span class="function-line">12</span>
+                            </div>
+                            <div class="function-item">
+                                <span class="function-icon">ƒ</span>
+                                <span class="function-name">SystemClock_Config</span>
+                                <span class="function-line">45</span>
+                            </div>
+                            <div class="function-item">
+                                <span class="function-icon">ƒ</span>
+                                <span class="function-name">HAL_Init</span>
+                                <span class="function-line">78</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center - Editor Area -->
+            <div class="editor-main">
+                <div class="editor-tabs" id="editor-tabs">
+                    <div class="editor-tab active">
+                        <span class="tab-icon">📄</span>
+                        <span class="tab-name">main.c</span>
+                        <span class="tab-modified">●</span>
+                        <span class="tab-close">✕</span>
+                    </div>
+                    <div class="editor-tab">
+                        <span class="tab-icon">📋</span>
+                        <span class="tab-name">stm32f4xx_hal.h</span>
+                        <span class="tab-close">✕</span>
+                    </div>
+                </div>
+                <div class="editor-container">
+                    <div id="monaco-editor"></div>
+                </div>
+            </div>
+
+            <!-- Right Sidebar - Debug/Watch -->
+            <div class="sidebar-right">
+                <div class="panel watch-panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Watch</span>
+                        <div class="panel-actions">
+                            <button class="panel-btn" title="Add Watch">+</button>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <table class="watch-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Value</th>
+                                    <th>Type</th>
+                                </tr>
+                            </thead>
+                            <tbody id="watch-tbody">
+                                <tr>
+                                    <td>counter</td>
+                                    <td class="value-hex">0x00001234</td>
+                                    <td>uint32_t</td>
+                                </tr>
+                                <tr>
+                                    <td>temperature</td>
+                                    <td class="value-float">25.3</td>
+                                    <td>float</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="panel registers-panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Registers</span>
+                    </div>
+                    <div class="panel-content">
+                        <table class="registers-table">
+                            <tbody id="registers-tbody">
+                                <tr>
+                                    <td>R0</td>
+                                    <td class="value-hex">0x20000000</td>
+                                </tr>
+                                <tr>
+                                    <td>R1</td>
+                                    <td class="value-hex">0x00000001</td>
+                                </tr>
+                                <tr>
+                                    <td>R2</td>
+                                    <td class="value-hex">0x08000000</td>
+                                </tr>
+                                <tr>
+                                    <td>SP</td>
+                                    <td class="value-hex">0x20020000</td>
+                                </tr>
+                                <tr>
+                                    <td>PC</td>
+                                    <td class="value-hex">0x08000420</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="panel memory-panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Memory</span>
+                        <input type="text" class="memory-address" placeholder="0x20000000" />
+                    </div>
+                    <div class="panel-content">
+                        <div class="memory-viewer" id="memory-viewer">
+                            <div class="memory-row">
+                                <span class="memory-addr">20000000</span>
+                                <span class="memory-hex">00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F</span>
+                                <span class="memory-ascii">................</span>
+                            </div>
+                            <div class="memory-row">
+                                <span class="memory-addr">20000010</span>
+                                <span class="memory-hex">48 65 6C 6C 6F 20 57 6F 72 6C 64 21 00 00 00 00</span>
+                                <span class="memory-ascii">Hello World!....</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel peripherals-panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Peripherals</span>
+                    </div>
+                    <div class="panel-content">
+                        <div class="peripherals-tree">
+                            <div class="peripheral-item">
+                                <span class="peripheral-icon">▶</span>
+                                <span class="peripheral-name">GPIOA</span>
+                            </div>
+                            <div class="peripheral-item">
+                                <span class="peripheral-icon">▶</span>
+                                <span class="peripheral-name">TIM1</span>
+                            </div>
+                            <div class="peripheral-item">
+                                <span class="peripheral-icon">▶</span>
+                                <span class="peripheral-name">USART1</span>
+                            </div>
+                            <div class="peripheral-item">
+                                <span class="peripheral-icon">▶</span>
+                                <span class="peripheral-name">ADC1</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Panel - Output/Terminal -->
+        <div class="bottom-panel">
+            <div class="bottom-tabs">
+                <div class="bottom-tab active">Build Output</div>
+                <div class="bottom-tab">Terminal</div>
+                <div class="bottom-tab">Debug Output</div>
+                <div class="bottom-tab">Find Results</div>
+                <div class="bottom-tab">Serial Monitor</div>
+            </div>
+            <div class="bottom-content">
+                <div class="output-panel" id="build-output">
+                    <div class="output-line">*** Using Compiler 'V6.18', folder: 'C:\Keil\ARM\ARMCLANG\Bin'</div>
+                    <div class="output-line">Build target 'STM32F407VG'</div>
+                    <div class="output-line">compiling main.c...</div>
+                    <div class="output-line success">Build succeeded.</div>
+                    <div class="output-line">Program Size: Code=12345 RO-data=678 RW-data=234 ZI-data=1024</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-left">
+                <div class="status-item">
+                    <span class="status-icon">⚙️</span>
+                    <span>Ready</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-icon">📍</span>
+                    <span>Ln 42, Col 16</span>
+                </div>
+                <div class="status-item">
+                    <span>100%</span>
+                </div>
+            </div>
+            <div class="status-right">
+                <div class="status-item">
+                    <span>C</span>
+                </div>
+                <div class="status-item">
+                    <span>UTF-8</span>
+                </div>
+                <div class="status-item">
+                    <span>CRLF</span>
+                </div>
+                <div class="status-item">
+                    <span>ARM Cortex-M4</span>
+                </div>
+                <div class="status-item build-status">
+                    <span class="build-icon">✓</span>
+                    <span>Build: Success</span>
+                </div>
+                <div class="status-item debug-status inactive">
+                    <span class="debug-icon">●</span>
+                    <span>Debug: Stopped</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SVG Icon Definitions -->
+    <svg style="display: none;">
+        <defs>
+            <symbol id="icon-new" viewBox="0 0 20 20">
+                <path fill="currentColor" d="M13 3H7c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h6c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 9h-2v2H9v-2H7v-1h2V9h1v2h2v1z"/>
+            </symbol>
+            <symbol id="icon-open" viewBox="0 0 20 20">
+                <path fill="currentColor" d="M18 19H2V5h7l2 2h7v12z"/>
+            </symbol>
+            <symbol id="icon-save" viewBox="0 0 20 20">
+                <path fill="currentColor" d="M15 9H5V5h10v4zM7 10h6v7H7v-7z"/>
+            </symbol>
+            <symbol id="icon-build" viewBox="0 0 20 20">
+                <path fill="currentColor" d="M14.5 10l-3 3-2-2-4 4h12l-3-5z"/>
+            </symbol>
+            <symbol id="icon-debug" viewBox="0 0 20 20">
+                <path fill="currentColor" d="M6 4l8 6-8 6V4z"/>
+            </symbol>
+            <symbol id="icon-flash" viewBox="0 0 20 20">
+                <path fill="currentColor" d="M11 3L6 12h4v5l5-9h-4V3z"/>
+            </symbol>
+        </defs>
+    </svg>
+
+    <script src="professional-ui.js"></script>
+</body>
+</html>
