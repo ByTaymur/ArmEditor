@@ -1,8 +1,9 @@
 {
-  "name": "arm-editor",
+  "name": "armeditor",
   "version": "1.0.0",
-  "description": "Open-source ARM development IDE with integrated compiler and debugger",
-  "main": "src/main/index.js",
+  "description": "Professional ARM Development IDE with AI features - Better than Keil!",
+  "main": "src/main/electron-main.js",
+  "homepage": "https://github.com/armeditor/armeditor",
   "author": "ArmEditor Team",
   "license": "MIT",
   "scripts": {
@@ -14,23 +15,11 @@
     "dist": "electron-builder"
   },
   "dependencies": {
-    "monaco-editor": "^0.44.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "xterm": "^5.3.0",
-    "xterm-addon-fit": "^0.8.0",
-    "node-pty": "^1.0.0",
-    "chokidar": "^3.5.3",
-    "ws": "^8.14.2"
+    "chokidar": "^3.5.3"
   },
   "devDependencies": {
     "electron": "^27.0.0",
-    "electron-builder": "^24.6.4",
-    "webpack": "^5.89.0",
-    "webpack-cli": "^5.1.4",
-    "css-loader": "^6.8.1",
-    "style-loader": "^3.3.3",
-    "html-webpack-plugin": "^5.5.4"
+    "electron-builder": "^24.6.4"
   },
   "build": {
     "appId": "com.armeditor.ide",
@@ -51,8 +40,7 @@
         "libappindicator1",
         "libxtst6",
         "libnss3"
-      ],
-      "afterInstall": "debian/postinst.sh"
+      ]
     },
     "files": [
       "src/**/*",
