@@ -1,0 +1,64 @@
+#!/bin/bash
+# ArmEditor launcher
+
+ARMEDITOR_DIR="/opt/ArmEditor"
+
+# Check if Node.js is installed
+if ! command -v node >/dev/null 2>&1; then
+    echo "❌ Error: Node.js is not installed"
+    echo "Install with: sudo apt install nodejs npm"
+    exit 1
+fi
+
+# Check if dependencies are installed
+if [ ! -d "$ARMEDITOR_DIR/node_modules" ]; then
+    echo "⚙️  Installing dependencies (first run)..."
+    cd "$ARMEDITOR_DIR"
+    npm install --production
+fi
+
+# Launch ArmEditor
+cd "$ARMEDITOR_DIR"
+
+# Check for arguments
+if [ "$1" == "--ai" ]; then
+    # AI Code Assistant
+    shift
+    node src/ai/code-assistant.js "$@"
+elif [ "$1" == "--analyze" ]; then
+    # Full analysis
+    shift
+    node src/ai/code-assistant.js "$1"
+    node src/ai/memory-analyzer.js "$1"
+    node src/ai/performance-profiler.js "$1"
+elif [ "$1" == "--cubemx" ]; then
+    # CubeMX import
+    shift
+    node src/advanced/cubemx-importer.js "$@"
+elif [ "$1" == "--test" ]; then
+    # Run tests
+    bash test-all.sh
+elif [ "$1" == "--gui" ]; then
+    # GUI mode (Electron)
+    npm start
+else
+    # Show help
+    echo "ArmEditor - Professional ARM Development IDE"
+    echo ""
+    echo "Usage:"
+    echo "  armeditor --gui              Launch GUI (Electron app)"
+    echo "  armeditor --ai <file.c>      AI code analysis"
+    echo "  armeditor --analyze <elf>    Full analysis (AI + Memory + Perf)"
+    echo "  armeditor --cubemx <dir>     Import STM32CubeMX project"
+    echo "  armeditor --test             Run test suite"
+    echo ""
+    echo "Examples:"
+    echo "  armeditor --ai main.c"
+    echo "  armeditor --analyze build/app.elf"
+    echo "  armeditor --cubemx ~/MyProject"
+    echo ""
+    echo "Documentation:"
+    echo "  /opt/ArmEditor/README.md"
+    echo "  /opt/ArmEditor/HOW-TO-USE.md"
+    echo "  /opt/ArmEditor/DEMO.md"
+fi

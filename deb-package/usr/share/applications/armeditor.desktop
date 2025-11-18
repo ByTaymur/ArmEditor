@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=ArmEditor
+Comment=Professional ARM Development IDE with AI
+Exec=/usr/bin/armeditor --gui
+Icon=armeditor
+Terminal=false
+Categories=Development;IDE;
+Keywords=ARM;STM32;Embedded;IDE;Cortex-M;

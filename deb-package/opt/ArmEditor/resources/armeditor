@@ -1,0 +1,13 @@
+#!/bin/bash
+# ArmEditor launcher script
+
+ARMEDITOR_DIR="/opt/ArmEditor"
+
+# Check if running from development directory
+if [ -f "$(dirname "$0")/../package.json" ]; then
+    ARMEDITOR_DIR="$(dirname "$0")/.."
+fi
+
+# Launch Electron app
+cd "$ARMEDITOR_DIR"
+exec electron "$ARMEDITOR_DIR/src/main/index.js" "$@"

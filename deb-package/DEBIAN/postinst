@@ -1,0 +1,65 @@
+#!/bin/bash
+set -e
+
+echo "⚙️  Configuring ArmEditor..."
+
+# Create config directory
+mkdir -p /etc/armeditor
+
+# Create default config
+cat > /etc/armeditor/config.json << EOFCONFIG
+{
+  "version": "1.0.0",
+  "toolchain": {
+    "prefix": "arm-none-eabi-",
+    "path": "/usr/bin"
+  },
+  "debugger": {
+    "gdb": "arm-none-eabi-gdb",
+    "openocd": "openocd"
+  },
+  "features": {
+    "ai_assistant": true,
+    "memory_analyzer": true,
+    "performance_profiler": true,
+    "svd_viewer": true,
+    "cubemx_import": true
+  }
+}
+EOFCONFIG
+
+# Install Node.js dependencies
+echo "📦 Installing Node.js dependencies..."
+cd /opt/ArmEditor
+npm install --production --silent || true
+
+# Update desktop database
+if command -v update-desktop-database >/dev/null 2>&1; then
+    update-desktop-database /usr/share/applications || true
+fi
+
+# Print success message
+echo ""
+echo "========================================="
+echo "✅ ArmEditor installed successfully!"
+echo "========================================="
+echo ""
+echo "Launch with:"
+echo "  armeditor --gui       # GUI mode"
+echo "  armeditor --ai file.c # AI analysis"
+echo ""
+echo "Documentation:"
+echo "  /opt/ArmEditor/README.md"
+echo "  /opt/ArmEditor/HOW-TO-USE.md"
+echo "  /opt/ArmEditor/DEMO.md"
+echo ""
+
+# Check ARM toolchain
+if ! command -v arm-none-eabi-gcc >/dev/null 2>&1; then
+    echo "⚠️  ARM toolchain not found!"
+    echo "Install with:"
+    echo "  sudo apt install gcc-arm-none-eabi gdb-multiarch openocd"
+    echo ""
+fi
+
+exit 0

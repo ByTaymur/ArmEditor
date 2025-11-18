@@ -1,0 +1,22 @@
+Package: armeditor
+Version: 1.0.0
+Section: devel
+Priority: optional
+Architecture: amd64
+Depends: nodejs (>= 14.0), npm
+Recommends: gcc-arm-none-eabi, gdb-multiarch, openocd, stlink-tools
+Maintainer: ArmEditor Team <armeditor@github.com>
+Description: Professional ARM Development IDE with AI features
+ ArmEditor is a professional ARM development IDE with AI-powered features.
+ .
+ Features:
+  - AI Code Assistant (bug detection, performance tips)
+  - Memory Analyzer (leak detection)
+  - Performance Profiler (cycle estimation)
+  - STM32CubeMX project import
+  - SVD peripheral viewer
+  - Real-time variable graphing
+  - VS Code integration
+  - Better than Keil/IAR, completely free!
+ .
+ This package includes all necessary tools for ARM Cortex-M development.
