@@ -8,9 +8,26 @@ const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
 
+// Professional debugging tools
+const GDBBackend = require('../debugger/gdb-backend');
+const OpenOCDInterface = require('../debugger/openocd-interface');
+const FlashManager = require('../debugger/flash-manager');
+const STM32Tools = require('../stm32/stm32-tools');
+
 let mainWindow;
 let currentProjectPath = null;
 let currentFilePath = null;
+
+// Debug instances
+let gdbBackend = null;
+let openocdInterface = null;
+let flashManager = null;
+let stm32Tools = null;
+let debugSession = {
+    active: false,
+    breakpoints: new Map(),
+    elfFile: null
+};
 
 /**
  * Create main window
@@ -657,6 +674,223 @@ ipcMain.on('open-file-from-project', (event, filePath) => {
         });
     } catch (error) {
         dialog.showErrorBox('Error', `Failed to open file: ${error.message}`);
+    }
+});
+
+/**
+ * Professional Debug & Flash Operations
+ */
+
+// Start debug session
+ipcMain.on('debug-start', async (event) => {
+    try {
+        if (!currentProjectPath) {
+            mainWindow.webContents.send('output-append', '❌ No project opened\n');
+            return;
+        }
+
+        // Find ELF file
+        const buildDir = path.join(currentProjectPath, 'build');
+        const elfFiles = fs.readdirSync(buildDir).filter(f => f.endsWith('.elf'));
+
+        if (elfFiles.length === 0) {
+            mainWindow.webContents.send('output-append', '❌ No ELF file found. Build project first.\n');
+            return;
+        }
+
+        debugSession.elfFile = path.join(buildDir, elfFiles[0]);
+
+        mainWindow.webContents.send('output-append', '🔌 Starting debug session...\n');
+
+        // Start OpenOCD
+        openocdInterface = new OpenOCDInterface();
+        await openocdInterface.start('stm32f4x', 'stlink');
+
+        mainWindow.webContents.send('output-append', '✅ OpenOCD started\n');
+
+        // Connect OpenOCD TCL
+        await openocdInterface.connectTCL();
+
+        // Start GDB
+        gdbBackend = new GDBBackend();
+        await gdbBackend.start(debugSession.elfFile);
+
+        mainWindow.webContents.send('output-append', '✅ GDB started\n');
+
+        // Connect GDB to OpenOCD
+        await gdbBackend.connectOpenOCD();
+
+        mainWindow.webContents.send('output-append', '✅ Connected to target\n');
+
+        // Load program
+        await gdbBackend.load();
+
+        mainWindow.webContents.send('output-append', '✅ Program loaded\n');
+
+        // Initialize tools
+        flashManager = new FlashManager(openocdInterface);
+        stm32Tools = new STM32Tools(openocdInterface);
+
+        // Get device info
+        const deviceInfo = await stm32Tools.getDeviceInfo();
+        mainWindow.webContents.send('output-append',
+            `📱 Device: ${deviceInfo.deviceName}\n` +
+            `   ID: ${deviceInfo.deviceID} Rev: ${deviceInfo.revisionID}\n` +
+            `   UID: ${deviceInfo.uidString}\n` +
+            `   Flash: ${deviceInfo.flash.sizeKB}\n`
+        );
+
+        debugSession.active = true;
+        mainWindow.webContents.send('debug-started');
+
+        // Read initial registers
+        const registers = await gdbBackend.readRegisters();
+        mainWindow.webContents.send('registers-updated', registers);
+
+    } catch (error) {
+        mainWindow.webContents.send('output-append', `❌ Debug start failed: ${error.message}\n`);
+    }
+});
+
+// Stop debug session
+ipcMain.on('debug-stop', async (event) => {
+    try {
+        if (gdbBackend) {
+            await gdbBackend.quit();
+            gdbBackend = null;
+        }
+
+        if (openocdInterface) {
+            await openocdInterface.stop();
+            openocdInterface = null;
+        }
+
+        debugSession.active = false;
+        debugSession.breakpoints.clear();
+
+        mainWindow.webContents.send('output-append', '🛑 Debug session stopped\n');
+        mainWindow.webContents.send('debug-stopped');
+    } catch (error) {
+        mainWindow.webContents.send('output-append', `❌ Error stopping debug: ${error.message}\n`);
+    }
+});
+
+// Flash program
+ipcMain.on('flash-program', async (event, filePath) => {
+    try {
+        if (!filePath && debugSession.elfFile) {
+            filePath = debugSession.elfFile.replace('.elf', '.hex');
+        }
+
+        if (!filePath) {
+            mainWindow.webContents.send('output-append', '❌ No file to flash\n');
+            return;
+        }
+
+        mainWindow.webContents.send('output-append', `⚡ Flashing ${path.basename(filePath)}...\n`);
+
+        if (!openocdInterface) {
+            openocdInterface = new OpenOCDInterface();
+            await openocdInterface.start();
+            await openocdInterface.connectTCL();
+        }
+
+        flashManager = flashManager || new FlashManager(openocdInterface);
+
+        const result = await flashManager.programAndRun(filePath, true, true);
+
+        if (result.success) {
+            mainWindow.webContents.send('output-append', '✅ Flash successful!\n');
+            for (const step of result.steps) {
+                mainWindow.webContents.send('output-append', `   ${step}\n`);
+            }
+        } else {
+            mainWindow.webContents.send('output-append', `❌ Flash failed: ${result.error}\n`);
+        }
+
+    } catch (error) {
+        mainWindow.webContents.send('output-append', `❌ Flash error: ${error.message}\n`);
+    }
+});
+
+// Debug controls
+ipcMain.on('debug-continue', async () => {
+    if (gdbBackend) {
+        await gdbBackend.continue();
+        mainWindow.webContents.send('output-append', '▶️  Continue\n');
+    }
+});
+
+ipcMain.on('debug-step-over', async () => {
+    if (gdbBackend) {
+        await gdbBackend.stepOver();
+        const registers = await gdbBackend.readRegisters();
+        mainWindow.webContents.send('registers-updated', registers);
+    }
+});
+
+ipcMain.on('debug-step-into', async () => {
+    if (gdbBackend) {
+        await gdbBackend.stepInto();
+        const registers = await gdbBackend.readRegisters();
+        mainWindow.webContents.send('registers-updated', registers);
+    }
+});
+
+ipcMain.on('debug-step-out', async () => {
+    if (gdbBackend) {
+        await gdbBackend.stepOut();
+        const registers = await gdbBackend.readRegisters();
+        mainWindow.webContents.send('registers-updated', registers);
+    }
+});
+
+ipcMain.on('debug-pause', async () => {
+    if (gdbBackend) {
+        await gdbBackend.pause();
+        mainWindow.webContents.send('output-append', '⏸️  Paused\n');
+    }
+});
+
+// Breakpoints
+ipcMain.on('breakpoint-toggle', async (event, { file, line }) => {
+    if (!gdbBackend) return;
+
+    const key = `${file}:${line}`;
+
+    if (debugSession.breakpoints.has(key)) {
+        const bpNum = debugSession.breakpoints.get(key);
+        await gdbBackend.deleteBreakpoint(bpNum);
+        debugSession.breakpoints.delete(key);
+        mainWindow.webContents.send('output-append', `🔴 Breakpoint removed: ${key}\n`);
+    } else {
+        const bpNum = await gdbBackend.setBreakpoint(file, line);
+        debugSession.breakpoints.set(key, bpNum);
+        mainWindow.webContents.send('output-append', `🔴 Breakpoint set: ${key}\n`);
+    }
+});
+
+// Read memory
+ipcMain.on('memory-read', async (event, address) => {
+    if (!gdbBackend) return;
+
+    try {
+        const memory = await gdbBackend.readMemory(address, 256);
+        mainWindow.webContents.send('memory-data', memory);
+    } catch (error) {
+        mainWindow.webContents.send('output-append', `❌ Memory read error: ${error.message}\n`);
+    }
+});
+
+// Read registers
+ipcMain.on('registers-read', async () => {
+    if (!gdbBackend) return;
+
+    try {
+        const registers = await gdbBackend.readRegisters();
+        mainWindow.webContents.send('registers-updated', registers);
+    } catch (error) {
+        mainWindow.webContents.send('output-append', `❌ Register read error: ${error.message}\n`);
     }
 });
 
