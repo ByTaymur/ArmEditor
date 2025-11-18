@@ -274,8 +274,15 @@ function openFile() {
     }).then(result => {
         if (!result.canceled && result.filePaths.length > 0) {
             const filePath = result.filePaths[0];
-            const content = fs.readFileSync(filePath, 'utf-8');
 
+            // Check if it's a file, not a directory
+            const stats = fs.statSync(filePath);
+            if (!stats.isFile()) {
+                dialog.showErrorBox('Error', 'Please select a file, not a directory');
+                return;
+            }
+
+            const content = fs.readFileSync(filePath, 'utf-8');
             currentFilePath = filePath;
             mainWindow.webContents.send('open-file', {
                 path: filePath,
@@ -292,11 +299,76 @@ function openProject() {
     }).then(result => {
         if (!result.canceled && result.filePaths.length > 0) {
             currentProjectPath = result.filePaths[0];
-            mainWindow.webContents.send('open-project', {
-                path: currentProjectPath
-            });
+
+            // Parse project structure
+            const projectInfo = parseProjectStructure(currentProjectPath);
+
+            mainWindow.webContents.send('open-project', projectInfo);
+            mainWindow.webContents.send('output-append',
+                `✅ Project loaded: ${path.basename(currentProjectPath)}\n` +
+                `   Files: ${projectInfo.files.length}\n` +
+                `   Type: ${projectInfo.type}\n`
+            );
         }
     });
+}
+
+function parseProjectStructure(projectPath) {
+    const files = [];
+    const info = {
+        path: projectPath,
+        name: path.basename(projectPath),
+        type: 'unknown',
+        files: [],
+        iocFile: null,
+        makefile: null
+    };
+
+    // Check for CubeMX project (.ioc file)
+    const iocFiles = fs.readdirSync(projectPath).filter(f => f.endsWith('.ioc'));
+    if (iocFiles.length > 0) {
+        info.type = 'STM32CubeMX';
+        info.iocFile = path.join(projectPath, iocFiles[0]);
+    }
+
+    // Check for Makefile
+    const makefilePath = path.join(projectPath, 'Makefile');
+    if (fs.existsSync(makefilePath)) {
+        info.makefile = makefilePath;
+        if (info.type === 'unknown') info.type = 'Makefile';
+    }
+
+    // Recursively find all source files
+    function scanDirectory(dir, baseDir = dir) {
+        const items = fs.readdirSync(dir);
+
+        for (const item of items) {
+            const fullPath = path.join(dir, item);
+            const stats = fs.statSync(fullPath);
+
+            if (stats.isDirectory()) {
+                // Skip build directories
+                if (!['build', 'Build', 'Debug', 'Release', '.git'].includes(item)) {
+                    scanDirectory(fullPath, baseDir);
+                }
+            } else if (stats.isFile()) {
+                const ext = path.extname(item).toLowerCase();
+                if (['.c', '.h', '.cpp', '.hpp', '.s', '.asm'].includes(ext)) {
+                    files.push({
+                        name: item,
+                        path: fullPath,
+                        relativePath: path.relative(baseDir, fullPath),
+                        type: ext
+                    });
+                }
+            }
+        }
+    }
+
+    scanDirectory(projectPath);
+    info.files = files;
+
+    return info;
 }
 
 function saveFile() {
@@ -566,6 +638,25 @@ ipcMain.on('save-file-as-content', (event, content) => {
     if (currentFilePath) {
         fs.writeFileSync(currentFilePath, content, 'utf-8');
         mainWindow.webContents.send('file-saved', currentFilePath);
+    }
+});
+
+ipcMain.on('open-file-from-project', (event, filePath) => {
+    try {
+        const stats = fs.statSync(filePath);
+        if (!stats.isFile()) {
+            return;
+        }
+
+        const content = fs.readFileSync(filePath, 'utf-8');
+        currentFilePath = filePath;
+        mainWindow.webContents.send('open-file', {
+            path: filePath,
+            content: content,
+            name: path.basename(filePath)
+        });
+    } catch (error) {
+        dialog.showErrorBox('Error', `Failed to open file: ${error.message}`);
     }
 });
 

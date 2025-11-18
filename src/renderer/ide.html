@@ -113,6 +113,33 @@
             font-size: 12px;
         }
 
+        /* File tree */
+        .file-tree {
+            margin-top: 8px;
+        }
+
+        .file-item {
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border-radius: 3px;
+        }
+
+        .file-item:hover {
+            background: #2a2d2e;
+        }
+
+        .file-item.active {
+            background: #094771;
+        }
+
+        .file-icon {
+            font-size: 14px;
+        }
+
         /* Editor */
         .editor-area {
             flex: 1;
@@ -179,7 +206,7 @@
 
         /* Output */
         .output {
-            height: 200px;
+            height: 250px;
             background: #1e1e1e;
             border-top: 1px solid #3e3e42;
             display: flex;
@@ -197,6 +224,7 @@
             cursor: pointer;
             font-size: 12px;
             font-weight: 600;
+            border-right: 1px solid #3e3e42;
         }
 
         .output-tab.active {
@@ -266,7 +294,7 @@
                 <div class="sidebar-header">PROJECT</div>
                 <div class="sidebar-content">
                     <div id="project-info" class="project-name">No project opened</div>
-                    <div id="file-info"></div>
+                    <div id="file-tree" class="file-tree"></div>
                 </div>
             </div>
 
@@ -290,9 +318,55 @@
         <!-- Output -->
         <div class="output">
             <div class="output-tabs">
-                <div class="output-tab active">OUTPUT</div>
+                <div class="output-tab active" onclick="switchTab('output')">BUILD OUTPUT</div>
+                <div class="output-tab" onclick="switchTab('registers')">REGISTERS</div>
+                <div class="output-tab" onclick="switchTab('memory')">MEMORY</div>
+                <div class="output-tab" onclick="switchTab('watch')">WATCH</div>
+                <div class="output-tab" onclick="switchTab('callstack')">CALL STACK</div>
             </div>
-            <div class="output-content" id="output"></div>
+            <div class="output-content" id="output" style="display: block;"></div>
+            <div class="output-content" id="registers" style="display: none;">
+                <div style="padding: 12px; font-family: monospace; font-size: 12px;">
+                    <div style="margin-bottom: 8px; font-weight: bold;">Core Registers:</div>
+                    <div id="core-registers">
+                        R0:  0x00000000&nbsp;&nbsp;&nbsp;R8:  0x00000000<br>
+                        R1:  0x00000000&nbsp;&nbsp;&nbsp;R9:  0x00000000<br>
+                        R2:  0x00000000&nbsp;&nbsp;&nbsp;R10: 0x00000000<br>
+                        R3:  0x00000000&nbsp;&nbsp;&nbsp;R11: 0x00000000<br>
+                        R4:  0x00000000&nbsp;&nbsp;&nbsp;R12: 0x00000000<br>
+                        R5:  0x00000000&nbsp;&nbsp;&nbsp;SP:  0x20020000<br>
+                        R6:  0x00000000&nbsp;&nbsp;&nbsp;LR:  0x00000000<br>
+                        R7:  0x00000000&nbsp;&nbsp;&nbsp;PC:  0x08000000<br>
+                        <br>
+                        xPSR: 0x01000000 (Thumb mode)
+                    </div>
+                </div>
+            </div>
+            <div class="output-content" id="memory" style="display: none;">
+                <div style="padding: 12px; font-family: monospace; font-size: 11px;">
+                    <input type="text" placeholder="Address (e.g., 0x20000000)"
+                           style="width: 200px; padding: 4px; background: #2d2d30; border: 1px solid #3e3e42; color: #d4d4d4; margin-bottom: 8px;">
+                    <button class="btn" style="padding: 4px 12px; margin-left: 8px;">Read</button>
+                    <div id="memory-view" style="margin-top: 8px;">
+                        Click "Read" to view memory contents
+                    </div>
+                </div>
+            </div>
+            <div class="output-content" id="watch" style="display: none;">
+                <div style="padding: 12px;">
+                    <button class="btn" style="padding: 4px 12px;">+ Add Watch</button>
+                    <div id="watch-list" style="margin-top: 8px; font-family: monospace; font-size: 12px;">
+                        No watch variables
+                    </div>
+                </div>
+            </div>
+            <div class="output-content" id="callstack" style="display: none;">
+                <div style="padding: 12px; font-family: monospace; font-size: 12px;">
+                    <div id="callstack-view">
+                        Callstack available during debugging
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Status bar -->
@@ -351,9 +425,32 @@
             }
         });
 
-        ipcRenderer.on('open-project', (event, data) => {
-            document.getElementById('project-info').textContent = data.path;
-            outputAppend(`📁 Opened project: ${data.path}\n`);
+        ipcRenderer.on('open-project', (event, projectInfo) => {
+            // Update project info
+            document.getElementById('project-info').innerHTML = `
+                <strong>${projectInfo.name}</strong><br>
+                <small>Type: ${projectInfo.type}</small><br>
+                <small>Files: ${projectInfo.files.length}</small>
+            `;
+
+            // Build file tree
+            const fileTree = document.getElementById('file-tree');
+            fileTree.innerHTML = '';
+
+            projectInfo.files.forEach(file => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.title = file.relativePath;
+
+                const icon = getFileIcon(file.type);
+                fileItem.innerHTML = `<span class="file-icon">${icon}</span>${file.name}`;
+
+                fileItem.onclick = () => {
+                    ipcRenderer.send('open-file-from-project', file.path);
+                };
+
+                fileTree.appendChild(fileItem);
+            });
         });
 
         ipcRenderer.on('get-editor-content', (event, action) => {
@@ -414,6 +511,37 @@
             const output = document.getElementById('output');
             output.textContent += text;
             output.scrollTop = output.scrollHeight;
+        }
+
+        function getFileIcon(ext) {
+            const icons = {
+                '.c': '📄',
+                '.h': '📋',
+                '.cpp': '📄',
+                '.hpp': '📋',
+                '.s': '⚙️',
+                '.asm': '⚙️'
+            };
+            return icons[ext] || '📄';
+        }
+
+        function switchTab(tabName) {
+            // Hide all tabs
+            const tabs = ['output', 'registers', 'memory', 'watch', 'callstack'];
+            tabs.forEach(t => {
+                const el = document.getElementById(t);
+                if (el) el.style.display = 'none';
+            });
+
+            // Show selected tab
+            const selected = document.getElementById(tabName);
+            if (selected) selected.style.display = 'block';
+
+            // Update tab active state
+            document.querySelectorAll('.output-tab').forEach(t => {
+                t.classList.remove('active');
+            });
+            event.target.classList.add('active');
         }
 
         function updateUI() {
