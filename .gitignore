@@ -1,0 +1,50 @@
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build output
+dist/
+build/
+out/
+*.deb
+*.rpm
+*.dmg
+*.exe
+
+# Electron
+.cache/
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Logs
+logs/
+*.log
+
+# Temporary
+tmp/
+temp/
+.temp/
+
+# Package files
+*.tgz
+*.zip
+
+# Debug
+*.pdb
+*.map
+
+# Coverage
+coverage/
+.nyc_output/
