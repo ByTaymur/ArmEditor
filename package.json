@@ -15,7 +15,8 @@
     "dist": "electron-builder"
   },
   "dependencies": {
-    "chokidar": "^3.5.3"
+    "chokidar": "^3.5.3",
+    "monaco-editor": "^0.44.0"
   },
   "devDependencies": {
     "electron": "^27.0.0",
@@ -39,6 +40,7 @@
     "files": [
       "src/**/*",
       "resources/**/*",
+      "node_modules/monaco-editor/**/*",
       "package.json"
     ],
     "extraResources": [

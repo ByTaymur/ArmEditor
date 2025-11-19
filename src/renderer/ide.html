@@ -444,40 +444,35 @@
         let openedFiles = []; // Array of {path, name, content, modified}
         let activeFileIndex = -1;
 
-        // Load Monaco Editor from CDN with fallback
+        // Load Monaco Editor from local node_modules
+        const path = require('path');
+        const monacoPath = path.join(__dirname, '../../node_modules/monaco-editor/min/vs');
+
+        console.log('Loading Monaco from:', monacoPath);
+
         const loaderScript = document.createElement('script');
-        loaderScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js';
+        loaderScript.src = path.join(monacoPath, 'loader.js');
         loaderScript.onload = () => {
-            console.log('Monaco loader loaded');
+            console.log('Monaco loader loaded from local');
             require.config({
-                paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' }
+                paths: {
+                    vs: monacoPath
+                }
             });
+
             require(['vs/editor/editor.main'], () => {
-                console.log('Monaco loaded successfully');
+                console.log('✅ Monaco Editor loaded successfully!');
                 initMonaco();
             }, (err) => {
-                console.error('Monaco loading failed:', err);
-                showMonacoError();
+                console.error('❌ Monaco loading failed:', err);
+                alert('Monaco Editor failed to load: ' + err);
             });
         };
-        loaderScript.onerror = () => {
-            console.error('Failed to load Monaco loader script');
-            showMonacoError();
+        loaderScript.onerror = (err) => {
+            console.error('❌ Failed to load Monaco loader:', err);
+            alert('Failed to load Monaco Editor. Check console for details.');
         };
         document.head.appendChild(loaderScript);
-
-        // Fallback if Monaco doesn't load in 5 seconds
-        setTimeout(() => {
-            if (!editor) {
-                console.warn('Monaco timeout - using fallback');
-                showMonacoError();
-            }
-        }, 5000);
-
-        function showMonacoError() {
-            const editorDiv = document.getElementById('editor');
-            editorDiv.innerHTML = '<div style="padding: 20px; color: #ce9178;"><h3>⚠️ Monaco Editor Loading Failed</h3><p>Editor functionality limited. Build/Flash/Debug still work from toolbar.</p><textarea id="fallback-editor" style="width: 100%; height: 100%; background: #1e1e1e; color: #d4d4d4; border: 1px solid #3e3e42; padding: 10px; font-family: Consolas, monospace;"></textarea></div>';
-        }
 
         // IPC Listeners
         ipcRenderer.on('new-file', () => {
@@ -489,10 +484,19 @@
         });
 
         ipcRenderer.on('open-file', (event, data) => {
+            console.log('📂 Opening file:', data.name);
+
+            // Always hide welcome and show editor area
+            document.getElementById('welcome').style.display = 'none';
+            document.getElementById('editor').style.display = 'block';
+
             if (editor) {
+                console.log('✅ Editor ready, opening in tab');
                 openFileInTab(data.path, data.name, data.content);
-                document.getElementById('welcome').style.display = 'none';
-                document.getElementById('editor').style.display = 'block';
+            } else {
+                console.warn('⚠️ Editor not ready yet, queuing file');
+                // Queue file to open when editor is ready
+                window.pendingFile = data;
             }
         });
 
@@ -863,7 +867,16 @@
             // Focus on editor
             editor.focus();
 
-            console.log('Monaco Editor initialized with keyboard shortcuts');
+            console.log('✅ Monaco Editor initialized with keyboard shortcuts');
+
+            // Open pending file if exists
+            if (window.pendingFile) {
+                console.log('📂 Opening pending file:', window.pendingFile.name);
+                openFileInTab(window.pendingFile.path, window.pendingFile.name, window.pendingFile.content);
+                document.getElementById('welcome').style.display = 'none';
+                document.getElementById('editor').style.display = 'block';
+                window.pendingFile = null;
+            }
         }
 
         function outputAppend(text) {
