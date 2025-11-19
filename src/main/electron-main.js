@@ -658,6 +658,16 @@ ipcMain.on('save-file-as-content', (event, content) => {
     }
 });
 
+// New save-file handler for tab system
+ipcMain.on('save-file', (event, data) => {
+    try {
+        fs.writeFileSync(data.path, data.content, 'utf-8');
+        mainWindow.webContents.send('output-append', `💾 Saved: ${path.basename(data.path)}\n`);
+    } catch (error) {
+        mainWindow.webContents.send('output-append', `❌ Save failed: ${error.message}\n`);
+    }
+});
+
 ipcMain.on('open-file-from-project', (event, filePath) => {
     try {
         const stats = fs.statSync(filePath);

@@ -441,6 +441,8 @@
 
         let editor = null;
         let currentFile = null;
+        let openedFiles = []; // Array of {path, name, content, modified}
+        let activeFileIndex = -1;
 
         // Load Monaco Editor from CDN
         const loaderScript = document.createElement('script');
@@ -453,19 +455,6 @@
         };
         document.head.appendChild(loaderScript);
 
-        function initMonaco() {
-            editor = monaco.editor.create(document.getElementById('editor'), {
-                value: '',
-                language: 'c',
-                theme: 'vs-dark',
-                automaticLayout: true,
-                fontSize: 14,
-                minimap: { enabled: true }
-            });
-
-            outputAppend('✅ Editor ready\n');
-        }
-
         // IPC Listeners
         ipcRenderer.on('new-file', () => {
             if (editor) {
@@ -477,9 +466,7 @@
 
         ipcRenderer.on('open-file', (event, data) => {
             if (editor) {
-                editor.setValue(data.content);
-                currentFile = data;
-                updateUI();
+                openFileInTab(data.path, data.name, data.content);
                 document.getElementById('welcome').style.display = 'none';
                 document.getElementById('editor').style.display = 'block';
             }
@@ -560,8 +547,20 @@
         }
 
         function saveFile() {
-            if (editor) {
-                ipcRenderer.send('get-editor-content', 'save');
+            if (editor && activeFileIndex !== -1) {
+                // Update content from editor
+                openedFiles[activeFileIndex].content = editor.getValue();
+                currentFile = openedFiles[activeFileIndex];
+
+                // Send to backend
+                ipcRenderer.send('save-file', {
+                    path: openedFiles[activeFileIndex].path,
+                    content: openedFiles[activeFileIndex].content
+                });
+
+                // Mark as not modified
+                openedFiles[activeFileIndex].modified = false;
+                updateTabs();
             }
         }
 
@@ -621,6 +620,122 @@
             document.getElementById('step-over-btn').style.display = 'none';
             document.getElementById('step-into-btn').style.display = 'none';
         });
+
+        // Tab Management
+        function openFileInTab(filePath, fileName, content) {
+            // Check if already open
+            const existingIndex = openedFiles.findIndex(f => f.path === filePath);
+
+            if (existingIndex !== -1) {
+                // Switch to existing tab
+                switchTab(existingIndex);
+            } else {
+                // Add new tab
+                openedFiles.push({
+                    path: filePath,
+                    name: fileName,
+                    content: content,
+                    modified: false
+                });
+                activeFileIndex = openedFiles.length - 1;
+                updateTabs();
+                editor.setValue(content);
+                currentFile = openedFiles[activeFileIndex];
+            }
+        }
+
+        function updateTabs() {
+            const tabsContainer = document.getElementById('tabs');
+            // Keep ASM/HEX button
+            const asmBtn = tabsContainer.querySelector('button[onclick="toggleSidePanel()"]');
+            tabsContainer.innerHTML = '';
+
+            openedFiles.forEach((file, index) => {
+                const tab = document.createElement('div');
+                tab.className = 'tab' + (index === activeFileIndex ? ' active' : '');
+                tab.innerHTML = `
+                    ${getFileIcon(file.path.match(/\.[^.]+$/)?.[0] || '')}
+                    <span>${file.name}${file.modified ? ' •' : ''}</span>
+                    <span style="margin-left: 8px; cursor: pointer;" onclick="closeTab(${index}); event.stopPropagation();">✕</span>
+                `;
+                tab.onclick = () => switchTab(index);
+                tabsContainer.appendChild(tab);
+            });
+
+            // Re-add ASM/HEX button
+            if (asmBtn) {
+                tabsContainer.appendChild(asmBtn);
+            }
+        }
+
+        function switchTab(index) {
+            if (index < 0 || index >= openedFiles.length) return;
+
+            // Save current editor content
+            if (activeFileIndex !== -1 && editor) {
+                openedFiles[activeFileIndex].content = editor.getValue();
+            }
+
+            // Switch to new tab
+            activeFileIndex = index;
+            currentFile = openedFiles[index];
+            editor.setValue(openedFiles[index].content);
+
+            updateTabs();
+        }
+
+        function closeTab(index) {
+            if (openedFiles[index].modified) {
+                if (!confirm(`${openedFiles[index].name} has unsaved changes. Close anyway?`)) {
+                    return;
+                }
+            }
+
+            openedFiles.splice(index, 1);
+
+            if (openedFiles.length === 0) {
+                activeFileIndex = -1;
+                currentFile = null;
+                editor.setValue('');
+                document.getElementById('welcome').style.display = 'flex';
+                document.getElementById('editor').style.display = 'none';
+            } else {
+                if (activeFileIndex >= openedFiles.length) {
+                    activeFileIndex = openedFiles.length - 1;
+                }
+                switchTab(activeFileIndex);
+            }
+
+            updateTabs();
+        }
+
+        // Track modifications
+        function initMonaco() {
+            require(['vs/editor/editor.main'], () => {
+                editor = monaco.editor.create(document.getElementById('editor'), {
+                    value: '',
+                    language: 'c',
+                    theme: 'vs-dark',
+                    automaticLayout: true,
+                    minimap: { enabled: true },
+                    fontSize: 14,
+                    lineNumbers: 'on',
+                    scrollBeyondLastLine: false,
+                    wordWrap: 'on'
+                });
+
+                // Track changes
+                editor.onDidChangeModelContent(() => {
+                    if (activeFileIndex !== -1) {
+                        openedFiles[activeFileIndex].modified = true;
+                        openedFiles[activeFileIndex].content = editor.getValue();
+                        updateTabs();
+                    }
+                });
+
+                console.log('Monaco Editor initialized');
+            });
+        }
 
         function outputAppend(text) {
             const output = document.getElementById('output');
