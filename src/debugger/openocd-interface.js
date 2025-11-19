@@ -20,8 +20,9 @@ class OpenOCDInterface extends EventEmitter {
      */
     async start(boardConfig = 'stm32f4x', probe = 'stlink') {
         return new Promise((resolve, reject) => {
+            // ST-Link V3 uses stlink.cfg (not stlink-v2.cfg)
             const configFiles = [
-                `interface/${probe}.cfg`,
+                `interface/stlink.cfg`,
                 `target/${boardConfig}.cfg`
             ];
 
