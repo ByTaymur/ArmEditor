@@ -18,10 +18,10 @@ class OpenOCDInterface extends EventEmitter {
     /**
      * Start OpenOCD with board configuration
      */
-    async start(boardConfig = 'stm32f4x', interface = 'stlink') {
+    async start(boardConfig = 'stm32f4x', probe = 'stlink') {
         return new Promise((resolve, reject) => {
             const configFiles = [
-                `interface/${interface}.cfg`,
+                `interface/${probe}.cfg`,
                 `target/${boardConfig}.cfg`
             ];
 
