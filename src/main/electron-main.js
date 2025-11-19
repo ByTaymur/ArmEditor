@@ -894,6 +894,206 @@ ipcMain.on('registers-read', async () => {
     }
 });
 
+// Build/Clean/Rebuild from toolbar
+ipcMain.on('build-project', () => {
+    buildProject();
+});
+
+ipcMain.on('clean-project', () => {
+    cleanProject();
+});
+
+ipcMain.on('rebuild-project', () => {
+    rebuildProject();
+});
+
+// New File
+ipcMain.on('new-file', (event, fileName) => {
+    if (!currentProjectPath) {
+        // Create standalone file
+        dialog.showSaveDialog(mainWindow, {
+            defaultPath: fileName,
+            filters: [
+                { name: 'C Files', extensions: ['c'] },
+                { name: 'Header Files', extensions: ['h'] },
+                { name: 'All Files', extensions: ['*'] }
+            ]
+        }).then(result => {
+            if (!result.canceled) {
+                const template = getFileTemplate(path.extname(fileName));
+                fs.writeFileSync(result.filePath, template);
+
+                mainWindow.webContents.send('open-file', {
+                    path: result.filePath,
+                    content: template,
+                    name: path.basename(result.filePath)
+                });
+
+                currentFilePath = result.filePath;
+            }
+        });
+    } else {
+        // Create in project
+        const filePath = path.join(currentProjectPath, fileName);
+        const template = getFileTemplate(path.extname(fileName));
+        fs.writeFileSync(filePath, template);
+
+        mainWindow.webContents.send('open-file', {
+            path: filePath,
+            content: template,
+            name: fileName
+        });
+
+        currentFilePath = filePath;
+        mainWindow.webContents.send('output-append', `✅ Created: ${fileName}\n`);
+    }
+});
+
+// New Project
+ipcMain.on('new-project', (event, projectName) => {
+    dialog.showOpenDialog(mainWindow, {
+        properties: ['openDirectory'],
+        title: 'Select folder for new project'
+    }).then(result => {
+        if (!result.canceled && result.filePaths.length > 0) {
+            const projectPath = path.join(result.filePaths[0], projectName);
+
+            // Create project structure
+            fs.mkdirSync(projectPath, { recursive: true });
+            fs.mkdirSync(path.join(projectPath, 'src'));
+            fs.mkdirSync(path.join(projectPath, 'inc'));
+            fs.mkdirSync(path.join(projectPath, 'build'));
+
+            // Create main.c
+            const mainC = `/**
+ * Project: ${projectName}
+ * File: main.c
+ */
+
+#include <stdint.h>
+
+int main(void) {
+    // Initialize
+
+    while(1) {
+        // Main loop
+    }
+
+    return 0;
+}
+`;
+            fs.writeFileSync(path.join(projectPath, 'src', 'main.c'), mainC);
+
+            // Create Makefile
+            const makefile = `# Makefile for ${projectName}
+
+PROJECT = ${projectName}
+
+# Source files
+SRCS = src/main.c
+
+# Includes
+INCS = -Iinc
+
+# Compiler
+CC = arm-none-eabi-gcc
+OBJCOPY = arm-none-eabi-objcopy
+SIZE = arm-none-eabi-size
+
+# Flags
+CFLAGS = -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
+CFLAGS += -O2 -g -Wall \$(INCS)
+LDFLAGS = -T STM32F407VGTx_FLASH.ld
+
+# Build directory
+BUILD_DIR = build
+
+# Objects
+OBJS = \$(SRCS:%.c=\$(BUILD_DIR)/%.o)
+
+all: \$(BUILD_DIR)/\$(PROJECT).elf \$(BUILD_DIR)/\$(PROJECT).hex \$(BUILD_DIR)/\$(PROJECT).bin
+\t@echo "Build complete!"
+\t@\$(SIZE) \$(BUILD_DIR)/\$(PROJECT).elf
+
+\$(BUILD_DIR)/\$(PROJECT).elf: \$(OBJS)
+\t@echo "Linking..."
+\t@\$(CC) \$(CFLAGS) \$(LDFLAGS) \$^ -o \$@
+
+\$(BUILD_DIR)/%.o: %.c
+\t@mkdir -p \$(dir \$@)
+\t@echo "Compiling \$<"
+\t@\$(CC) \$(CFLAGS) -c \$< -o \$@
+
+\$(BUILD_DIR)/%.hex: \$(BUILD_DIR)/%.elf
+\t@\$(OBJCOPY) -O ihex \$< \$@
+
+\$(BUILD_DIR)/%.bin: \$(BUILD_DIR)/%.elf
+\t@\$(OBJCOPY) -O binary \$< \$@
+
+clean:
+\t@rm -rf \$(BUILD_DIR)
+\t@echo "Cleaned!"
+
+flash: all
+\t@openocd -f interface/stlink.cfg -f target/stm32f4x.cfg -c "program \$(BUILD_DIR)/\$(PROJECT).elf verify reset exit"
+
+.PHONY: all clean flash
+`;
+            fs.writeFileSync(path.join(projectPath, 'Makefile'), makefile);
+
+            currentProjectPath = projectPath;
+
+            // Open project
+            const projectInfo = parseProjectStructure(projectPath);
+            mainWindow.webContents.send('open-project', projectInfo);
+            mainWindow.webContents.send('output-append',
+                `✅ Project created: ${projectName}\n` +
+                `   Path: ${projectPath}\n`
+            );
+
+            // Open main.c
+            mainWindow.webContents.send('open-file', {
+                path: path.join(projectPath, 'src', 'main.c'),
+                content: mainC,
+                name: 'main.c'
+            });
+        }
+    });
+});
+
+function getFileTemplate(ext) {
+    switch(ext) {
+        case '.c':
+            return `/**
+ * File: ${path.basename(currentFilePath || 'main.c')}
+ */
+
+#include <stdint.h>
+
+int main(void) {
+    // Your code here
+
+    return 0;
+}
+`;
+        case '.h':
+            const guard = `_${path.basename(currentFilePath || 'HEADER').toUpperCase().replace('.', '_')}_`;
+            return `/**
+ * File: ${path.basename(currentFilePath || 'header.h')}
+ */
+
+#ifndef ${guard}
+#define ${guard}
+
+// Declarations here
+
+#endif /* ${guard} */
+`;
+        default:
+            return '';
+    }
+}
+
 /**
  * App lifecycle
  */

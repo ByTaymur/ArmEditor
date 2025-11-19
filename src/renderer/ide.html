@@ -275,16 +275,21 @@
     <div class="container">
         <!-- Toolbar -->
         <div class="toolbar">
-            <button class="btn" onclick="openFile()">📂 Open File</button>
-            <button class="btn" onclick="openProject()">📁 Open Project</button>
+            <button class="btn" onclick="newFile()">📄 New File</button>
+            <button class="btn" onclick="newProject()">📁 New Project</button>
+            <button class="btn" onclick="openFile()">📂 Open</button>
             <button class="btn" onclick="saveFile()">💾 Save</button>
             <div class="separator"></div>
             <button class="btn success" onclick="buildProject()">🔨 Build (F7)</button>
             <button class="btn" onclick="cleanProject()">🧹 Clean</button>
+            <button class="btn" onclick="rebuildProject()">🔄 Rebuild</button>
+            <div class="separator"></div>
+            <button class="btn success" id="debug-btn" onclick="startDebug()">▶️ Debug (F5)</button>
+            <button class="btn danger" id="stop-btn" onclick="stopDebug()" style="display:none;">⏹ Stop</button>
+            <button class="btn" id="step-over-btn" onclick="stepOver()" style="display:none;">⏭ Step Over</button>
+            <button class="btn" id="step-into-btn" onclick="stepInto()" style="display:none;">⬇️ Step Into</button>
             <div class="separator"></div>
             <button class="btn success" onclick="flashDevice()">⚡ Flash</button>
-            <div class="separator"></div>
-            <button class="btn" onclick="analyzeCode()">🤖 AI Analyze</button>
         </div>
 
         <!-- Main -->
@@ -532,6 +537,20 @@
         });
 
         // UI Functions
+        function newFile() {
+            const fileName = prompt('File name (e.g., main.c):');
+            if (fileName) {
+                ipcRenderer.send('new-file', fileName);
+            }
+        }
+
+        function newProject() {
+            const projectName = prompt('Project name:');
+            if (projectName) {
+                ipcRenderer.send('new-project', projectName);
+            }
+        }
+
         function openFile() {
             ipcRenderer.send('open-file-dialog');
         }
@@ -547,20 +566,61 @@
         }
 
         function buildProject() {
-            outputAppend('\n🔨 Building...\n');
+            outputAppend('\n🔨 Building project...\n');
+            ipcRenderer.send('build-project');
         }
 
         function cleanProject() {
-            outputAppend('🧹 Cleaning...\n');
+            outputAppend('\n🧹 Cleaning build files...\n');
+            ipcRenderer.send('clean-project');
+        }
+
+        function rebuildProject() {
+            outputAppend('\n🔄 Rebuilding project...\n');
+            ipcRenderer.send('rebuild-project');
         }
 
         function flashDevice() {
-            outputAppend('⚡ Flashing...\n');
+            outputAppend('\n⚡ Flashing device...\n');
+            ipcRenderer.send('flash-program');
         }
 
-        function analyzeCode() {
-            outputAppend('\n🤖 Running AI analysis...\n');
+        function startDebug() {
+            outputAppend('\n▶️ Starting debug session...\n');
+            ipcRenderer.send('debug-start');
         }
+
+        function stopDebug() {
+            outputAppend('\n⏹ Stopping debug...\n');
+            ipcRenderer.send('debug-stop');
+        }
+
+        function stepOver() {
+            ipcRenderer.send('debug-step-over');
+        }
+
+        function stepInto() {
+            ipcRenderer.send('debug-step-into');
+        }
+
+        function stepOut() {
+            ipcRenderer.send('debug-step-out');
+        }
+
+        // Debug state UI updates
+        ipcRenderer.on('debug-started', () => {
+            document.getElementById('debug-btn').style.display = 'none';
+            document.getElementById('stop-btn').style.display = 'inline-block';
+            document.getElementById('step-over-btn').style.display = 'inline-block';
+            document.getElementById('step-into-btn').style.display = 'inline-block';
+        });
+
+        ipcRenderer.on('debug-stopped', () => {
+            document.getElementById('debug-btn').style.display = 'inline-block';
+            document.getElementById('stop-btn').style.display = 'none';
+            document.getElementById('step-over-btn').style.display = 'none';
+            document.getElementById('step-into-btn').style.display = 'none';
+        });
 
         function outputAppend(text) {
             const output = document.getElementById('output');
