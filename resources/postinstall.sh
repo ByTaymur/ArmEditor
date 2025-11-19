@@ -1,6 +1,12 @@
 #!/bin/bash
 # Post-install script for ArmEditor
 
+# Create symlink to make 'armeditor' command available
+echo "Creating armeditor command..."
+ln -sf /opt/ArmEditor/armeditor /usr/bin/armeditor
+chmod +x /opt/ArmEditor/armeditor
+echo "✅ Command 'armeditor' is now available!"
+
 # Install udev rules for ST-Link and J-Link
 if [ -f /opt/ArmEditor/resources/99-stlink.rules ]; then
     echo "Installing udev rules for ST-Link..."

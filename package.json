@@ -31,7 +31,15 @@
       ],
       "category": "Development",
       "maintainer": "ArmEditor Team",
-      "icon": "resources/icon.png"
+      "icon": "resources/icon.png",
+      "executableName": "armeditor",
+      "desktop": {
+        "Name": "ArmEditor",
+        "Comment": "Professional ARM Development IDE",
+        "Terminal": false,
+        "Type": "Application",
+        "Categories": "Development;IDE;"
+      }
     },
     "deb": {
       "depends": [],
