@@ -639,7 +639,32 @@
                 });
                 activeFileIndex = openedFiles.length - 1;
                 updateTabs();
-                editor.setValue(content);
+
+                // Show editor, hide welcome
+                document.getElementById('welcome').style.display = 'none';
+                document.getElementById('editor').style.display = 'block';
+
+                // Wait for editor to be ready, then set content
+                if (editor) {
+                    editor.setValue(content);
+                    // Set language based on file extension
+                    const ext = filePath.match(/\.[^.]+$/)?.[0] || '';
+                    const langMap = {
+                        '.c': 'c',
+                        '.h': 'c',
+                        '.cpp': 'cpp',
+                        '.hpp': 'cpp',
+                        '.s': 'asm',
+                        '.asm': 'asm',
+                        '.json': 'json',
+                        '.md': 'markdown'
+                    };
+                    const lang = langMap[ext] || 'c';
+                    monaco.editor.setModelLanguage(editor.getModel(), lang);
+                } else {
+                    console.warn('Editor not ready yet');
+                }
+
                 currentFile = openedFiles[activeFileIndex];
             }
         }
@@ -679,7 +704,28 @@
             // Switch to new tab
             activeFileIndex = index;
             currentFile = openedFiles[index];
-            editor.setValue(openedFiles[index].content);
+
+            // Show editor, hide welcome
+            document.getElementById('welcome').style.display = 'none';
+            document.getElementById('editor').style.display = 'block';
+
+            if (editor) {
+                editor.setValue(openedFiles[index].content);
+                // Set language based on file extension
+                const ext = openedFiles[index].path.match(/\.[^.]+$/)?.[0] || '';
+                const langMap = {
+                    '.c': 'c',
+                    '.h': 'c',
+                    '.cpp': 'cpp',
+                    '.hpp': 'cpp',
+                    '.s': 'asm',
+                    '.asm': 'asm',
+                    '.json': 'json',
+                    '.md': 'markdown'
+                };
+                const lang = langMap[ext] || 'c';
+                monaco.editor.setModelLanguage(editor.getModel(), lang);
+            }
 
             updateTabs();
         }
@@ -711,30 +757,28 @@
 
         // Track modifications
         function initMonaco() {
-            require(['vs/editor/editor.main'], () => {
-                editor = monaco.editor.create(document.getElementById('editor'), {
-                    value: '',
-                    language: 'c',
-                    theme: 'vs-dark',
-                    automaticLayout: true,
-                    minimap: { enabled: true },
-                    fontSize: 14,
-                    lineNumbers: 'on',
-                    scrollBeyondLastLine: false,
-                    wordWrap: 'on'
-                });
-
-                // Track changes
-                editor.onDidChangeModelContent(() => {
-                    if (activeFileIndex !== -1) {
-                        openedFiles[activeFileIndex].modified = true;
-                        openedFiles[activeFileIndex].content = editor.getValue();
-                        updateTabs();
-                    }
-                });
-
-                console.log('Monaco Editor initialized');
+            editor = monaco.editor.create(document.getElementById('editor'), {
+                value: '',
+                language: 'c',
+                theme: 'vs-dark',
+                automaticLayout: true,
+                minimap: { enabled: true },
+                fontSize: 14,
+                lineNumbers: 'on',
+                scrollBeyondLastLine: false,
+                wordWrap: 'on'
             });
+
+            // Track changes
+            editor.onDidChangeModelContent(() => {
+                if (activeFileIndex !== -1) {
+                    openedFiles[activeFileIndex].modified = true;
+                    openedFiles[activeFileIndex].content = editor.getValue();
+                    updateTabs();
+                }
+            });
+
+            console.log('Monaco Editor initialized');
         }
 
         function outputAppend(text) {
