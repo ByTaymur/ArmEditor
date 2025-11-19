@@ -832,16 +832,19 @@ ipcMain.on('debug-stop', async (event) => {
 
 // Flash program
 ipcMain.on('flash-program', async (event, filePath) => {
+    console.log('[IPC] flash-program received, filePath:', filePath);
     try {
         if (!filePath && debugSession.elfFile) {
             filePath = debugSession.elfFile.replace('.elf', '.hex');
         }
 
         if (!filePath) {
+            console.log('[Flash] No file specified');
             mainWindow.webContents.send('output-append', '❌ No file to flash\n');
             return;
         }
 
+        console.log('[Flash] Starting flash:', filePath);
         mainWindow.webContents.send('output-append', `⚡ Flashing ${path.basename(filePath)}...\n`);
 
         if (!openocdInterface) {
@@ -951,14 +954,17 @@ ipcMain.on('registers-read', async () => {
 
 // Build/Clean/Rebuild from toolbar
 ipcMain.on('build-project', () => {
+    console.log('[IPC] build-project received');
     buildProject();
 });
 
 ipcMain.on('clean-project', () => {
+    console.log('[IPC] clean-project received');
     cleanProject();
 });
 
 ipcMain.on('rebuild-project', () => {
+    console.log('[IPC] rebuild-project received');
     rebuildProject();
 });
 

@@ -444,16 +444,40 @@
         let openedFiles = []; // Array of {path, name, content, modified}
         let activeFileIndex = -1;
 
-        // Load Monaco Editor from CDN
+        // Load Monaco Editor from CDN with fallback
         const loaderScript = document.createElement('script');
         loaderScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js';
         loaderScript.onload = () => {
+            console.log('Monaco loader loaded');
             require.config({
                 paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' }
             });
-            require(['vs/editor/editor.main'], initMonaco);
+            require(['vs/editor/editor.main'], () => {
+                console.log('Monaco loaded successfully');
+                initMonaco();
+            }, (err) => {
+                console.error('Monaco loading failed:', err);
+                showMonacoError();
+            });
+        };
+        loaderScript.onerror = () => {
+            console.error('Failed to load Monaco loader script');
+            showMonacoError();
         };
         document.head.appendChild(loaderScript);
+
+        // Fallback if Monaco doesn't load in 5 seconds
+        setTimeout(() => {
+            if (!editor) {
+                console.warn('Monaco timeout - using fallback');
+                showMonacoError();
+            }
+        }, 5000);
+
+        function showMonacoError() {
+            const editorDiv = document.getElementById('editor');
+            editorDiv.innerHTML = '<div style="padding: 20px; color: #ce9178;"><h3>⚠️ Monaco Editor Loading Failed</h3><p>Editor functionality limited. Build/Flash/Debug still work from toolbar.</p><textarea id="fallback-editor" style="width: 100%; height: 100%; background: #1e1e1e; color: #d4d4d4; border: 1px solid #3e3e42; padding: 10px; font-family: Consolas, monospace;"></textarea></div>';
+        }
 
         // IPC Listeners
         ipcRenderer.on('new-file', () => {
@@ -565,26 +589,31 @@
         }
 
         function buildProject() {
+            console.log('buildProject() called');
             outputAppend('\n🔨 Building project...\n');
             ipcRenderer.send('build-project');
         }
 
         function cleanProject() {
+            console.log('cleanProject() called');
             outputAppend('\n🧹 Cleaning build files...\n');
             ipcRenderer.send('clean-project');
         }
 
         function rebuildProject() {
+            console.log('rebuildProject() called');
             outputAppend('\n🔄 Rebuilding project...\n');
             ipcRenderer.send('rebuild-project');
         }
 
         function flashDevice() {
+            console.log('flashDevice() called');
             outputAppend('\n⚡ Flashing device...\n');
             ipcRenderer.send('flash-program');
         }
 
         function startDebug() {
+            console.log('startDebug() called');
             outputAppend('\n▶️ Starting debug session...\n');
             ipcRenderer.send('debug-start');
         }
