@@ -778,7 +778,63 @@
                 }
             });
 
-            console.log('Monaco Editor initialized');
+            // Add keyboard shortcuts
+            editor.addAction({
+                id: 'save-file',
+                label: 'Save File',
+                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
+                run: function() {
+                    if (currentFile) {
+                        ipcRenderer.send('file-save', currentFile.path, editor.getValue());
+                    }
+                    return null;
+                }
+            });
+
+            editor.addAction({
+                id: 'build-project',
+                label: 'Build Project (F7)',
+                keybindings: [monaco.KeyCode.F7],
+                run: function() {
+                    ipcRenderer.send('build-project');
+                    return null;
+                }
+            });
+
+            editor.addAction({
+                id: 'flash-device',
+                label: 'Flash Device (F8)',
+                keybindings: [monaco.KeyCode.F8],
+                run: function() {
+                    ipcRenderer.send('flash-device');
+                    return null;
+                }
+            });
+
+            editor.addAction({
+                id: 'debug-start',
+                label: 'Start Debug (F5)',
+                keybindings: [monaco.KeyCode.F5],
+                run: function() {
+                    ipcRenderer.send('debug-start');
+                    return null;
+                }
+            });
+
+            editor.addAction({
+                id: 'clean-project',
+                label: 'Clean Project',
+                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyC],
+                run: function() {
+                    ipcRenderer.send('clean-project');
+                    return null;
+                }
+            });
+
+            // Focus on editor
+            editor.focus();
+
+            console.log('Monaco Editor initialized with keyboard shortcuts');
         }
 
         function outputAppend(text) {

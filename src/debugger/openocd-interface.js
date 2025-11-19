@@ -26,6 +26,9 @@ class OpenOCDInterface extends EventEmitter {
                 `target/${boardConfig}.cfg`
             ];
 
+            let allOutput = '';
+            let errorOutput = '';
+
             // Launch OpenOCD
             this.process = spawn('openocd', [
                 ...configFiles.flatMap(f => ['-f', f]),
@@ -36,30 +39,49 @@ class OpenOCDInterface extends EventEmitter {
 
             this.process.stdout.on('data', (data) => {
                 const output = data.toString();
+                allOutput += output;
                 this.emit('output', output);
 
-                // Check if ready
-                if (output.includes('Info : Listening on port 3333')) {
+                // Check if ready (OpenOCD sends "Info" to stderr on some systems)
+                if (output.includes('Listening on port 3333') || output.includes('Listening on port 6666')) {
                     this.running = true;
-                    resolve();
+                    // Give it a moment to fully initialize
+                    setTimeout(() => resolve(), 500);
                 }
             });
 
             this.process.stderr.on('data', (data) => {
-                this.emit('error', data.toString());
+                const output = data.toString();
+                errorOutput += output;
+                this.emit('error', output);
+
+                // OpenOCD sends Info messages to stderr too!
+                if (output.includes('Listening on port 3333') || output.includes('Listening on port 6666')) {
+                    this.running = true;
+                    // Give it a moment to fully initialize
+                    setTimeout(() => resolve(), 500);
+                }
             });
 
             this.process.on('close', (code) => {
                 this.emit('closed', code);
                 this.running = false;
+                if (!this.running && code !== 0) {
+                    reject(new Error('OpenOCD exited with code ' + code + '\n' + errorOutput));
+                }
             });
 
-            // Timeout after 5 seconds
+            // Timeout after 10 seconds (some ST-Link need more time)
             setTimeout(() => {
                 if (!this.running) {
-                    reject(new Error('OpenOCD startup timeout'));
+                    const errMsg = errorOutput.includes('libusb')
+                        ? 'USB permission denied. Run: sudo chmod 666 /dev/bus/usb/*/*'
+                        : errorOutput.includes('not found') || errorOutput.includes('Can\'t find')
+                        ? 'ST-Link not connected. Check USB connection.'
+                        : 'OpenOCD startup timeout: ' + (errorOutput || allOutput);
+                    reject(new Error(errMsg));
                 }
-            }, 5000);
+            }, 10000);
         });
     }
 

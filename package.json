@@ -33,7 +33,8 @@
       "icon": "resources/icon.png"
     },
     "deb": {
-      "depends": []
+      "depends": [],
+      "afterInstall": "resources/postinstall.sh"
     },
     "files": [
       "src/**/*",

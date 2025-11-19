@@ -330,6 +330,48 @@ function openProject() {
     });
 }
 
+/**
+ * Auto-setup STM32CubeMX project with optimized Makefile
+ */
+function setupCubeMXProject(projectPath) {
+    const makefilePath = path.join(projectPath, 'Makefile');
+    const makefileCubemxPath = path.join(projectPath, 'Makefile.cubemx');
+
+    // Skip if already set up
+    if (fs.existsSync(makefileCubemxPath)) {
+        return;
+    }
+
+    // If Makefile exists, rename it to Makefile.cubemx
+    if (fs.existsSync(makefilePath)) {
+        try {
+            // Backup original
+            if (!fs.existsSync(path.join(projectPath, 'Makefile.original'))) {
+                fs.copyFileSync(makefilePath, path.join(projectPath, 'Makefile.original'));
+            }
+
+            // Rename to Makefile.cubemx
+            fs.renameSync(makefilePath, makefileCubemxPath);
+
+            // Copy template
+            const templatePath = path.join(__dirname, '../../resources/Makefile.template');
+            if (fs.existsSync(templatePath)) {
+                fs.copyFileSync(templatePath, makefilePath);
+
+                mainWindow.webContents.send('output-append',
+                    '🚀 Auto-setup complete!\n' +
+                    '   ✅ Makefile.cubemx created (original CubeMX Makefile)\n' +
+                    '   ✅ Makefile created with build profiles\n' +
+                    '   📊 Available profiles: debug, release, O0, Og, O2, O3, Os\n' +
+                    '   ⚡ Auto-detected MCU family and OpenOCD target\n'
+                );
+            }
+        } catch (err) {
+            console.error('Auto-setup error:', err);
+        }
+    }
+}
+
 function parseProjectStructure(projectPath) {
     const files = [];
     const info = {
@@ -346,6 +388,9 @@ function parseProjectStructure(projectPath) {
     if (iocFiles.length > 0) {
         info.type = 'STM32CubeMX';
         info.iocFile = path.join(projectPath, iocFiles[0]);
+
+        // Auto-setup CubeMX project
+        setupCubeMXProject(projectPath);
     }
 
     // Check for Makefile
