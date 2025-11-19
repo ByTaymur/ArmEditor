@@ -351,13 +351,13 @@ class FlashManager {
     }
 
     getWriteProtectedSectors(wrp) {
-        const protected = [];
+        const protectedSectors = [];
         for (let i = 0; i < 12; i++) {
             if ((wrp & (1 << i)) === 0) {
-                protected.push(i);
+                protectedSectors.push(i);
             }
         }
-        return protected;
+        return protectedSectors;
     }
 
     getBORLevel(nbor) {
