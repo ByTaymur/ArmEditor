@@ -34,17 +34,18 @@ class FlashManager {
             // Halt target
             await this.openocd.halt();
 
-            // Erase if requested
+            // Erase if requested (with timeout)
             if (erase) {
                 await this.eraseFlash(options.fullErase || false);
             }
 
-            // Program flash
+            // Program flash (with extended timeout)
             await this.programFlash(file);
 
-            // Verify if requested
+            // Verify if requested (with timeout)
             if (verify) {
-                await this.verifyFlash(file);
+                const VERIFY_TIMEOUT = 30000;
+                await this.openocd.sendCommand(`verify_image ${file}`, VERIFY_TIMEOUT);
             }
 
             // Reset and run if requested
@@ -165,13 +166,16 @@ class FlashManager {
     async programFlash(file) {
         const ext = path.extname(file).toLowerCase();
 
+        // Programming can take 30-60 seconds for large files
+        const FLASH_TIMEOUT = 60000;
+
         if (ext === '.hex') {
-            await this.openocd.sendCommand(`program ${file} verify reset`);
+            await this.openocd.sendCommand(`program ${file}`, FLASH_TIMEOUT);
         } else if (ext === '.bin') {
             // Need to specify address for .bin files
-            await this.openocd.sendCommand(`program ${file} 0x08000000 verify reset`);
+            await this.openocd.sendCommand(`program ${file} 0x08000000`, FLASH_TIMEOUT);
         } else if (ext === '.elf') {
-            await this.openocd.sendCommand(`program ${file} verify reset`);
+            await this.openocd.sendCommand(`program ${file}`, FLASH_TIMEOUT);
         } else {
             throw new Error(`Unsupported file format: ${ext}`);
         }

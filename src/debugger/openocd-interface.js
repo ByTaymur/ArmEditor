@@ -145,7 +145,7 @@ class OpenOCDInterface extends EventEmitter {
     /**
      * Send TCL command to OpenOCD
      */
-    async sendCommand(command) {
+    async sendCommand(command, timeout = 30000) {
         return new Promise((resolve, reject) => {
             if (!this.tclClient) {
                 reject(new Error('TCL client not connected'));
@@ -153,24 +153,27 @@ class OpenOCDInterface extends EventEmitter {
             }
 
             let response = '';
+            let timeoutHandle;
 
             const handler = (data) => {
-                response += data;
+                response += data.toString();
                 // Wait for prompt
                 if (response.includes('> ')) {
-                    this.tclClient.removeListener('tcl-response', handler);
+                    clearTimeout(timeoutHandle);
+                    this.tclClient.removeListener('data', handler);
                     resolve(response.replace('> ', '').trim());
                 }
             };
 
-            this.emit('tcl-response', handler);
+            // Listen to data events from tclClient
+            this.tclClient.on('data', handler);
             this.tclClient.write(command + '\n');
 
-            // Timeout
-            setTimeout(() => {
-                this.tclClient.removeListener('tcl-response', handler);
-                reject(new Error('Command timeout'));
-            }, 10000);
+            // Timeout (increased to 30s for flash operations, configurable)
+            timeoutHandle = setTimeout(() => {
+                this.tclClient.removeListener('data', handler);
+                reject(new Error(`Command timeout after ${timeout}ms: ${command}`));
+            }, timeout);
         });
     }
 
