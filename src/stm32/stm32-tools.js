@@ -175,21 +175,56 @@ class STM32Tools {
      * STM32 Monitor (Serial/SWO)
      */
     async monitorStartSWO(port = 0, cpuFreq = 168000000, swoFreq = 2000000) {
-        // Configure SWO
+        // Configure TPIU (Trace Port Interface Unit) for SWO
+        // SWO frequency must be: CPU_Freq / (TPIU_Prescaler + 1)
+        // For 168MHz CPU and 2MHz SWO: prescaler = 168/2 - 1 = 83
+        const prescaler = Math.floor(cpuFreq / swoFreq) - 1;
+
         await this.openocd.sendCommand(`tpiu config internal - uart off ${cpuFreq}`);
+        await this.openocd.sendCommand(`tpiu config internal /tmp/swo.log uart off ${cpuFreq}`);
         await this.openocd.sendCommand(`itm port ${port} on`);
+
+        // Enable ITM (Instrumentation Trace Macrocell)
+        // ITM_LAR = 0xC5ACCE55 (unlock)
+        await this.openocd.sendCommand('mww 0xE0000FB0 0xC5ACCE55');
+
+        // ITM_TCR: Enable ITM
+        await this.openocd.sendCommand('mww 0xE0000E80 0x00010009');
+
+        // ITM_TER: Enable stimulus port 0
+        await this.openocd.sendCommand(`mww 0xE0000E00 ${1 << port}`);
 
         return { enabled: true, port, frequency: swoFreq };
     }
 
     async monitorStopSWO() {
+        // Disable ITM
+        await this.openocd.sendCommand('mww 0xE0000E80 0x00000000');
         await this.openocd.sendCommand('itm ports off');
     }
 
     async monitorReadSWO() {
-        // This would typically read from SWO output
-        // Implementation depends on OpenOCD SWO capture
-        return [];
+        // Read SWO data from OpenOCD ITM trace
+        // Note: This is a simplified implementation
+        // For production, you'd use OpenOCD's built-in SWO capture or SEGGER RTT
+
+        try {
+            // Try to read ITM stimulus port 0 data
+            const fs = require('fs');
+            const swoFile = '/tmp/swo.log';
+
+            if (fs.existsSync(swoFile)) {
+                const data = fs.readFileSync(swoFile, 'utf8');
+                // Clear the file after reading
+                fs.writeFileSync(swoFile, '');
+                return data;
+            }
+        } catch (err) {
+            // If file reading fails, return empty string
+            console.error('SWO read error:', err.message);
+        }
+
+        return '';
     }
 
     /**

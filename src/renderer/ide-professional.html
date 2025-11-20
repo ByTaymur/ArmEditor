@@ -1375,6 +1375,37 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- SWV TRACE VIEWER -->
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-title">
+                        <span class="card-title-icon">📡</span>
+                        SWV Trace Viewer (Serial Wire Viewer)
+                        <div style="margin-left: auto; display: flex; gap: 10px; align-items: center;">
+                            <label style="font-size: 11px; color: #858585;">CPU Freq (MHz):</label>
+                            <input type="number" id="swv-cpu-freq" value="168" style="width: 70px; padding: 4px 8px; background: #1e1e1e; border: 1px solid #3e3e42; color: #cccccc; border-radius: 4px; font-size: 12px;">
+                            <button class="btn btn-sm btn-success" onclick="enableSWV()" id="swv-enable-btn">▶️ Enable</button>
+                            <button class="btn btn-sm btn-danger" onclick="disableSWV()" id="swv-disable-btn" style="display: none;">⏹️ Disable</button>
+                            <button class="btn btn-sm btn-secondary" onclick="clearSWVTrace()">🗑️ Clear</button>
+                        </div>
+                    </div>
+                    <div style="background: #1e1e1e; border-radius: 4px; padding: 10px; font-family: 'Courier New', monospace; font-size: 12px;">
+                        <div style="margin-bottom: 10px; color: #858585; font-size: 11px;">
+                            💡 Tip: Use ITM_SendChar() in your code for printf-style debugging without UART
+                        </div>
+                        <div id="swv-trace-output" style="max-height: 300px; overflow-y: auto; background: #000000; padding: 10px; border-radius: 4px; border: 1px solid #3e3e42;">
+                            <div style="color: #858585; text-align: center; padding: 10px;">
+                                SWV Trace disabled. Click "Enable" to start capturing ITM trace data.
+                            </div>
+                        </div>
+                        <div style="margin-top: 10px; display: flex; gap: 10px; align-items: center;">
+                            <span style="color: #858585; font-size: 11px;">Status:</span>
+                            <span id="swv-status" style="color: #858585; font-size: 11px;">Disabled</span>
+                            <span style="margin-left: auto; color: #858585; font-size: 11px;">Packets:</span>
+                            <span id="swv-packet-count" style="color: #4ec9b0; font-size: 11px;">0</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- OUTPUT CONSOLE -->
@@ -2149,6 +2180,121 @@
                 e.preventDefault();
                 debugStepOut();
             }
+        });
+
+        // ============================================
+        // SWV TRACE FUNCTIONS
+        // ============================================
+
+        let swvEnabled = false;
+        let swvPacketCount = 0;
+        let swvPollInterval = null;
+
+        function enableSWV() {
+            if (!currentDevice) {
+                appendConsole('❌ No device connected. Connect ST-Link first.', 'error');
+                return;
+            }
+
+            const cpuFreq = parseInt(document.getElementById('swv-cpu-freq').value) * 1000000;
+            const swoFreq = 2000000; // 2 MHz SWO frequency
+
+            appendConsole(`📡 Enabling SWV Trace (CPU: ${cpuFreq/1000000} MHz, SWO: ${swoFreq/1000000} MHz)...`, 'normal');
+
+            // Send enable command to backend
+            ipcRenderer.send('swv-enable', { cpuFreq, swoFreq });
+
+            swvEnabled = true;
+            swvPacketCount = 0;
+
+            // Update UI
+            document.getElementById('swv-enable-btn').style.display = 'none';
+            document.getElementById('swv-disable-btn').style.display = 'block';
+            document.getElementById('swv-status').textContent = 'Enabled';
+            document.getElementById('swv-status').style.color = '#4ec9b0';
+            document.getElementById('swv-trace-output').innerHTML = '';
+
+            // Start polling for SWV data
+            swvPollInterval = setInterval(() => {
+                ipcRenderer.send('swv-read');
+            }, 100); // Poll every 100ms
+
+            appendConsole('✅ SWV Trace enabled. Use ITM_SendChar() in your firmware.', 'success');
+        }
+
+        function disableSWV() {
+            appendConsole('⏹️ Disabling SWV Trace...', 'normal');
+
+            // Send disable command to backend
+            ipcRenderer.send('swv-disable');
+
+            swvEnabled = false;
+
+            // Stop polling
+            if (swvPollInterval) {
+                clearInterval(swvPollInterval);
+                swvPollInterval = null;
+            }
+
+            // Update UI
+            document.getElementById('swv-enable-btn').style.display = 'block';
+            document.getElementById('swv-disable-btn').style.display = 'none';
+            document.getElementById('swv-status').textContent = 'Disabled';
+            document.getElementById('swv-status').style.color = '#858585';
+
+            appendConsole('⏹️ SWV Trace disabled', 'normal');
+        }
+
+        function clearSWVTrace() {
+            document.getElementById('swv-trace-output').innerHTML = '';
+            swvPacketCount = 0;
+            document.getElementById('swv-packet-count').textContent = '0';
+            appendConsole('🗑️ SWV trace cleared', 'normal');
+        }
+
+        function appendSWVTrace(data) {
+            const output = document.getElementById('swv-trace-output');
+            const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false, fractionalSecondDigits: 3 });
+
+            // Create trace line
+            const line = document.createElement('div');
+            line.style.color = '#4ec9b0';
+            line.style.marginBottom = '2px';
+            line.innerHTML = `<span style="color: #858585;">[${timestamp}]</span> ${escapeHtml(data)}`;
+
+            output.appendChild(line);
+
+            // Auto-scroll to bottom
+            output.scrollTop = output.scrollHeight;
+
+            // Update packet count
+            swvPacketCount++;
+            document.getElementById('swv-packet-count').textContent = swvPacketCount;
+
+            // Limit to last 1000 lines for performance
+            while (output.children.length > 1000) {
+                output.removeChild(output.firstChild);
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Listen for SWV data from main process
+        ipcRenderer.on('swv-data', (event, data) => {
+            appendSWVTrace(data);
+        });
+
+        ipcRenderer.on('swv-enabled', () => {
+            appendConsole('✅ SWV hardware configured', 'success');
+        });
+
+        ipcRenderer.on('swv-error', (event, error) => {
+            appendConsole(`❌ SWV Error: ${error}`, 'error');
+            disableSWV();
         });
     </script>
 </body>

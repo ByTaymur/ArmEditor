@@ -1888,6 +1888,80 @@ ipcMain.on('read-device-memory', async (event) => {
     }
 });
 
+// SWV Trace handlers
+let swvEnabled = false;
+let swvBuffer = '';
+
+ipcMain.on('swv-enable', async (event, config) => {
+    try {
+        if (!connectedStLink || !connectedStLink.openocd) {
+            mainWindow.webContents.send('swv-error', 'No device connected');
+            return;
+        }
+
+        mainWindow.webContents.send('output-append', `📡 Configuring SWV (CPU: ${config.cpuFreq/1000000} MHz)...\n`);
+
+        const stm32Tools = new STM32Tools(connectedStLink.openocd);
+        await stm32Tools.monitorStartSWO(0, config.cpuFreq, config.swoFreq);
+
+        swvEnabled = true;
+        swvBuffer = '';
+
+        mainWindow.webContents.send('swv-enabled');
+        mainWindow.webContents.send('output-append', `✅ SWV enabled. ITM Port 0 ready.\n`);
+
+    } catch (error) {
+        mainWindow.webContents.send('swv-error', error.message);
+        mainWindow.webContents.send('output-append', `❌ SWV enable failed: ${error.message}\n`);
+    }
+});
+
+ipcMain.on('swv-disable', async (event) => {
+    try {
+        if (connectedStLink && connectedStLink.openocd) {
+            const stm32Tools = new STM32Tools(connectedStLink.openocd);
+            await stm32Tools.monitorStopSWO();
+        }
+
+        swvEnabled = false;
+        swvBuffer = '';
+
+        mainWindow.webContents.send('output-append', '⏹️ SWV disabled\n');
+
+    } catch (error) {
+        mainWindow.webContents.send('output-append', `❌ SWV disable error: ${error.message}\n`);
+    }
+});
+
+ipcMain.on('swv-read', async (event) => {
+    if (!swvEnabled || !connectedStLink || !connectedStLink.openocd) {
+        return;
+    }
+
+    try {
+        const stm32Tools = new STM32Tools(connectedStLink.openocd);
+        const data = await stm32Tools.monitorReadSWO();
+
+        if (data && data.length > 0) {
+            // Accumulate data in buffer
+            swvBuffer += data;
+
+            // Split by newlines and send complete lines
+            const lines = swvBuffer.split('\n');
+            swvBuffer = lines.pop(); // Keep incomplete line in buffer
+
+            for (const line of lines) {
+                if (line.trim()) {
+                    mainWindow.webContents.send('swv-data', line);
+                }
+            }
+        }
+    } catch (error) {
+        // Ignore read errors during polling
+        console.error('[SWV Read Error]', error.message);
+    }
+});
+
 /**
  * App lifecycle
  */
