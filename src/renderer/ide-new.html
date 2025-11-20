@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArmEditor - Professional ARM IDE</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #1e1e1e;
+            color: #cccccc;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* TOOLBAR */
+        .toolbar {
+            background: #2d2d30;
+            padding: 8px 12px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .btn {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: #1177bb;
+        }
+
+        .btn:active {
+            background: #0d5a8f;
+        }
+
+        .btn.success {
+            background: #16825d;
+        }
+
+        .btn.success:hover {
+            background: #1e9b70;
+        }
+
+        .btn.danger {
+            background: #d13438;
+        }
+
+        .btn.danger:hover {
+            background: #e13438;
+        }
+
+        .separator {
+            width: 1px;
+            height: 20px;
+            background: #3e3e42;
+            margin: 0 4px;
+        }
+
+        .project-name {
+            color: #4fc1ff;
+            font-weight: 600;
+            margin-left: auto;
+            font-size: 14px;
+        }
+
+        /* MAIN AREA */
+        .main {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* SIDEBAR - File Tree */
+        .sidebar {
+            width: 250px;
+            background: #252526;
+            border-right: 1px solid #3e3e42;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 12px;
+            background: #2d2d30;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #999;
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .file-tree {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 0;
+        }
+
+        .file-item {
+            padding: 6px 16px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .file-item:hover {
+            background: #2a2d2e;
+        }
+
+        .file-item.active {
+            background: #094771;
+            color: #ffffff;
+        }
+
+        .file-icon {
+            font-size: 16px;
+        }
+
+        /* EDITOR AREA */
+        .editor-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .editor-tabs {
+            background: #2d2d30;
+            display: flex;
+            gap: 2px;
+            padding: 4px 8px;
+            border-bottom: 1px solid #3e3e42;
+            overflow-x: auto;
+        }
+
+        .tab {
+            background: #2d2d30;
+            padding: 6px 12px;
+            border-radius: 3px 3px 0 0;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .tab:hover {
+            background: #1e1e1e;
+        }
+
+        .tab.active {
+            background: #1e1e1e;
+            color: #ffffff;
+        }
+
+        .tab-close {
+            opacity: 0.6;
+            font-size: 16px;
+            margin-left: 8px;
+        }
+
+        .tab-close:hover {
+            opacity: 1;
+        }
+
+        .editor {
+            flex: 1;
+            background: #1e1e1e;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #code-editor {
+            width: 100%;
+            height: 100%;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border: none;
+            padding: 16px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+        }
+
+        .welcome {
+            text-align: center;
+            color: #6a6a6a;
+        }
+
+        .welcome h1 {
+            font-size: 48px;
+            margin-bottom: 16px;
+            color: #4fc1ff;
+        }
+
+        .welcome p {
+            font-size: 16px;
+        }
+
+        /* OUTPUT PANEL */
+        .output-panel {
+            height: 200px;
+            background: #1e1e1e;
+            border-top: 1px solid #3e3e42;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .output-header {
+            background: #2d2d30;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #999;
+            display: flex;
+            gap: 12px;
+        }
+
+        .output-tab {
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 3px;
+        }
+
+        .output-tab:hover {
+            background: #3e3e42;
+        }
+
+        .output-tab.active {
+            background: #094771;
+            color: #ffffff;
+        }
+
+        #output {
+            flex: 1;
+            background: #1e1e1e;
+            color: #cccccc;
+            padding: 12px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            line-height: 1.4;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #424242;
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4e4e4e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- TOOLBAR -->
+        <div class="toolbar">
+            <button class="btn" onclick="openProject()">📁 Open Project</button>
+            <button class="btn" onclick="saveFile()">💾 Save (Ctrl+S)</button>
+            <div class="separator"></div>
+            <button class="btn success" onclick="buildProject()">🔨 Build (F7)</button>
+            <button class="btn" onclick="cleanProject()">🧹 Clean</button>
+            <div class="separator"></div>
+            <button class="btn success" onclick="flashDevice()">⚡ Flash (F8)</button>
+            <button class="btn danger" onclick="debugStart()">▶️ Debug (F5)</button>
+            <div class="project-name" id="project-name">No Project</div>
+        </div>
+
+        <!-- MAIN AREA -->
+        <div class="main">
+            <!-- SIDEBAR - File Tree -->
+            <div class="sidebar">
+                <div class="sidebar-header">Files</div>
+                <div class="file-tree" id="file-tree">
+                    <div style="padding: 20px; text-align: center; color: #6a6a6a;">
+                        Open a project to see files
+                    </div>
+                </div>
+            </div>
+
+            <!-- EDITOR AREA -->
+            <div class="editor-area">
+                <div class="editor-tabs" id="editor-tabs"></div>
+                <div class="editor">
+                    <div class="welcome" id="welcome">
+                        <h1>🚀 ArmEditor</h1>
+                        <p>Professional ARM Development IDE</p>
+                        <p style="margin-top: 20px; font-size: 14px;">Click <strong>Open Project</strong> to get started</p>
+                    </div>
+                    <textarea id="code-editor" style="display: none;"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- OUTPUT PANEL -->
+        <div class="output-panel">
+            <div class="output-header">
+                <div class="output-tab active">Output</div>
+            </div>
+            <div id="output">Ready.</div>
+        </div>
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+
+        let currentFile = null;
+        let currentProject = null;
+        let openTabs = [];
+        let activeTab = -1;
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                saveFile();
+            }
+            if (e.key === 'F7') {
+                e.preventDefault();
+                buildProject();
+            }
+            if (e.key === 'F8') {
+                e.preventDefault();
+                flashDevice();
+            }
+            if (e.key === 'F5') {
+                e.preventDefault();
+                debugStart();
+            }
+        });
+
+        // Open Project
+        function openProject() {
+            ipcRenderer.send('open-project-dialog');
+        }
+
+        // Save File
+        function saveFile() {
+            if (!currentFile) {
+                outputAppend('⚠️ No file open\n');
+                return;
+            }
+
+            const content = document.getElementById('code-editor').value;
+            ipcRenderer.send('save-file', currentFile.path, content);
+            outputAppend(`💾 Saved: ${currentFile.name}\n`);
+
+            // Update tab
+            if (activeTab !== -1) {
+                openTabs[activeTab].modified = false;
+                updateTabs();
+            }
+        }
+
+        // Build Project
+        function buildProject() {
+            if (!currentProject) {
+                outputAppend('⚠️ No project open\n');
+                return;
+            }
+            outputAppend('\n🔨 Building project...\n');
+            ipcRenderer.send('build-project');
+        }
+
+        // Clean Project
+        function cleanProject() {
+            if (!currentProject) {
+                outputAppend('⚠️ No project open\n');
+                return;
+            }
+            outputAppend('\n🧹 Cleaning...\n');
+            ipcRenderer.send('clean-project');
+        }
+
+        // Flash Device
+        function flashDevice() {
+            if (!currentProject) {
+                outputAppend('⚠️ No project open\n');
+                return;
+            }
+            outputAppend('\n⚡ Flashing device...\n');
+            ipcRenderer.send('flash-program');
+        }
+
+        // Debug Start
+        function debugStart() {
+            if (!currentProject) {
+                outputAppend('⚠️ No project open\n');
+                return;
+            }
+            outputAppend('\n▶️ Starting debug...\n');
+            ipcRenderer.send('debug-start');
+        }
+
+        // Append to output
+        function outputAppend(text) {
+            const output = document.getElementById('output');
+            output.textContent += text;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        // Update tabs
+        function updateTabs() {
+            const tabsContainer = document.getElementById('editor-tabs');
+            tabsContainer.innerHTML = '';
+
+            openTabs.forEach((tab, index) => {
+                const tabEl = document.createElement('div');
+                tabEl.className = 'tab' + (index === activeTab ? ' active' : '');
+
+                const icon = getFileIcon(tab.name);
+                const modified = tab.modified ? ' •' : '';
+
+                tabEl.innerHTML = `
+                    <span class="file-icon">${icon}</span>
+                    <span>${tab.name}${modified}</span>
+                    <span class="tab-close" onclick="closeTab(${index}); event.stopPropagation();">✕</span>
+                `;
+
+                tabEl.onclick = () => switchToTab(index);
+                tabsContainer.appendChild(tabEl);
+            });
+        }
+
+        // Switch to tab
+        function switchToTab(index) {
+            if (index < 0 || index >= openTabs.length) return;
+
+            // Save current content
+            if (activeTab !== -1) {
+                const content = document.getElementById('code-editor').value;
+                openTabs[activeTab].content = content;
+            }
+
+            activeTab = index;
+            currentFile = openTabs[index];
+
+            // Load new content
+            document.getElementById('code-editor').value = currentFile.content;
+            document.getElementById('welcome').style.display = 'none';
+            document.getElementById('code-editor').style.display = 'block';
+
+            updateTabs();
+            updateFileTree();
+        }
+
+        // Close tab
+        function closeTab(index) {
+            if (openTabs[index].modified) {
+                if (!confirm(`${openTabs[index].name} has unsaved changes. Close anyway?`)) {
+                    return;
+                }
+            }
+
+            openTabs.splice(index, 1);
+
+            if (openTabs.length === 0) {
+                activeTab = -1;
+                currentFile = null;
+                document.getElementById('welcome').style.display = 'flex';
+                document.getElementById('code-editor').style.display = 'none';
+            } else {
+                if (activeTab >= openTabs.length) {
+                    activeTab = openTabs.length - 1;
+                }
+                switchToTab(activeTab);
+            }
+
+            updateTabs();
+        }
+
+        // Open file
+        function openFile(file) {
+            // Check if already open
+            const existingIndex = openTabs.findIndex(t => t.path === file.path);
+            if (existingIndex !== -1) {
+                switchToTab(existingIndex);
+                return;
+            }
+
+            // Add new tab
+            openTabs.push({
+                path: file.path,
+                name: file.name,
+                content: file.content || '',
+                modified: false
+            });
+
+            switchToTab(openTabs.length - 1);
+        }
+
+        // Get file icon
+        function getFileIcon(name) {
+            if (name.endsWith('.c')) return '📄';
+            if (name.endsWith('.h')) return '📋';
+            if (name.endsWith('.cpp') || name.endsWith('.cc')) return '📄';
+            if (name.endsWith('.s') || name.endsWith('.asm')) return '⚙️';
+            if (name.endsWith('.json')) return '📦';
+            if (name.endsWith('.md')) return '📝';
+            return '📄';
+        }
+
+        // Update file tree
+        function updateFileTree() {
+            if (!currentProject || !currentProject.files) return;
+
+            const tree = document.getElementById('file-tree');
+            tree.innerHTML = '';
+
+            currentProject.files.forEach(file => {
+                const item = document.createElement('div');
+                item.className = 'file-item';
+                if (currentFile && currentFile.path === file.path) {
+                    item.classList.add('active');
+                }
+
+                const icon = getFileIcon(file.name);
+                item.innerHTML = `
+                    <span class="file-icon">${icon}</span>
+                    <span>${file.name}</span>
+                `;
+
+                item.onclick = () => {
+                    ipcRenderer.send('read-file', file.path);
+                };
+
+                tree.appendChild(item);
+            });
+        }
+
+        // Track modifications
+        document.getElementById('code-editor').addEventListener('input', () => {
+            if (activeTab !== -1) {
+                openTabs[activeTab].modified = true;
+                openTabs[activeTab].content = document.getElementById('code-editor').value;
+                updateTabs();
+            }
+        });
+
+        // IPC Listeners
+        ipcRenderer.on('project-opened', (event, project) => {
+            currentProject = project;
+            document.getElementById('project-name').textContent = project.name;
+            outputAppend(`✅ Opened project: ${project.name}\n`);
+            outputAppend(`   Files: ${project.files.length}\n`);
+            updateFileTree();
+        });
+
+        ipcRenderer.on('file-content', (event, data) => {
+            openFile({
+                path: data.path,
+                name: data.name,
+                content: data.content
+            });
+        });
+
+        ipcRenderer.on('output-append', (event, text) => {
+            outputAppend(text);
+        });
+
+        ipcRenderer.on('output-clear', () => {
+            document.getElementById('output').textContent = '';
+        });
+
+        console.log('✅ ArmEditor UI loaded');
+    </script>
+</body>
+</html>

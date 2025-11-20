@@ -51,15 +51,8 @@ function createWindow() {
         titleBarStyle: 'default'
     });
 
-    // Load the HTML file
-    mainWindow.loadFile(path.join(__dirname, '../renderer/ide.html'));
-
-    // Send Monaco path to renderer when ready
-    mainWindow.webContents.on('did-finish-load', () => {
-        const monacoPath = path.join(app.getAppPath(), 'node_modules/monaco-editor/min/vs');
-        console.log('Sending Monaco path to renderer:', monacoPath);
-        mainWindow.webContents.send('monaco-path', monacoPath);
-    });
+    // Load the NEW simplified HTML file
+    mainWindow.loadFile(path.join(__dirname, '../renderer/ide-new.html'));
 
     // Show when ready
     mainWindow.once('ready-to-show', () => {
@@ -1161,6 +1154,55 @@ int main(void) {
             return '';
     }
 }
+
+/**
+ * NEW SIMPLIFIED IPC HANDLERS
+ */
+
+// Open project dialog
+ipcMain.on('open-project-dialog', () => {
+    dialog.showOpenDialog(mainWindow, {
+        properties: ['openDirectory'],
+        title: 'Open Project Folder'
+    }).then(result => {
+        if (!result.canceled && result.filePaths.length > 0) {
+            const projectPath = result.filePaths[0];
+            currentProjectPath = projectPath;
+
+            // Parse project
+            const projectInfo = parseProjectStructure(projectPath);
+
+            // Send to renderer
+            mainWindow.webContents.send('project-opened', projectInfo);
+        }
+    });
+});
+
+// Read file
+ipcMain.on('read-file', (event, filePath) => {
+    try {
+        const content = fs.readFileSync(filePath, 'utf-8');
+        const fileName = path.basename(filePath);
+
+        mainWindow.webContents.send('file-content', {
+            path: filePath,
+            name: fileName,
+            content: content
+        });
+    } catch (error) {
+        mainWindow.webContents.send('output-append', `❌ Error reading file: ${error.message}\n`);
+    }
+});
+
+// Save file (new simple version)
+ipcMain.on('save-file', (event, filePath, content) => {
+    try {
+        fs.writeFileSync(filePath, content, 'utf-8');
+        console.log('[Save] File saved:', filePath);
+    } catch (error) {
+        mainWindow.webContents.send('output-append', `❌ Save error: ${error.message}\n`);
+    }
+});
 
 /**
  * App lifecycle
