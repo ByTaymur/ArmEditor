@@ -379,6 +379,7 @@ function parseProjectStructure(projectPath) {
         name: path.basename(projectPath),
         type: 'unknown',
         files: [],
+        folders: null,
         iocFile: null,
         makefile: null
     };
@@ -400,7 +401,7 @@ function parseProjectStructure(projectPath) {
         if (info.type === 'unknown') info.type = 'Makefile';
     }
 
-    // Recursively find all source files
+    // Recursively find all source files (flat list for compatibility)
     function scanDirectory(dir, baseDir = dir) {
         const items = fs.readdirSync(dir);
 
@@ -410,7 +411,7 @@ function parseProjectStructure(projectPath) {
 
             if (stats.isDirectory()) {
                 // Skip build directories
-                if (!['build', 'Build', 'Debug', 'Release', '.git'].includes(item)) {
+                if (!['build', 'Build', 'Debug', 'Release', '.git', 'node_modules'].includes(item)) {
                     scanDirectory(fullPath, baseDir);
                 }
             } else if (stats.isFile()) {
@@ -427,8 +428,54 @@ function parseProjectStructure(projectPath) {
         }
     }
 
+    // Build hierarchical folder structure
+    function buildFolderTree(dirPath, baseDir = dirPath) {
+        const items = fs.readdirSync(dirPath);
+        const tree = {
+            name: path.basename(dirPath),
+            path: dirPath,
+            type: 'folder',
+            children: []
+        };
+
+        for (const item of items) {
+            const fullPath = path.join(dirPath, item);
+            const stats = fs.statSync(fullPath);
+
+            if (stats.isDirectory()) {
+                // Skip build directories
+                if (!['build', 'Build', 'Debug', 'Release', '.git', 'node_modules'].includes(item)) {
+                    tree.children.push(buildFolderTree(fullPath, baseDir));
+                }
+            } else if (stats.isFile()) {
+                const ext = path.extname(item).toLowerCase();
+                if (['.c', '.h', '.cpp', '.hpp', '.s', '.asm', '.ioc', '.ld'].includes(ext)) {
+                    tree.children.push({
+                        name: item,
+                        path: fullPath,
+                        relativePath: path.relative(baseDir, fullPath),
+                        type: 'file',
+                        ext: ext
+                    });
+                }
+            }
+        }
+
+        // Sort: folders first, then files
+        tree.children.sort((a, b) => {
+            if (a.type === 'folder' && b.type === 'file') return -1;
+            if (a.type === 'file' && b.type === 'folder') return 1;
+            return a.name.localeCompare(b.name);
+        });
+
+        return tree;
+    }
+
     scanDirectory(projectPath);
     info.files = files;
+
+    // Build hierarchical tree
+    info.folders = buildFolderTree(projectPath);
 
     return info;
 }
@@ -1201,6 +1248,139 @@ ipcMain.on('save-file', (event, filePath, content) => {
         console.log('[Save] File saved:', filePath);
     } catch (error) {
         mainWindow.webContents.send('output-append', `❌ Save error: ${error.message}\n`);
+    }
+});
+
+/**
+ * ST-LINK DETECTION AND MANAGEMENT
+ */
+let stlinkDevices = [];
+let connectedStLink = null;
+
+// Scan for ST-Link devices
+ipcMain.on('scan-stlinks', async (event) => {
+    try {
+        // Use lsusb to detect ST-Link devices
+        const { execSync } = require('child_process');
+        const lsusbOutput = execSync('lsusb').toString();
+
+        const devices = [];
+        const lines = lsusbOutput.split('\n');
+
+        for (const line of lines) {
+            // ST-Link V2: 0483:3748
+            // ST-Link V2-1: 0483:374b, 0483:3752
+            // ST-Link V3: 0483:374d, 0483:374e, 0483:374f, 0483:3753, 0483:3754, 0483:3755, 0483:3756
+            if (line.includes('0483:3748')) {
+                devices.push({
+                    id: 'stlink-v2-' + devices.length,
+                    name: 'ST-Link V2',
+                    usbId: '0483:3748',
+                    version: 'V2',
+                    connected: connectedStLink && connectedStLink.id === 'stlink-v2-' + devices.length,
+                    mcu: connectedStLink && connectedStLink.id === 'stlink-v2-' + devices.length ? connectedStLink.mcu : null
+                });
+            } else if (line.includes('0483:374b') || line.includes('0483:3752')) {
+                devices.push({
+                    id: 'stlink-v2.1-' + devices.length,
+                    name: 'ST-Link V2-1',
+                    usbId: line.includes('0483:374b') ? '0483:374b' : '0483:3752',
+                    version: 'V2-1',
+                    connected: connectedStLink && connectedStLink.id === 'stlink-v2.1-' + devices.length,
+                    mcu: connectedStLink && connectedStLink.id === 'stlink-v2.1-' + devices.length ? connectedStLink.mcu : null
+                });
+            } else if (line.includes('0483:3754') || line.includes('0483:374d') || line.includes('0483:374e') || line.includes('0483:374f') || line.includes('0483:3753') || line.includes('0483:3755') || line.includes('0483:3756')) {
+                const usbId = line.match(/0483:[0-9a-f]{4}/i)[0];
+                devices.push({
+                    id: 'stlink-v3-' + devices.length,
+                    name: 'ST-Link V3',
+                    usbId: usbId,
+                    version: 'V3',
+                    connected: connectedStLink && connectedStLink.id === 'stlink-v3-' + devices.length,
+                    mcu: connectedStLink && connectedStLink.id === 'stlink-v3-' + devices.length ? connectedStLink.mcu : null
+                });
+            }
+        }
+
+        stlinkDevices = devices;
+        mainWindow.webContents.send('stlink-devices', devices);
+
+    } catch (error) {
+        console.error('Error scanning ST-Links:', error);
+        mainWindow.webContents.send('stlink-devices', []);
+    }
+});
+
+// Connect to ST-Link and read MCU info
+ipcMain.on('connect-stlink', async (event, deviceId) => {
+    try {
+        const device = stlinkDevices.find(d => d.id === deviceId);
+        if (!device) return;
+
+        mainWindow.webContents.send('output-append', `🔌 Connecting to ${device.name}...\n`);
+
+        // Start OpenOCD
+        const openocd = new OpenOCDInterface();
+        await openocd.start('stm32f4x', 'stlink');
+
+        mainWindow.webContents.send('output-append', '✅ OpenOCD connected\n');
+
+        // Connect TCL
+        await openocd.connectTCL();
+
+        // Get device info using STM32Tools
+        const stm32Tools = new STM32Tools(openocd);
+        const deviceInfo = await stm32Tools.getDeviceInfo();
+
+        mainWindow.webContents.send('output-append',
+            `📱 MCU: ${deviceInfo.deviceName}\n` +
+            `   ID: ${deviceInfo.deviceID}\n` +
+            `   Flash: ${deviceInfo.flash.sizeKB} KB\n`
+        );
+
+        // Update device with MCU info
+        device.connected = true;
+        device.mcu = {
+            name: deviceInfo.deviceName,
+            deviceId: deviceInfo.deviceID,
+            flashSize: deviceInfo.flash.sizeKB + ' KB',
+            revisionId: deviceInfo.revisionID
+        };
+
+        connectedStLink = {
+            id: deviceId,
+            openocd: openocd,
+            mcu: device.mcu
+        };
+
+        // Send updated devices
+        mainWindow.webContents.send('stlink-devices', stlinkDevices);
+
+    } catch (error) {
+        mainWindow.webContents.send('output-append', `❌ Connection failed: ${error.message}\n`);
+    }
+});
+
+// Disconnect ST-Link
+ipcMain.on('disconnect-stlink', async (event, deviceId) => {
+    try {
+        if (connectedStLink && connectedStLink.openocd) {
+            await connectedStLink.openocd.stop();
+        }
+
+        const device = stlinkDevices.find(d => d.id === deviceId);
+        if (device) {
+            device.connected = false;
+            device.mcu = null;
+        }
+
+        connectedStLink = null;
+
+        mainWindow.webContents.send('output-append', '🔴 ST-Link disconnected\n');
+        mainWindow.webContents.send('stlink-devices', stlinkDevices);
+
+    } catch (error) {
+        mainWindow.webContents.send('output-append', `❌ Disconnect error: ${error.message}\n`);
     }
 });
 
