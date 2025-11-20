@@ -57,11 +57,31 @@ class STM32Tools {
     }
 
     async getDeviceInfo() {
-        const [deviceID, uniqueID, flashSize] = await Promise.all([
-            this.getDeviceID(),
-            this.getUniqueID(),
-            this.getFlashSize()
-        ]);
+        // Try to get all device info, but handle failures gracefully
+        let deviceID = { deviceID: 'Unknown', revisionID: 'Unknown', deviceName: 'Unknown MCU', revision: 'Unknown' };
+        let uniqueID = { uid: [0, 0, 0], uidString: 'Unknown', lotNumber: 'Unknown', wafNumber: 'Unknown', coordinates: 'Unknown' };
+        let flashSize = { size: 0, sizeKB: 0, sizeMB: '0.00 MB' };
+
+        // Try to read device ID (most important)
+        try {
+            deviceID = await this.getDeviceID();
+        } catch (err) {
+            console.error('Failed to read device ID:', err.message);
+        }
+
+        // Try to read unique ID
+        try {
+            uniqueID = await this.getUniqueID();
+        } catch (err) {
+            console.error('Failed to read unique ID:', err.message);
+        }
+
+        // Try to read flash size
+        try {
+            flashSize = await this.getFlashSize();
+        } catch (err) {
+            console.error('Failed to read flash size:', err.message);
+        }
 
         this.deviceInfo = {
             ...deviceID,

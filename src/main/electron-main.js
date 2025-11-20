@@ -1618,9 +1618,9 @@ ipcMain.on('connect-stlink', async (event, deviceId) => {
             mainWindow.webContents.send('output-append', '📖 Reading device information...\n');
             const stm32Tools = new STM32Tools(openocd);
 
-            // Add timeout to getDeviceInfo
+            // Add timeout to getDeviceInfo (increased to 15s for slow connections)
             const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('Device info read timeout')), 5000)
+                setTimeout(() => reject(new Error('Device info read timeout')), 15000)
             );
 
             deviceInfo = await Promise.race([
