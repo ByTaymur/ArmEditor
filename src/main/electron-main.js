@@ -320,7 +320,7 @@ function openProject() {
             // Parse project structure
             const projectInfo = parseProjectStructure(currentProjectPath);
 
-            mainWindow.webContents.send('open-project', projectInfo);
+            mainWindow.webContents.send('project-opened', projectInfo);
             mainWindow.webContents.send('output-append',
                 `✅ Project loaded: ${path.basename(currentProjectPath)}\n` +
                 `   Files: ${projectInfo.files.length}\n` +
@@ -1412,6 +1412,150 @@ ipcMain.on('disconnect-stlink', async (event, deviceId) => {
 
     } catch (error) {
         mainWindow.webContents.send('output-append', `❌ Disconnect error: ${error.message}\n`);
+    }
+});
+
+// Open project handler
+ipcMain.on('open-project', () => {
+    openProject();
+});
+
+// Save console log handler
+ipcMain.on('save-console-log', (event, content) => {
+    const options = {
+        title: 'Save Console Log',
+        defaultPath: path.join(app.getPath('documents'), 'armeditor-log.txt'),
+        filters: [
+            { name: 'Text Files', extensions: ['txt'] },
+            { name: 'All Files', extensions: ['*'] }
+        ]
+    };
+
+    dialog.showSaveDialog(mainWindow, options).then(result => {
+        if (!result.canceled && result.filePath) {
+            fs.writeFileSync(result.filePath, content, 'utf8');
+            mainWindow.webContents.send('output-append', `✅ Log saved to ${result.filePath}\n`);
+        }
+    });
+});
+
+// Read memory handler
+ipcMain.on('read-memory', async (event, data) => {
+    try {
+        if (!connectedStLink || !connectedStLink.openocd) {
+            mainWindow.webContents.send('output-append', '❌ No device connected\n');
+            return;
+        }
+
+        const address = data.address;
+        const size = data.size;
+
+        mainWindow.webContents.send('output-append', `📖 Reading ${size} bytes from ${address}...\n`);
+
+        // Use OpenOCD to read memory
+        const stm32Tools = new STM32Tools(connectedStLink.openocd);
+        const memoryData = await stm32Tools.readMemory(address, size);
+
+        // Send memory data to renderer
+        mainWindow.webContents.send('memory-data', { address, data: memoryData });
+        mainWindow.webContents.send('output-append', `✅ Memory read complete\n`);
+
+    } catch (error) {
+        mainWindow.webContents.send('output-append', `❌ Memory read error: ${error.message}\n`);
+    }
+});
+
+// Flash firmware handler
+ipcMain.on('flash-firmware', async (event, data) => {
+    try {
+        if (!connectedStLink || !connectedStLink.openocd) {
+            mainWindow.webContents.send('output-append', '❌ No device connected\n');
+            return;
+        }
+
+        const filePath = data.file;
+        const options = data.options;
+
+        mainWindow.webContents.send('output-append', `⚡ Flashing firmware: ${path.basename(filePath)}\n`);
+
+        // Use FlashManager to flash firmware
+        const flashManager = new FlashManager(connectedStLink.openocd);
+
+        // Flash with options
+        await flashManager.flash(filePath, {
+            verify: options.verify,
+            reset: options.run,
+            erase: !options.skipErase
+        });
+
+        mainWindow.webContents.send('flash-progress', 100);
+        mainWindow.webContents.send('output-append', `✅ Flash complete!\n`);
+
+        if (options.run) {
+            mainWindow.webContents.send('output-append', `🚀 Running application...\n`);
+        }
+
+    } catch (error) {
+        mainWindow.webContents.send('output-append', `❌ Flash error: ${error.message}\n`);
+        mainWindow.webContents.send('flash-progress', 0);
+    }
+});
+
+// Erase chip handler
+ipcMain.on('erase-chip', async (event) => {
+    try {
+        if (!connectedStLink || !connectedStLink.openocd) {
+            mainWindow.webContents.send('output-append', '❌ No device connected\n');
+            return;
+        }
+
+        mainWindow.webContents.send('output-append', `🗑️ Erasing chip...\n`);
+
+        const flashManager = new FlashManager(connectedStLink.openocd);
+        await flashManager.eraseChip();
+
+        mainWindow.webContents.send('output-append', `✅ Chip erased successfully\n`);
+
+    } catch (error) {
+        mainWindow.webContents.send('output-append', `❌ Erase error: ${error.message}\n`);
+    }
+});
+
+// Read device memory handler
+ipcMain.on('read-device-memory', async (event) => {
+    try {
+        if (!connectedStLink || !connectedStLink.openocd) {
+            mainWindow.webContents.send('output-append', '❌ No device connected\n');
+            return;
+        }
+
+        mainWindow.webContents.send('output-append', `📖 Reading device flash memory...\n`);
+
+        // Get flash size from device info
+        const flashSize = connectedStLink.mcu ? parseInt(connectedStLink.mcu.flashSize) * 1024 : 0x10000;
+
+        // Read flash memory
+        const stm32Tools = new STM32Tools(connectedStLink.openocd);
+        const memoryData = await stm32Tools.readMemory('0x08000000', flashSize);
+
+        // Save to file
+        const options = {
+            title: 'Save Memory Dump',
+            defaultPath: path.join(app.getPath('documents'), 'flash-dump.bin'),
+            filters: [
+                { name: 'Binary Files', extensions: ['bin'] },
+                { name: 'All Files', extensions: ['*'] }
+            ]
+        };
+
+        const result = await dialog.showSaveDialog(mainWindow, options);
+        if (!result.canceled && result.filePath) {
+            fs.writeFileSync(result.filePath, Buffer.from(memoryData));
+            mainWindow.webContents.send('output-append', `✅ Memory saved to ${result.filePath}\n`);
+        }
+
+    } catch (error) {
+        mainWindow.webContents.send('output-append', `❌ Read error: ${error.message}\n`);
     }
 });
 

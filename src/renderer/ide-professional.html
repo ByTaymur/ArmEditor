@@ -1191,7 +1191,7 @@
         // ST-Link functions
         function refreshDevices() {
             appendConsole('Scanning for ST-Link devices...', 'normal');
-            ipcRenderer.send('scan-stlink');
+            ipcRenderer.send('scan-stlinks');
         }
 
         function connectDevice(deviceId) {
