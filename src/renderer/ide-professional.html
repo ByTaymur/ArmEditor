@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ArmEditor - Professional ARM IDE</title>
+    <title>HopeIDE - Professional ARM IDE</title>
     <style>
         * {
             margin: 0;
@@ -747,6 +747,159 @@
             transition: width 0.3s;
             border-radius: 3px;
         }
+
+        /* DEBUG STYLES */
+        .btn-warning {
+            background: #b89500;
+            color: #ffffff;
+        }
+
+        .btn-warning:hover {
+            background: #d4a900;
+        }
+
+        .btn-info {
+            background: #0e7490;
+            color: #ffffff;
+        }
+
+        .btn-info:hover {
+            background: #1098b8;
+        }
+
+        .btn-sm {
+            padding: 4px 12px;
+            font-size: 12px;
+        }
+
+        .register-item {
+            background: #252526;
+            border: 1px solid #3e3e42;
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .register-item.highlight {
+            border-color: #007acc;
+            background: #1a2b3a;
+        }
+
+        .register-name {
+            font-size: 11px;
+            color: #858585;
+            font-weight: 600;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .register-value {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #4ec9b0;
+            font-weight: 500;
+        }
+
+        .debug-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .debug-table th {
+            background: #2d2d30;
+            color: #ffffff;
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #3e3e42;
+            font-weight: 600;
+        }
+
+        .debug-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #2d2d30;
+            color: #cccccc;
+        }
+
+        .debug-table tr:hover {
+            background: #2a2d2e;
+        }
+
+        .breakpoint-item {
+            padding: 10px;
+            background: #252526;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+
+        .breakpoint-item:hover {
+            background: #2a2d2e;
+        }
+
+        .callstack-item {
+            padding: 10px;
+            background: #252526;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .callstack-item:hover {
+            background: #2a2d2e;
+            cursor: pointer;
+        }
+
+        .callstack-function {
+            color: #4ec9b0;
+            font-weight: 600;
+        }
+
+        .callstack-location {
+            color: #858585;
+            font-size: 11px;
+            margin-top: 4px;
+        }
+
+        .disassembly-line {
+            padding: 4px 8px;
+            display: flex;
+            gap: 15px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .disassembly-line:hover {
+            background: #2a2d2e;
+        }
+
+        .disassembly-line.current {
+            background: #094771;
+            border-left: 3px solid #007acc;
+        }
+
+        .disassembly-addr {
+            color: #858585;
+            min-width: 80px;
+        }
+
+        .disassembly-bytes {
+            color: #b5cea8;
+            min-width: 100px;
+        }
+
+        .disassembly-inst {
+            color: #4ec9b0;
+        }
+
+        .variable-table-container {
+            overflow-x: auto;
+        }
     </style>
 </head>
 <body>
@@ -763,6 +916,7 @@
         <!-- SIDEBAR -->
         <div class="sidebar">
             <div class="sidebar-icon active" data-tooltip="Editor" onclick="showView('editor')">📝</div>
+            <div class="sidebar-icon" data-tooltip="Debug" onclick="showView('debug')">🐛</div>
             <div class="sidebar-icon" data-tooltip="ST-Link Manager" onclick="showView('stlink')">🔌</div>
             <div class="sidebar-icon" data-tooltip="Memory Browser" onclick="showView('memory')">💾</div>
             <div class="sidebar-icon" data-tooltip="Flash Download" onclick="showView('flash')">⚡</div>
@@ -1035,6 +1189,194 @@
                 </div>
             </div>
 
+            <!-- DEBUG VIEW -->
+            <div class="view" id="debug-view" style="padding: 20px; overflow-y: auto;">
+                <!-- DEBUG CONTROLS -->
+                <div class="card">
+                    <div class="card-title">
+                        <span class="card-title-icon">🐛</span>
+                        Debug Controls
+                    </div>
+                    <div class="debug-controls" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn btn-success" onclick="debugRun()" title="Run (F5)">
+                            ▶️ Run
+                        </button>
+                        <button class="btn btn-danger" onclick="debugStop()" title="Stop (Shift+F5)">
+                            ⏹️ Stop
+                        </button>
+                        <button class="btn btn-warning" onclick="debugPause()" title="Pause">
+                            ⏸️ Pause
+                        </button>
+                        <button class="btn btn-primary" onclick="debugContinue()" title="Continue">
+                            ▶️ Continue
+                        </button>
+                        <div style="width: 2px; background: #3e3e42; margin: 0 5px;"></div>
+                        <button class="btn btn-info" onclick="debugStepOver()" title="Step Over (F10)">
+                            ⏭️ Step Over
+                        </button>
+                        <button class="btn btn-info" onclick="debugStepInto()" title="Step Into (F11)">
+                            ⤵️ Step Into
+                        </button>
+                        <button class="btn btn-info" onclick="debugStepOut()" title="Step Out (Shift+F11)">
+                            ⤴️ Step Out
+                        </button>
+                        <div style="width: 2px; background: #3e3e42; margin: 0 5px;"></div>
+                        <button class="btn btn-secondary" onclick="debugReset()" title="Reset MCU">
+                            🔄 Reset
+                        </button>
+                    </div>
+                    <div style="margin-top: 15px; padding: 10px; background: #1e1e1e; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 12px;" id="debug-status">
+                        <span style="color: #858585;">Debug Status: Not Running</span>
+                    </div>
+                </div>
+
+                <!-- VARIABLE VIEWER -->
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-title">
+                        <span class="card-title-icon">📊</span>
+                        Variable Viewer
+                        <button class="btn btn-sm" onclick="addVariable()" style="margin-left: auto; font-size: 12px;">+ Add Variable</button>
+                    </div>
+                    <div class="variable-table-container">
+                        <table class="debug-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 30px;">📌</th>
+                                    <th>Variable Name</th>
+                                    <th>Type</th>
+                                    <th>Value</th>
+                                    <th>Address</th>
+                                    <th style="width: 80px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="variable-list">
+                                <tr>
+                                    <td colspan="6" style="text-align: center; color: #858585; padding: 20px;">
+                                        No variables added. Click "+ Add Variable" to monitor a variable.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- REGISTER VIEWER -->
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-title">
+                        <span class="card-title-icon">🎚️</span>
+                        Register Viewer
+                        <button class="btn btn-sm" onclick="refreshRegisters()" style="margin-left: auto; font-size: 12px;">🔄 Refresh</button>
+                    </div>
+                    <div class="register-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px;">
+                        <div class="register-item" id="reg-r0">
+                            <div class="register-name">R0</div>
+                            <div class="register-value">0x00000000</div>
+                        </div>
+                        <div class="register-item" id="reg-r1">
+                            <div class="register-name">R1</div>
+                            <div class="register-value">0x00000000</div>
+                        </div>
+                        <div class="register-item" id="reg-r2">
+                            <div class="register-name">R2</div>
+                            <div class="register-value">0x00000000</div>
+                        </div>
+                        <div class="register-item" id="reg-r3">
+                            <div class="register-name">R3</div>
+                            <div class="register-value">0x00000000</div>
+                        </div>
+                        <div class="register-item" id="reg-r4">
+                            <div class="register-name">R4</div>
+                            <div class="register-value">0x00000000</div>
+                        </div>
+                        <div class="register-item" id="reg-r5">
+                            <div class="register-name">R5</div>
+                            <div class="register-value">0x00000000</div>
+                        </div>
+                        <div class="register-item" id="reg-r6">
+                            <div class="register-name">R6</div>
+                            <div class="register-value">0x00000000</div>
+                        </div>
+                        <div class="register-item" id="reg-r7">
+                            <div class="register-name">R7</div>
+                            <div class="register-value">0x00000000</div>
+                        </div>
+                        <div class="register-item" id="reg-r8">
+                            <div class="register-name">R8</div>
+                            <div class="register-value">0x00000000</div>
+                        </div>
+                        <div class="register-item" id="reg-r9">
+                            <div class="register-name">R9</div>
+                            <div class="register-value">0x00000000</div>
+                        </div>
+                        <div class="register-item" id="reg-r10">
+                            <div class="register-name">R10</div>
+                            <div class="register-value">0x00000000</div>
+                        </div>
+                        <div class="register-item" id="reg-r11">
+                            <div class="register-name">R11</div>
+                            <div class="register-value">0x00000000</div>
+                        </div>
+                        <div class="register-item" id="reg-r12">
+                            <div class="register-name">R12</div>
+                            <div class="register-value">0x00000000</div>
+                        </div>
+                        <div class="register-item highlight" id="reg-sp">
+                            <div class="register-name">SP</div>
+                            <div class="register-value">0x20020000</div>
+                        </div>
+                        <div class="register-item highlight" id="reg-lr">
+                            <div class="register-name">LR</div>
+                            <div class="register-value">0x00000000</div>
+                        </div>
+                        <div class="register-item highlight" id="reg-pc">
+                            <div class="register-name">PC</div>
+                            <div class="register-value">0x08000000</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BREAKPOINTS -->
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-title">
+                        <span class="card-title-icon">🔴</span>
+                        Breakpoints
+                        <button class="btn btn-sm" onclick="addBreakpoint()" style="margin-left: auto; font-size: 12px;">+ Add Breakpoint</button>
+                    </div>
+                    <div class="breakpoint-list" id="breakpoint-list">
+                        <div style="text-align: center; color: #858585; padding: 20px;">
+                            No breakpoints set. Click "+ Add Breakpoint" to add one.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CALL STACK -->
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-title">
+                        <span class="card-title-icon">📚</span>
+                        Call Stack
+                    </div>
+                    <div class="callstack-list" id="callstack-list">
+                        <div style="text-align: center; color: #858585; padding: 20px;">
+                            Start debugging to view call stack
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DISASSEMBLY VIEW -->
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-title">
+                        <span class="card-title-icon">🔍</span>
+                        Disassembly View
+                        <button class="btn btn-sm" onclick="refreshDisassembly()" style="margin-left: auto; font-size: 12px;">🔄 Refresh</button>
+                    </div>
+                    <div class="disassembly-view" id="disassembly-view" style="font-family: 'Courier New', monospace; font-size: 12px; background: #1e1e1e; border-radius: 4px; padding: 10px; max-height: 400px; overflow-y: auto;">
+                        <div style="text-align: center; color: #858585; padding: 20px;">
+                            Start debugging to view disassembly
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- OUTPUT CONSOLE -->
             <div class="output-console">
                 <div class="console-header">
@@ -1045,7 +1387,7 @@
                     </div>
                 </div>
                 <div class="console-content" id="console-output">
-                    <div class="console-line">ArmEditor Professional v1.0.0</div>
+                    <div class="console-line">🌟 HopeIDE (Umut IDE) v1.0.0</div>
                     <div class="console-line">Ready.</div>
                 </div>
             </div>
@@ -1493,8 +1835,321 @@
         });
 
         // Initialize
-        appendConsole('ArmEditor Professional initialized', 'success');
+        appendConsole('🌟 HopeIDE initialized - Let\'s build something amazing!', 'success');
         appendConsole('Click "Open Project" to start or "ST-Link Manager" to connect devices', 'normal');
+
+        // ============================================
+        // DEBUG FUNCTIONS
+        // ============================================
+
+        let debugRunning = false;
+        let monitoredVariables = [];
+        let breakpoints = [];
+
+        // Debug Control Functions
+        function debugRun() {
+            if (!currentDevice) {
+                appendConsole('❌ No device connected. Please connect ST-Link first.', 'error');
+                return;
+            }
+            appendConsole('▶️ Starting debug session...', 'normal');
+            ipcRenderer.send('debug-start');
+            debugRunning = true;
+            updateDebugStatus('Running');
+        }
+
+        function debugStop() {
+            appendConsole('⏹️ Stopping debug session...', 'normal');
+            ipcRenderer.send('debug-stop');
+            debugRunning = false;
+            updateDebugStatus('Not Running');
+        }
+
+        function debugPause() {
+            if (!debugRunning) {
+                appendConsole('⚠️ Debug session not running', 'warning');
+                return;
+            }
+            appendConsole('⏸️ Pausing execution...', 'normal');
+            ipcRenderer.send('debug-pause');
+            updateDebugStatus('Paused');
+        }
+
+        function debugContinue() {
+            if (!debugRunning) {
+                appendConsole('⚠️ Debug session not running', 'warning');
+                return;
+            }
+            appendConsole('▶️ Continuing execution...', 'normal');
+            ipcRenderer.send('debug-continue');
+            updateDebugStatus('Running');
+        }
+
+        function debugStepOver() {
+            if (!debugRunning) {
+                appendConsole('⚠️ Debug session not running', 'warning');
+                return;
+            }
+            appendConsole('⏭️ Step Over...', 'normal');
+            ipcRenderer.send('debug-step-over');
+        }
+
+        function debugStepInto() {
+            if (!debugRunning) {
+                appendConsole('⚠️ Debug session not running', 'warning');
+                return;
+            }
+            appendConsole('⤵️ Step Into...', 'normal');
+            ipcRenderer.send('debug-step-into');
+        }
+
+        function debugStepOut() {
+            if (!debugRunning) {
+                appendConsole('⚠️ Debug session not running', 'warning');
+                return;
+            }
+            appendConsole('⤴️ Step Out...', 'normal');
+            ipcRenderer.send('debug-step-out');
+        }
+
+        function debugReset() {
+            appendConsole('🔄 Resetting MCU...', 'normal');
+            // TODO: Implement reset via OpenOCD
+        }
+
+        function updateDebugStatus(status) {
+            const statusEl = document.getElementById('debug-status');
+            let color = '#858585';
+            if (status === 'Running') color = '#4ec9b0';
+            else if (status === 'Paused') color = '#b89500';
+            statusEl.innerHTML = `<span style="color: ${color};">Debug Status: ${status}</span>`;
+        }
+
+        // Variable Viewer Functions
+        function addVariable() {
+            const varName = prompt('Enter variable name to monitor:');
+            if (!varName) return;
+
+            monitoredVariables.push({
+                name: varName,
+                type: 'uint32_t',
+                value: '0x00000000',
+                address: '0x20000000'
+            });
+
+            updateVariableList();
+            appendConsole(`📊 Added variable: ${varName}`, 'normal');
+        }
+
+        function removeVariable(index) {
+            const varName = monitoredVariables[index].name;
+            monitoredVariables.splice(index, 1);
+            updateVariableList();
+            appendConsole(`🗑️ Removed variable: ${varName}`, 'normal');
+        }
+
+        function updateVariableList() {
+            const tbody = document.getElementById('variable-list');
+
+            if (monitoredVariables.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: #858585; padding: 20px;">
+                            No variables added. Click "+ Add Variable" to monitor a variable.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = monitoredVariables.map((v, i) => `
+                <tr>
+                    <td>📌</td>
+                    <td>${v.name}</td>
+                    <td>${v.type}</td>
+                    <td style="font-family: 'Courier New', monospace; color: #4ec9b0;">${v.value}</td>
+                    <td style="font-family: 'Courier New', monospace; color: #858585;">${v.address}</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" onclick="removeVariable(${i})" style="padding: 2px 8px;">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Register Viewer Functions
+        function refreshRegisters() {
+            if (!debugRunning) {
+                appendConsole('⚠️ Debug session not running', 'warning');
+                return;
+            }
+            appendConsole('🔄 Refreshing registers...', 'normal');
+            ipcRenderer.send('registers-read');
+        }
+
+        function updateRegisters(registers) {
+            // Update register display
+            for (const [reg, value] of Object.entries(registers)) {
+                const regEl = document.getElementById(`reg-${reg.toLowerCase()}`);
+                if (regEl) {
+                    const valueEl = regEl.querySelector('.register-value');
+                    if (valueEl) {
+                        valueEl.textContent = '0x' + value.toString(16).toUpperCase().padStart(8, '0');
+                    }
+                }
+            }
+        }
+
+        // Breakpoint Functions
+        function addBreakpoint() {
+            const location = prompt('Enter breakpoint location (file:line or address):');
+            if (!location) return;
+
+            breakpoints.push({
+                location: location,
+                enabled: true,
+                hitCount: 0
+            });
+
+            updateBreakpointList();
+            appendConsole(`🔴 Breakpoint added: ${location}`, 'normal');
+
+            // Send to backend
+            if (location.includes(':')) {
+                const [file, line] = location.split(':');
+                ipcRenderer.send('breakpoint-toggle', { file, line: parseInt(line) });
+            }
+        }
+
+        function removeBreakpoint(index) {
+            const bp = breakpoints[index];
+            breakpoints.splice(index, 1);
+            updateBreakpointList();
+            appendConsole(`🗑️ Removed breakpoint: ${bp.location}`, 'normal');
+        }
+
+        function toggleBreakpoint(index) {
+            breakpoints[index].enabled = !breakpoints[index].enabled;
+            updateBreakpointList();
+        }
+
+        function updateBreakpointList() {
+            const container = document.getElementById('breakpoint-list');
+
+            if (breakpoints.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: #858585; padding: 20px;">
+                        No breakpoints set. Click "+ Add Breakpoint" to add one.
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = breakpoints.map((bp, i) => `
+                <div class="breakpoint-item">
+                    <div>
+                        <input type="checkbox" ${bp.enabled ? 'checked' : ''} onchange="toggleBreakpoint(${i})">
+                        <span style="margin-left: 8px; font-family: 'Courier New', monospace;">${bp.location}</span>
+                        ${bp.hitCount > 0 ? `<span style="margin-left: 10px; color: #858585; font-size: 11px;">(hit ${bp.hitCount}x)</span>` : ''}
+                    </div>
+                    <button class="btn btn-sm btn-danger" onclick="removeBreakpoint(${i})" style="padding: 2px 8px;">🗑️</button>
+                </div>
+            `).join('');
+        }
+
+        // Call Stack Functions
+        function updateCallStack(stack) {
+            const container = document.getElementById('callstack-list');
+
+            if (!stack || stack.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: #858585; padding: 20px;">
+                        No call stack available
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = stack.map((frame, i) => `
+                <div class="callstack-item" onclick="navigateToFrame(${i})">
+                    <div class="callstack-function">#${i} ${frame.function || 'unknown'}</div>
+                    <div class="callstack-location">${frame.file || 'unknown'}:${frame.line || '?'}</div>
+                    <div style="color: #b5cea8; font-size: 11px; margin-top: 2px;">0x${frame.address.toString(16).padStart(8, '0')}</div>
+                </div>
+            `).join('');
+        }
+
+        function navigateToFrame(index) {
+            appendConsole(`📍 Navigating to frame #${index}`, 'normal');
+            // TODO: Implement frame navigation
+        }
+
+        // Disassembly Functions
+        function refreshDisassembly() {
+            if (!debugRunning) {
+                appendConsole('⚠️ Debug session not running', 'warning');
+                return;
+            }
+            appendConsole('🔄 Refreshing disassembly...', 'normal');
+            // TODO: Implement disassembly fetch via GDB
+        }
+
+        function updateDisassembly(instructions) {
+            const container = document.getElementById('disassembly-view');
+
+            if (!instructions || instructions.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: #858585; padding: 20px;">
+                        No disassembly available
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = instructions.map(inst => `
+                <div class="disassembly-line ${inst.current ? 'current' : ''}">
+                    <span class="disassembly-addr">0x${inst.address.toString(16).padStart(8, '0')}</span>
+                    <span class="disassembly-bytes">${inst.bytes || ''}</span>
+                    <span class="disassembly-inst">${inst.instruction || ''}</span>
+                </div>
+            `).join('');
+        }
+
+        // Listen to debug events from main process
+        ipcRenderer.on('debug-started', () => {
+            debugRunning = true;
+            updateDebugStatus('Running');
+            appendConsole('✅ Debug session started', 'success');
+        });
+
+        ipcRenderer.on('debug-stopped', () => {
+            debugRunning = false;
+            updateDebugStatus('Not Running');
+            appendConsole('⏹️ Debug session stopped', 'normal');
+        });
+
+        ipcRenderer.on('registers-updated', (event, registers) => {
+            updateRegisters(registers);
+        });
+
+        // Keyboard shortcuts for debugging
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'F5' && !e.shiftKey) {
+                e.preventDefault();
+                debugRun();
+            } else if (e.key === 'F5' && e.shiftKey) {
+                e.preventDefault();
+                debugStop();
+            } else if (e.key === 'F10') {
+                e.preventDefault();
+                debugStepOver();
+            } else if (e.key === 'F11' && !e.shiftKey) {
+                e.preventDefault();
+                debugStepInto();
+            } else if (e.key === 'F11' && e.shiftKey) {
+                e.preventDefault();
+                debugStepOut();
+            }
+        });
     </script>
 </body>
 </html>

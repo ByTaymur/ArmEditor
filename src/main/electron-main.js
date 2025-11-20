@@ -1,5 +1,5 @@
 /**
- * ArmEditor - Electron Main Process
+ * HopeIDE - Electron Main Process
  * Native Desktop Application
  */
 
@@ -38,7 +38,7 @@ function createWindow() {
         height: 1000,
         minWidth: 1200,
         minHeight: 800,
-        title: 'ArmEditor - Professional ARM IDE',
+        title: 'HopeIDE - Professional ARM IDE',
         icon: path.join(__dirname, '../../resources/icon.png'),
         webPreferences: {
             nodeIntegration: true,
@@ -57,7 +57,7 @@ function createWindow() {
     // Show when ready
     mainWindow.once('ready-to-show', () => {
         mainWindow.show();
-        console.log('ArmEditor window ready');
+        console.log('HopeIDE window ready');
     });
 
     // Open DevTools in development
@@ -255,7 +255,7 @@ function createMenu() {
                 },
                 { type: 'separator' },
                 {
-                    label: 'About ArmEditor',
+                    label: 'About HopeIDE',
                     click: () => showAbout()
                 },
                 { type: 'separator' },
@@ -807,8 +807,8 @@ function findFiles(dir, ext, fileList = []) {
 function showAbout() {
     dialog.showMessageBox(mainWindow, {
         type: 'info',
-        title: 'About ArmEditor',
-        message: 'ArmEditor v1.0.0',
+        title: 'About HopeIDE',
+        message: 'HopeIDE (Umut IDE) v1.0.0',
         detail: 'Professional ARM Development IDE\n\n' +
                 'Features:\n' +
                 '• AI Code Assistant\n' +
@@ -1753,7 +1753,7 @@ ipcMain.on('open-project', () => {
 ipcMain.on('save-console-log', (event, content) => {
     const options = {
         title: 'Save Console Log',
-        defaultPath: path.join(app.getPath('documents'), 'armeditor-log.txt'),
+        defaultPath: path.join(app.getPath('documents'), 'hopeide-log.txt'),
         filters: [
             { name: 'Text Files', extensions: ['txt'] },
             { name: 'All Files', extensions: ['*'] }
@@ -1935,4 +1935,4 @@ app.on('before-quit', () => {
     } catch (e) { /* ignore */ }
 });
 
-console.log('ArmEditor Electron app started');
+console.log('HopeIDE Electron app started');
