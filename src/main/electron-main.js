@@ -507,7 +507,7 @@ function saveFileAs() {
 /**
  * Build operations
  */
-function buildProject() {
+async function buildProject(autoFlash = false) {
     if (!currentProjectPath) {
         dialog.showErrorBox('Error', 'No project opened');
         return;
@@ -519,19 +519,29 @@ function buildProject() {
     // Check if Makefile exists
     const makefilePath = path.join(currentProjectPath, 'Makefile');
     if (!fs.existsSync(makefilePath)) {
-        mainWindow.webContents.send('output-append',
-            `❌ Makefile not found!\n` +
-            `   \n` +
-            `   This project doesn't have a Makefile.\n` +
-            `   \n` +
-            `   If this is a CubeMX project:\n` +
-            `   1. Open the .ioc file in STM32CubeMX\n` +
-            `   2. Go to Project Manager → Project → Toolchain/IDE\n` +
-            `   3. Select "Makefile" from the dropdown\n` +
-            `   4. Click "GENERATE CODE" button\n` +
-            `   5. Try building again\n`
-        );
-        return;
+        // Try to generate Makefile automatically
+        mainWindow.webContents.send('output-append', `📝 No Makefile found, attempting to generate...\n`);
+
+        try {
+            const MakefileGenerator = require('../build/makefile-generator');
+            const generator = new MakefileGenerator(currentProjectPath);
+            const result = await generator.generate();
+
+            if (result.success) {
+                mainWindow.webContents.send('output-append',
+                    `✅ Makefile generated! (${result.sources || 0} sources, ${result.includes || 0} includes)\n`
+                );
+            } else {
+                mainWindow.webContents.send('output-append',
+                    `❌ Could not generate Makefile.\n` +
+                    `   Please create it manually or use STM32CubeMX.\n`
+                );
+                return;
+            }
+        } catch (err) {
+            mainWindow.webContents.send('output-append', `❌ Makefile generation failed: ${err.message}\n`);
+            return;
+        }
     }
 
     // First check available targets in Makefile
@@ -565,9 +575,52 @@ function buildProject() {
         mainWindow.webContents.send('output-append', data.toString());
     });
 
-    make.on('close', (code) => {
+    make.on('close', async (code) => {
         if (code === 0) {
             mainWindow.webContents.send('output-append', '\n✅ Build successful!\n');
+
+            // Auto-flash if requested and device is connected
+            if (autoFlash && connectedStLink && connectedStLink.openocd) {
+                mainWindow.webContents.send('output-append', '\n⚡ Auto-flashing firmware...\n');
+
+                try {
+                    // Find built firmware (check build directory)
+                    const buildDir = path.join(currentProjectPath, 'build');
+                    let firmwareFile = null;
+
+                    if (fs.existsSync(buildDir)) {
+                        const files = fs.readdirSync(buildDir);
+
+                        // Prefer .hex, then .bin, then .elf
+                        firmwareFile = files.find(f => f.endsWith('.hex')) ||
+                                     files.find(f => f.endsWith('.bin')) ||
+                                     files.find(f => f.endsWith('.elf'));
+
+                        if (firmwareFile) {
+                            firmwareFile = path.join(buildDir, firmwareFile);
+                        }
+                    }
+
+                    if (firmwareFile && fs.existsSync(firmwareFile)) {
+                        mainWindow.webContents.send('output-append', `📁 Found firmware: ${path.basename(firmwareFile)}\n`);
+
+                        const flashManager = new FlashManager(connectedStLink.openocd);
+                        await flashManager.flash(firmwareFile, {
+                            verify: true,
+                            reset: true,
+                            erase: true
+                        });
+
+                        mainWindow.webContents.send('output-append', '✅ Firmware flashed successfully!\n');
+                        mainWindow.webContents.send('flash-progress', 100);
+                    } else {
+                        mainWindow.webContents.send('output-append', '⚠️ Could not find firmware file (.hex/.bin/.elf)\n');
+                    }
+                } catch (flashErr) {
+                    mainWindow.webContents.send('output-append', `❌ Flash failed: ${flashErr.message}\n`);
+                    mainWindow.webContents.send('flash-progress', 0);
+                }
+            }
         } else {
             mainWindow.webContents.send('output-append', `\n❌ Build failed (exit code: ${code})\n`);
         }
@@ -1036,9 +1089,9 @@ ipcMain.on('registers-read', async () => {
 });
 
 // Build/Clean/Rebuild from toolbar
-ipcMain.on('build-project', () => {
-    console.log('[IPC] build-project received');
-    buildProject();
+ipcMain.on('build-project', (event, autoFlash = false) => {
+    console.log('[IPC] build-project received, autoFlash:', autoFlash);
+    buildProject(autoFlash);
 });
 
 ipcMain.on('clean-project', () => {

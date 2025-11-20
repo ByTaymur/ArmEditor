@@ -23,6 +23,55 @@ class FlashManager {
     }
 
     /**
+     * Simple flash method (for UI)
+     */
+    async flash(file, options = {}) {
+        const verify = options.verify !== false;
+        const reset = options.reset !== false;
+        const erase = options.erase !== false;
+
+        try {
+            // Halt target
+            await this.openocd.halt();
+
+            // Erase if requested
+            if (erase) {
+                await this.eraseFlash(options.fullErase || false);
+            }
+
+            // Program flash
+            await this.programFlash(file);
+
+            // Verify if requested
+            if (verify) {
+                await this.verifyFlash(file);
+            }
+
+            // Reset and run if requested
+            if (reset) {
+                await this.openocd.reset(false);
+            }
+
+            return { success: true };
+        } catch (error) {
+            throw new Error(`Flash failed: ${error.message}`);
+        }
+    }
+
+    /**
+     * Erase entire chip (for UI)
+     */
+    async eraseChip() {
+        try {
+            await this.openocd.halt();
+            await this.eraseFlash(true); // Full chip erase
+            return { success: true };
+        } catch (error) {
+            throw new Error(`Erase failed: ${error.message}`);
+        }
+    }
+
+    /**
      * Complete flash programming workflow (Keil-style)
      */
     async programAndRun(file, verify = true, reset = true) {

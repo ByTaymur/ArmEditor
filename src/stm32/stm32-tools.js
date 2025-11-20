@@ -73,6 +73,13 @@ class STM32Tools {
     }
 
     /**
+     * Simple memory read method (for UI)
+     */
+    async readMemory(address, size) {
+        return await this.programmerReadMemory(address, size);
+    }
+
+    /**
      * STM32 Programmer (Like ST-Link Utility)
      */
     async programmerConnect() {

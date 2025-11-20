@@ -754,7 +754,7 @@
     <div class="top-menu">
         <div class="menu-item" onclick="openProject()">📂 Open Project</div>
         <div class="menu-item" onclick="buildProject()">🔨 Build</div>
-        <div class="menu-item" onclick="flashFirmware()">⚡ Flash</div>
+        <div class="menu-item" onclick="buildAndFlash()">⚡ Build & Flash</div>
         <div class="menu-item" onclick="showView('stlink')">🔌 ST-Link</div>
     </div>
 
@@ -1190,7 +1190,19 @@
                 return;
             }
             appendConsole('Building project...', 'normal');
-            ipcRenderer.send('build-project');
+            ipcRenderer.send('build-project', false); // No auto-flash
+        }
+
+        function buildAndFlash() {
+            if (!currentProject) {
+                appendConsole('Error: No project opened', 'error');
+                return;
+            }
+            if (!currentDevice) {
+                appendConsole('Warning: No device connected. Will build only.', 'warning');
+            }
+            appendConsole('Building and flashing...', 'normal');
+            ipcRenderer.send('build-project', true); // With auto-flash
         }
 
         function flashFirmware() {
