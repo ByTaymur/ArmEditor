@@ -53,7 +53,10 @@ class OpenOCDInterface extends EventEmitter {
             this.process.stderr.on('data', (data) => {
                 const output = data.toString();
                 errorOutput += output;
-                this.emit('error', output);
+
+                // OpenOCD sends Info messages to stderr - don't emit as 'error'!
+                // Only emit 'output' for logging purposes
+                this.emit('output', output);
 
                 // OpenOCD sends Info messages to stderr too!
                 if (output.includes('Listening on port 3333') || output.includes('Listening on port 6666')) {
@@ -66,19 +69,52 @@ class OpenOCDInterface extends EventEmitter {
             this.process.on('close', (code) => {
                 this.emit('closed', code);
                 this.running = false;
+
+                // If process exits with error before we marked it as running
                 if (!this.running && code !== 0) {
-                    reject(new Error('OpenOCD exited with code ' + code + '\n' + errorOutput));
+                    let errMsg;
+
+                    if (errorOutput.includes('libusb') || errorOutput.includes('LIBUSB_ERROR')) {
+                        errMsg = 'USB permission denied. Run: sudo dpkg-reconfigure armeditor';
+                    } else if (errorOutput.includes('read version failed')) {
+                        errMsg = 'ST-Link communication failed. Device may be locked or in use.\n' +
+                                'Solutions:\n' +
+                                '  1) Unplug and replug ST-Link USB cable\n' +
+                                '  2) Close STM32CubeProgrammer if open\n' +
+                                '  3) Run: killall openocd\n' +
+                                '  4) Try different USB port';
+                    } else if (errorOutput.includes('not found') || errorOutput.includes('Can\'t find')) {
+                        errMsg = 'ST-Link not connected. Check USB connection.';
+                    } else if (errorOutput.includes('Error:')) {
+                        // Extract the actual error message
+                        const errorMatch = errorOutput.match(/Error:\s*(.+)/);
+                        errMsg = errorMatch ? errorMatch[1] : 'OpenOCD error: ' + errorOutput.substring(0, 200);
+                    } else {
+                        errMsg = 'OpenOCD exited with code ' + code;
+                    }
+
+                    reject(new Error(errMsg));
                 }
             });
 
             // Timeout after 10 seconds (some ST-Link need more time)
             setTimeout(() => {
                 if (!this.running) {
-                    const errMsg = errorOutput.includes('libusb')
-                        ? 'USB permission denied. Run: sudo chmod 666 /dev/bus/usb/*/*'
-                        : errorOutput.includes('not found') || errorOutput.includes('Can\'t find')
-                        ? 'ST-Link not connected. Check USB connection.'
-                        : 'OpenOCD startup timeout: ' + (errorOutput || allOutput);
+                    let errMsg;
+
+                    if (errorOutput.includes('libusb') || errorOutput.includes('LIBUSB_ERROR')) {
+                        errMsg = 'USB permission denied. Run: sudo dpkg-reconfigure armeditor';
+                    } else if (errorOutput.includes('read version failed')) {
+                        errMsg = 'ST-Link communication failed. Device may be locked or in use.\n' +
+                                'Try: 1) Unplug and replug ST-Link\n' +
+                                '     2) Close STM32CubeProgrammer if open\n' +
+                                '     3) Run: killall openocd';
+                    } else if (errorOutput.includes('not found') || errorOutput.includes('Can\'t find')) {
+                        errMsg = 'ST-Link not connected. Check USB connection.';
+                    } else {
+                        errMsg = 'OpenOCD startup timeout: ' + (errorOutput || allOutput);
+                    }
+
                     reject(new Error(errMsg));
                 }
             }, 10000);

@@ -33,4 +33,21 @@ else
     echo "✅ User added to dialout group (re-login required)"
 fi
 
+# Install usbutils if not present (needed for lsusb)
+if ! command -v lsusb &> /dev/null; then
+    echo "Installing usbutils (for ST-Link detection)..."
+    apt-get update -qq && apt-get install -y usbutils 2>/dev/null || echo "⚠️  Could not install usbutils automatically"
+fi
+
+# Make ST-Link fix script executable
+if [ -f /opt/ArmEditor/resources/stlink-fix.sh ]; then
+    chmod +x /opt/ArmEditor/resources/stlink-fix.sh
+    echo ""
+    echo "======================================"
+    echo "ST-Link Troubleshooting:"
+    echo "If ST-Link doesn't connect, run:"
+    echo "  sudo /opt/ArmEditor/resources/stlink-fix.sh"
+    echo "======================================"
+fi
+
 exit 0

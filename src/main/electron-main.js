@@ -1315,18 +1315,48 @@ ipcMain.on('scan-stlinks', async (event) => {
 ipcMain.on('connect-stlink', async (event, deviceId) => {
     try {
         const device = stlinkDevices.find(d => d.id === deviceId);
-        if (!device) return;
+        if (!device) {
+            mainWindow.webContents.send('output-append', `❌ Device not found\n`);
+            return;
+        }
 
         mainWindow.webContents.send('output-append', `🔌 Connecting to ${device.name}...\n`);
 
         // Start OpenOCD
         const openocd = new OpenOCDInterface();
-        await openocd.start('stm32f4x', 'stlink');
 
-        mainWindow.webContents.send('output-append', '✅ OpenOCD connected\n');
+        // Listen to OpenOCD output
+        openocd.on('output', (data) => {
+            console.log('[OpenOCD]', data);
+        });
+
+        try {
+            await openocd.start('stm32f4x', 'stlink');
+            mainWindow.webContents.send('output-append', '✅ OpenOCD started\n');
+        } catch (err) {
+            // Check for common errors
+            if (err.message.includes('USB permission')) {
+                mainWindow.webContents.send('output-append',
+                    `❌ USB Permission Error!\n` +
+                    `   Run: sudo dpkg-reconfigure armeditor\n` +
+                    `   Or: sudo udevadm control --reload-rules && sudo udevadm trigger\n`
+                );
+            } else if (err.message.includes('not connected') || err.message.includes('not found')) {
+                mainWindow.webContents.send('output-append',
+                    `❌ ST-Link not detected!\n` +
+                    `   1. Check USB cable connection\n` +
+                    `   2. Try a different USB port\n` +
+                    `   3. Run: lsusb | grep 0483\n`
+                );
+            } else {
+                mainWindow.webContents.send('output-append', `❌ OpenOCD error: ${err.message}\n`);
+            }
+            throw err;
+        }
 
         // Connect TCL
         await openocd.connectTCL();
+        mainWindow.webContents.send('output-append', '✅ TCL connected\n');
 
         // Get device info using STM32Tools
         const stm32Tools = new STM32Tools(openocd);
@@ -1357,6 +1387,7 @@ ipcMain.on('connect-stlink', async (event, deviceId) => {
         mainWindow.webContents.send('stlink-devices', stlinkDevices);
 
     } catch (error) {
+        console.error('[ST-Link Connect Error]', error);
         mainWindow.webContents.send('output-append', `❌ Connection failed: ${error.message}\n`);
     }
 });
