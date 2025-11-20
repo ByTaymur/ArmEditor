@@ -516,7 +516,43 @@ function buildProject() {
     mainWindow.webContents.send('output-clear');
     mainWindow.webContents.send('output-append', '🔨 Building project...\n');
 
-    const make = spawn('make', ['all'], {
+    // Check if Makefile exists
+    const makefilePath = path.join(currentProjectPath, 'Makefile');
+    if (!fs.existsSync(makefilePath)) {
+        mainWindow.webContents.send('output-append',
+            `❌ Makefile not found!\n` +
+            `   \n` +
+            `   This project doesn't have a Makefile.\n` +
+            `   \n` +
+            `   If this is a CubeMX project:\n` +
+            `   1. Open the .ioc file in STM32CubeMX\n` +
+            `   2. Go to Project Manager → Project → Toolchain/IDE\n` +
+            `   3. Select "Makefile" from the dropdown\n` +
+            `   4. Click "GENERATE CODE" button\n` +
+            `   5. Try building again\n`
+        );
+        return;
+    }
+
+    // First check available targets in Makefile
+    const makefileContent = fs.readFileSync(makefilePath, 'utf8');
+    let buildTarget = 'all';
+
+    // Check if 'all' target exists, if not try other common targets
+    if (!makefileContent.includes('all:')) {
+        if (makefileContent.includes('build:')) {
+            buildTarget = 'build';
+        } else if (makefileContent.match(/^[\w-]+\.elf:/m)) {
+            // Extract .elf target name
+            const match = makefileContent.match(/^([\w-]+)\.elf:/m);
+            if (match) {
+                buildTarget = match[1] + '.elf';
+                mainWindow.webContents.send('output-append', `📝 Using target: ${buildTarget}\n`);
+            }
+        }
+    }
+
+    const make = spawn('make', [buildTarget], {
         cwd: currentProjectPath,
         shell: true
     });
@@ -1340,6 +1376,22 @@ ipcMain.on('connect-stlink', async (event, deviceId) => {
                     `❌ USB Permission Error!\n` +
                     `   Run: sudo dpkg-reconfigure armeditor\n` +
                     `   Or: sudo udevadm control --reload-rules && sudo udevadm trigger\n`
+                );
+            } else if (err.message.includes('target voltage may be too low')) {
+                mainWindow.webContents.send('output-append',
+                    `❌ Target Voltage Too Low!\n` +
+                    `   \n` +
+                    `   The ST-Link cannot detect the target MCU voltage.\n` +
+                    `   \n` +
+                    `   Solutions:\n` +
+                    `   1. Power ON your target board (USB or external power)\n` +
+                    `   2. Check ST-Link VDD/VAPP pin is connected to target 3.3V\n` +
+                    `   3. Verify target MCU is powered (LED should be ON)\n` +
+                    `   4. Check all SWD connections (SWDIO, SWCLK, GND, VDD)\n` +
+                    `   5. Try another USB cable or port\n` +
+                    `   6. Reset your target board\n` +
+                    `   \n` +
+                    `   💡 ST-Link needs to see target voltage (3.0-3.6V) to work.\n`
                 );
             } else if (err.message.includes('not connected') || err.message.includes('not found')) {
                 mainWindow.webContents.send('output-append',
