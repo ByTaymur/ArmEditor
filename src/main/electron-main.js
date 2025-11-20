@@ -1416,6 +1416,28 @@ ipcMain.on('connect-stlink', async (event, deviceId) => {
             return;
         }
 
+        // Clean up any existing OpenOCD connection first
+        if (connectedStLink && connectedStLink.openocd) {
+            try {
+                mainWindow.webContents.send('output-append', `🧹 Cleaning up previous connection...\n`);
+                await connectedStLink.openocd.stop();
+                connectedStLink = null;
+                // Wait a bit for port to be released
+                await new Promise(resolve => setTimeout(resolve, 500));
+            } catch (cleanupErr) {
+                console.error('[Cleanup Error]', cleanupErr);
+            }
+        }
+
+        // Also kill any orphaned OpenOCD processes
+        try {
+            const { execSync } = require('child_process');
+            execSync('killall -9 openocd 2>/dev/null || true');
+            await new Promise(resolve => setTimeout(resolve, 300));
+        } catch (killErr) {
+            // Ignore errors
+        }
+
         mainWindow.webContents.send('output-append', `🔌 Connecting to ${device.name}...\n`);
 
         // Get user-selected MCU type or use auto-detect
@@ -1425,16 +1447,17 @@ ipcMain.on('connect-stlink', async (event, deviceId) => {
 
         let mcuType = await selectedMcuType;
         let detectedMcuType = null;
-
-        // Start OpenOCD
-        const openocd = new OpenOCDInterface();
-
-        // Listen to OpenOCD output
-        openocd.on('output', (data) => {
-            console.log('[OpenOCD]', data);
-        });
+        let openocd = null;
 
         try {
+            // Start OpenOCD
+            openocd = new OpenOCDInterface();
+
+            // Listen to OpenOCD output
+            openocd.on('output', (data) => {
+                console.log('[OpenOCD]', data);
+            });
+
             // If auto-detect, try to probe the device first
             if (mcuType === 'auto') {
                 mainWindow.webContents.send('output-append', `🔍 Auto-detecting MCU type...\n`);
@@ -1442,6 +1465,9 @@ ipcMain.on('connect-stlink', async (event, deviceId) => {
                 // Try with a generic config first to read device ID
                 try {
                     await openocd.start('stm32f4x', 'stlink'); // Use F4 as generic probe
+
+                    // Connect TCL
+                    await openocd.connectTCL();
 
                     // Try to read device ID
                     const stm32Tools = new STM32Tools(openocd);
@@ -1458,6 +1484,7 @@ ipcMain.on('connect-stlink', async (event, deviceId) => {
                             // Restart OpenOCD with correct MCU type if different
                             if (mcuType !== 'stm32f4x') {
                                 await openocd.stop();
+                                await new Promise(resolve => setTimeout(resolve, 500));
                                 await openocd.start(mcuType, 'stlink');
                                 mainWindow.webContents.send('output-append',
                                     `🔄 Reconnecting with ${getMCUName(mcuType)} configuration...\n`
@@ -1471,11 +1498,16 @@ ipcMain.on('connect-stlink', async (event, deviceId) => {
                         }
                     }
                 } catch (probeErr) {
-                    // If probe fails, fall back to F4
+                    // If probe fails, clean up and fall back to F4
                     mainWindow.webContents.send('output-append',
                         `⚠️ Auto-detect failed, trying STM32F4 configuration...\n`
                     );
+                    try {
+                        await openocd.stop();
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    } catch (e) { /* ignore */ }
                     mcuType = 'stm32f4x';
+                    await openocd.start(mcuType, 'stlink');
                 }
             } else {
                 // User selected specific MCU type
@@ -1585,15 +1617,32 @@ ipcMain.on('connect-stlink', async (event, deviceId) => {
     } catch (error) {
         console.error('[ST-Link Connect Error]', error);
         mainWindow.webContents.send('output-append', `❌ Connection failed: ${error.message}\n`);
+
+        // Clean up OpenOCD on error
+        try {
+            if (openocd && openocd.running) {
+                await openocd.stop();
+            }
+        } catch (cleanupErr) {
+            console.error('[Cleanup on error]', cleanupErr);
+        }
     }
 });
 
 // Disconnect ST-Link
 ipcMain.on('disconnect-stlink', async (event, deviceId) => {
     try {
+        mainWindow.webContents.send('output-append', '🔴 Disconnecting ST-Link...\n');
+
         if (connectedStLink && connectedStLink.openocd) {
             await connectedStLink.openocd.stop();
         }
+
+        // Also kill any orphaned OpenOCD processes
+        try {
+            const { execSync } = require('child_process');
+            execSync('killall -9 openocd 2>/dev/null || true');
+        } catch (e) { /* ignore */ }
 
         const device = stlinkDevices.find(d => d.id === deviceId);
         if (device) {
@@ -1603,7 +1652,8 @@ ipcMain.on('disconnect-stlink', async (event, deviceId) => {
 
         connectedStLink = null;
 
-        mainWindow.webContents.send('output-append', '🔴 ST-Link disconnected\n');
+        mainWindow.webContents.send('output-append', '✅ ST-Link disconnected\n');
+        mainWindow.webContents.send('device-disconnected');
         mainWindow.webContents.send('stlink-devices', stlinkDevices);
 
     } catch (error) {
@@ -1769,9 +1819,37 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
+    // Clean up OpenOCD on exit
+    if (connectedStLink && connectedStLink.openocd) {
+        try {
+            connectedStLink.openocd.stop();
+        } catch (e) { /* ignore */ }
+    }
+
+    // Kill any orphaned OpenOCD processes
+    try {
+        const { execSync } = require('child_process');
+        execSync('killall -9 openocd 2>/dev/null || true');
+    } catch (e) { /* ignore */ }
+
     if (process.platform !== 'darwin') {
         app.quit();
     }
+});
+
+app.on('before-quit', () => {
+    // Clean up OpenOCD on quit
+    if (connectedStLink && connectedStLink.openocd) {
+        try {
+            connectedStLink.openocd.stop();
+        } catch (e) { /* ignore */ }
+    }
+
+    // Kill any orphaned OpenOCD processes
+    try {
+        const { execSync } = require('child_process');
+        execSync('killall -9 openocd 2>/dev/null || true');
+    } catch (e) { /* ignore */ }
 });
 
 console.log('ArmEditor Electron app started');
