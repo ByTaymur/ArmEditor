@@ -851,15 +851,24 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Target MCU</label>
+                                <label class="form-label">Target MCU (Auto-Detected)</label>
                                 <select class="form-control" id="target-mcu">
-                                    <option value="stm32f4x">STM32F4xx</option>
-                                    <option value="stm32f1x">STM32F1xx</option>
+                                    <option value="auto" selected>🔍 Auto-Detect MCU</option>
                                     <option value="stm32f0x">STM32F0xx</option>
-                                    <option value="stm32l4x">STM32L4xx</option>
+                                    <option value="stm32f1x">STM32F1xx</option>
+                                    <option value="stm32f2x">STM32F2xx</option>
+                                    <option value="stm32f3x">STM32F3xx</option>
+                                    <option value="stm32f4x">STM32F4xx</option>
+                                    <option value="stm32f7x">STM32F7xx</option>
                                     <option value="stm32g0x">STM32G0xx</option>
                                     <option value="stm32g4x">STM32G4xx</option>
                                     <option value="stm32h7x">STM32H7xx</option>
+                                    <option value="stm32l0x">STM32L0xx</option>
+                                    <option value="stm32l1x">STM32L1xx</option>
+                                    <option value="stm32l4x">STM32L4xx</option>
+                                    <option value="stm32l5x">STM32L5xx</option>
+                                    <option value="stm32wbx">STM32WBxx</option>
+                                    <option value="stm32wlx">STM32WLxx</option>
                                 </select>
                             </div>
                         </div>
@@ -1069,6 +1078,10 @@
 
             <div class="info-section" id="mcu-info-section" style="display: none;">
                 <div class="info-section-title">MCU Information</div>
+                <div class="info-row">
+                    <span class="info-label">MCU Type:</span>
+                    <span class="info-value" id="mcu-type" style="color: #4ec9b0; font-weight: 600;">-</span>
+                </div>
                 <div class="info-row">
                     <span class="info-label">Device:</span>
                     <span class="info-value" id="mcu-device">-</span>
@@ -1379,6 +1392,7 @@
             }
 
             if (deviceInfo.mcu) {
+                document.getElementById('mcu-type').textContent = deviceInfo.mcu.type || 'STM32';
                 document.getElementById('mcu-device').textContent = deviceInfo.mcu.device;
                 document.getElementById('mcu-id').textContent = deviceInfo.mcu.id;
                 document.getElementById('mcu-flash').textContent = deviceInfo.mcu.flash;

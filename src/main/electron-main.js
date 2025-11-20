@@ -1347,6 +1347,66 @@ ipcMain.on('scan-stlinks', async (event) => {
     }
 });
 
+// Auto-detect MCU from DEVICE_ID
+function detectMCUType(deviceId) {
+    const mcuMap = {
+        // STM32F0
+        '0x440': 'stm32f0x', '0x444': 'stm32f0x', '0x445': 'stm32f0x', '0x448': 'stm32f0x',
+        // STM32F1
+        '0x412': 'stm32f1x', '0x410': 'stm32f1x', '0x414': 'stm32f1x', '0x418': 'stm32f1x', '0x430': 'stm32f1x',
+        // STM32F2
+        '0x411': 'stm32f2x',
+        // STM32F3
+        '0x422': 'stm32f3x', '0x432': 'stm32f3x', '0x438': 'stm32f3x', '0x439': 'stm32f3x', '0x446': 'stm32f3x',
+        // STM32F4
+        '0x413': 'stm32f4x', '0x419': 'stm32f4x', '0x423': 'stm32f4x', '0x433': 'stm32f4x', '0x458': 'stm32f4x', '0x421': 'stm32f4x', '0x431': 'stm32f4x', '0x441': 'stm32f4x', '0x463': 'stm32f4x',
+        // STM32F7
+        '0x449': 'stm32f7x', '0x451': 'stm32f7x', '0x452': 'stm32f7x',
+        // STM32G0
+        '0x460': 'stm32g0x', '0x466': 'stm32g0x', '0x467': 'stm32g0x',
+        // STM32G4
+        '0x468': 'stm32g4x', '0x469': 'stm32g4x',
+        // STM32H7
+        '0x450': 'stm32h7x', '0x483': 'stm32h7x', '0x480': 'stm32h7x',
+        // STM32L0
+        '0x425': 'stm32l0x', '0x417': 'stm32l0x', '0x447': 'stm32l0x',
+        // STM32L1
+        '0x416': 'stm32l1x', '0x429': 'stm32l1x', '0x427': 'stm32l1x',
+        // STM32L4
+        '0x435': 'stm32l4x', '0x462': 'stm32l4x', '0x415': 'stm32l4x', '0x461': 'stm32l4x', '0x470': 'stm32l4x', '0x471': 'stm32l4x',
+        // STM32L5
+        '0x472': 'stm32l5x',
+        // STM32WB
+        '0x494': 'stm32wbx', '0x495': 'stm32wbx',
+        // STM32WL
+        '0x497': 'stm32wlx'
+    };
+
+    return mcuMap[deviceId] || null;
+}
+
+// Get MCU name from type
+function getMCUName(mcuType) {
+    const names = {
+        'stm32f0x': 'STM32F0',
+        'stm32f1x': 'STM32F1',
+        'stm32f2x': 'STM32F2',
+        'stm32f3x': 'STM32F3',
+        'stm32f4x': 'STM32F4',
+        'stm32f7x': 'STM32F7',
+        'stm32g0x': 'STM32G0',
+        'stm32g4x': 'STM32G4',
+        'stm32h7x': 'STM32H7',
+        'stm32l0x': 'STM32L0',
+        'stm32l1x': 'STM32L1',
+        'stm32l4x': 'STM32L4',
+        'stm32l5x': 'STM32L5',
+        'stm32wbx': 'STM32WB',
+        'stm32wlx': 'STM32WL'
+    };
+    return names[mcuType] || mcuType;
+}
+
 // Connect to ST-Link and read MCU info
 ipcMain.on('connect-stlink', async (event, deviceId) => {
     try {
@@ -1358,6 +1418,14 @@ ipcMain.on('connect-stlink', async (event, deviceId) => {
 
         mainWindow.webContents.send('output-append', `🔌 Connecting to ${device.name}...\n`);
 
+        // Get user-selected MCU type or use auto-detect
+        const selectedMcuType = mainWindow.webContents.executeJavaScript(
+            'document.getElementById("target-mcu").value'
+        );
+
+        let mcuType = await selectedMcuType;
+        let detectedMcuType = null;
+
         // Start OpenOCD
         const openocd = new OpenOCDInterface();
 
@@ -1367,7 +1435,56 @@ ipcMain.on('connect-stlink', async (event, deviceId) => {
         });
 
         try {
-            await openocd.start('stm32f4x', 'stlink');
+            // If auto-detect, try to probe the device first
+            if (mcuType === 'auto') {
+                mainWindow.webContents.send('output-append', `🔍 Auto-detecting MCU type...\n`);
+
+                // Try with a generic config first to read device ID
+                try {
+                    await openocd.start('stm32f4x', 'stlink'); // Use F4 as generic probe
+
+                    // Try to read device ID
+                    const stm32Tools = new STM32Tools(openocd);
+                    const deviceInfo = await stm32Tools.getDeviceInfo();
+
+                    if (deviceInfo && deviceInfo.deviceID) {
+                        detectedMcuType = detectMCUType(deviceInfo.deviceID);
+                        if (detectedMcuType) {
+                            mcuType = detectedMcuType;
+                            mainWindow.webContents.send('output-append',
+                                `✅ Detected: ${getMCUName(mcuType)} (ID: ${deviceInfo.deviceID})\n`
+                            );
+
+                            // Restart OpenOCD with correct MCU type if different
+                            if (mcuType !== 'stm32f4x') {
+                                await openocd.stop();
+                                await openocd.start(mcuType, 'stlink');
+                                mainWindow.webContents.send('output-append',
+                                    `🔄 Reconnecting with ${getMCUName(mcuType)} configuration...\n`
+                                );
+                            }
+                        } else {
+                            mainWindow.webContents.send('output-append',
+                                `⚠️ Unknown MCU ID: ${deviceInfo.deviceID}, using STM32F4 config\n`
+                            );
+                            mcuType = 'stm32f4x';
+                        }
+                    }
+                } catch (probeErr) {
+                    // If probe fails, fall back to F4
+                    mainWindow.webContents.send('output-append',
+                        `⚠️ Auto-detect failed, trying STM32F4 configuration...\n`
+                    );
+                    mcuType = 'stm32f4x';
+                }
+            } else {
+                // User selected specific MCU type
+                await openocd.start(mcuType, 'stlink');
+                mainWindow.webContents.send('output-append',
+                    `📝 Using ${getMCUName(mcuType)} configuration\n`
+                );
+            }
+
             mainWindow.webContents.send('output-append', '✅ OpenOCD started\n');
         } catch (err) {
             // Check for common errors
@@ -1417,7 +1534,8 @@ ipcMain.on('connect-stlink', async (event, deviceId) => {
         mainWindow.webContents.send('output-append',
             `📱 MCU: ${deviceInfo.deviceName}\n` +
             `   ID: ${deviceInfo.deviceID}\n` +
-            `   Flash: ${deviceInfo.flash.sizeKB} KB\n`
+            `   Flash: ${deviceInfo.flash.sizeKB} KB\n` +
+            `   Type: ${getMCUName(mcuType)}\n`
         );
 
         // Update device with MCU info
@@ -1426,7 +1544,9 @@ ipcMain.on('connect-stlink', async (event, deviceId) => {
             name: deviceInfo.deviceName,
             deviceId: deviceInfo.deviceID,
             flashSize: deviceInfo.flash.sizeKB + ' KB',
-            revisionId: deviceInfo.revisionID
+            revisionId: deviceInfo.revisionID,
+            type: mcuType,
+            typeName: getMCUName(mcuType)
         };
 
         connectedStLink = {
@@ -1435,7 +1555,31 @@ ipcMain.on('connect-stlink', async (event, deviceId) => {
             mcu: device.mcu
         };
 
-        // Send updated devices
+        // Update dropdown to show detected MCU
+        if (mcuType !== 'auto') {
+            mainWindow.webContents.executeJavaScript(
+                `document.getElementById('target-mcu').value = '${mcuType}';`
+            );
+        }
+
+        // Send device-connected event with full info
+        mainWindow.webContents.send('device-connected', {
+            name: device.name,
+            mcu: {
+                device: deviceInfo.deviceName,
+                id: deviceInfo.deviceID,
+                flash: deviceInfo.flash.sizeKB + ' KB',
+                ram: deviceInfo.ram ? (deviceInfo.ram.sizeKB + ' KB') : 'N/A',
+                core: 'ARM Cortex-M',
+                type: getMCUName(mcuType)
+            },
+            stlink: {
+                version: device.version,
+                firmware: 'V' + device.version
+            }
+        });
+
+        // Send updated devices list
         mainWindow.webContents.send('stlink-devices', stlinkDevices);
 
     } catch (error) {
