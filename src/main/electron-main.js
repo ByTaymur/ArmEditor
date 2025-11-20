@@ -1559,24 +1559,52 @@ ipcMain.on('connect-stlink', async (event, deviceId) => {
         await openocd.connectTCL();
         mainWindow.webContents.send('output-append', '✅ TCL connected\n');
 
-        // Get device info using STM32Tools
-        const stm32Tools = new STM32Tools(openocd);
-        const deviceInfo = await stm32Tools.getDeviceInfo();
+        // Get device info using STM32Tools with timeout
+        let deviceInfo = null;
+        try {
+            mainWindow.webContents.send('output-append', '📖 Reading device information...\n');
+            const stm32Tools = new STM32Tools(openocd);
 
-        mainWindow.webContents.send('output-append',
-            `📱 MCU: ${deviceInfo.deviceName}\n` +
-            `   ID: ${deviceInfo.deviceID}\n` +
-            `   Flash: ${deviceInfo.flash.sizeKB} KB\n` +
-            `   Type: ${getMCUName(mcuType)}\n`
-        );
+            // Add timeout to getDeviceInfo
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Device info read timeout')), 5000)
+            );
+
+            deviceInfo = await Promise.race([
+                stm32Tools.getDeviceInfo(),
+                timeoutPromise
+            ]);
+
+            mainWindow.webContents.send('output-append',
+                `📱 MCU: ${deviceInfo.deviceName}\n` +
+                `   ID: ${deviceInfo.deviceID}\n` +
+                `   Flash: ${deviceInfo.flash.sizeKB} KB\n` +
+                `   Type: ${getMCUName(mcuType)}\n`
+            );
+        } catch (infoErr) {
+            // Device info failed, but connection is OK
+            mainWindow.webContents.send('output-append',
+                `⚠️ Could not read device info: ${infoErr.message}\n` +
+                `   Connection is OK, but some details are unavailable.\n`
+            );
+
+            // Create minimal device info
+            deviceInfo = {
+                deviceName: getMCUName(mcuType),
+                deviceID: 'Unknown',
+                flash: { sizeKB: 0 },
+                ram: { sizeKB: 0 },
+                revisionID: 'Unknown'
+            };
+        }
 
         // Update device with MCU info
         device.connected = true;
         device.mcu = {
             name: deviceInfo.deviceName,
             deviceId: deviceInfo.deviceID,
-            flashSize: deviceInfo.flash.sizeKB + ' KB',
-            revisionId: deviceInfo.revisionID,
+            flashSize: deviceInfo.flash.sizeKB ? (deviceInfo.flash.sizeKB + ' KB') : 'Unknown',
+            revisionId: deviceInfo.revisionID || 'Unknown',
             type: mcuType,
             typeName: getMCUName(mcuType)
         };
@@ -1600,8 +1628,8 @@ ipcMain.on('connect-stlink', async (event, deviceId) => {
             mcu: {
                 device: deviceInfo.deviceName,
                 id: deviceInfo.deviceID,
-                flash: deviceInfo.flash.sizeKB + ' KB',
-                ram: deviceInfo.ram ? (deviceInfo.ram.sizeKB + ' KB') : 'N/A',
+                flash: deviceInfo.flash.sizeKB ? (deviceInfo.flash.sizeKB + ' KB') : 'Unknown',
+                ram: deviceInfo.ram ? (deviceInfo.ram.sizeKB + ' KB') : 'Unknown',
                 core: 'ARM Cortex-M',
                 type: getMCUName(mcuType)
             },
@@ -1610,6 +1638,8 @@ ipcMain.on('connect-stlink', async (event, deviceId) => {
                 firmware: 'V' + device.version
             }
         });
+
+        mainWindow.webContents.send('output-append', '✅ Device connected!\n');
 
         // Send updated devices list
         mainWindow.webContents.send('stlink-devices', stlinkDevices);
