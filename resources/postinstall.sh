@@ -1,24 +1,24 @@
 #!/bin/bash
-# Post-install script for ArmEditor
+# Post-install script for HopeIDE
 
 # Fix chrome-sandbox permissions (required for Electron)
-if [ -f /opt/ArmEditor/chrome-sandbox ]; then
+if [ -f /opt/HopeIDE/chrome-sandbox ]; then
     echo "Fixing chrome-sandbox permissions..."
-    chown root:root /opt/ArmEditor/chrome-sandbox
-    chmod 4755 /opt/ArmEditor/chrome-sandbox
+    chown root:root /opt/HopeIDE/chrome-sandbox
+    chmod 4755 /opt/HopeIDE/chrome-sandbox
     echo "✅ Chrome sandbox configured!"
 fi
 
-# Create symlink to make 'armeditor' command available
-echo "Creating armeditor command..."
-ln -sf /opt/ArmEditor/armeditor /usr/bin/armeditor
-chmod +x /opt/ArmEditor/armeditor
-echo "✅ Command 'armeditor' is now available!"
+# Create symlink to make 'hopeide' command available
+echo "Creating hopeide command..."
+ln -sf /opt/HopeIDE/hopeide /usr/bin/hopeide
+chmod +x /opt/HopeIDE/hopeide
+echo "✅ Command 'hopeide' is now available!"
 
 # Install udev rules for ST-Link and J-Link
-if [ -f /opt/ArmEditor/resources/99-stlink.rules ]; then
+if [ -f /opt/HopeIDE/resources/99-stlink.rules ]; then
     echo "Installing udev rules for ST-Link..."
-    cp /opt/ArmEditor/resources/99-stlink.rules /etc/udev/rules.d/
+    cp /opt/HopeIDE/resources/99-stlink.rules /etc/udev/rules.d/
     udevadm control --reload-rules
     udevadm trigger
     echo "✅ Udev rules installed!"
@@ -40,13 +40,13 @@ if ! command -v lsusb &> /dev/null; then
 fi
 
 # Make ST-Link fix script executable
-if [ -f /opt/ArmEditor/resources/stlink-fix.sh ]; then
-    chmod +x /opt/ArmEditor/resources/stlink-fix.sh
+if [ -f /opt/HopeIDE/resources/stlink-fix.sh ]; then
+    chmod +x /opt/HopeIDE/resources/stlink-fix.sh
     echo ""
     echo "======================================"
     echo "ST-Link Troubleshooting:"
     echo "If ST-Link doesn't connect, run:"
-    echo "  sudo /opt/ArmEditor/resources/stlink-fix.sh"
+    echo "  sudo /opt/HopeIDE/resources/stlink-fix.sh"
     echo "======================================"
 fi
 
