@@ -51,8 +51,8 @@ function createWindow() {
         titleBarStyle: 'default'
     });
 
-    // Load the NEW simplified HTML file
-    mainWindow.loadFile(path.join(__dirname, '../renderer/ide-new.html'));
+    // Load the NEW professional UI
+    mainWindow.loadFile(path.join(__dirname, '../renderer/ide-professional.html'));
 
     // Show when ready
     mainWindow.once('ready-to-show', () => {
