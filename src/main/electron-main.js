@@ -54,6 +54,13 @@ function createWindow() {
     // Load the HTML file
     mainWindow.loadFile(path.join(__dirname, '../renderer/ide.html'));
 
+    // Send Monaco path to renderer when ready
+    mainWindow.webContents.on('did-finish-load', () => {
+        const monacoPath = path.join(app.getAppPath(), 'node_modules/monaco-editor/min/vs');
+        console.log('Sending Monaco path to renderer:', monacoPath);
+        mainWindow.webContents.send('monaco-path', monacoPath);
+    });
+
     // Show when ready
     mainWindow.once('ready-to-show', () => {
         mainWindow.show();

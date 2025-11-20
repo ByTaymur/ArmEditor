@@ -444,35 +444,39 @@
         let openedFiles = []; // Array of {path, name, content, modified}
         let activeFileIndex = -1;
 
-        // Load Monaco Editor from local node_modules
-        const path = require('path');
-        const monacoPath = path.join(__dirname, '../../node_modules/monaco-editor/min/vs');
+        // Wait for Monaco path from main process
+        ipcRenderer.once('monaco-path', (event, monacoPath) => {
+            console.log('✅ Received Monaco path from main:', monacoPath);
 
-        console.log('Loading Monaco from:', monacoPath);
+            const path = require('path');
+            const loaderScript = document.createElement('script');
+            loaderScript.src = path.join(monacoPath, 'loader.js');
 
-        const loaderScript = document.createElement('script');
-        loaderScript.src = path.join(monacoPath, 'loader.js');
-        loaderScript.onload = () => {
-            console.log('Monaco loader loaded from local');
-            require.config({
-                paths: {
-                    vs: monacoPath
-                }
-            });
+            loaderScript.onload = () => {
+                console.log('✅ Monaco loader loaded!');
 
-            require(['vs/editor/editor.main'], () => {
-                console.log('✅ Monaco Editor loaded successfully!');
-                initMonaco();
-            }, (err) => {
-                console.error('❌ Monaco loading failed:', err);
-                alert('Monaco Editor failed to load: ' + err);
-            });
-        };
-        loaderScript.onerror = (err) => {
-            console.error('❌ Failed to load Monaco loader:', err);
-            alert('Failed to load Monaco Editor. Check console for details.');
-        };
-        document.head.appendChild(loaderScript);
+                require.config({
+                    paths: {
+                        vs: monacoPath
+                    }
+                });
+
+                require(['vs/editor/editor.main'], () => {
+                    console.log('✅ Monaco Editor loaded successfully!');
+                    initMonaco();
+                }, (err) => {
+                    console.error('❌ Monaco loading failed:', err);
+                    console.error('Path was:', monacoPath);
+                });
+            };
+
+            loaderScript.onerror = (err) => {
+                console.error('❌ Failed to load Monaco loader from:', loaderScript.src);
+                console.error('Monaco path was:', monacoPath);
+            };
+
+            document.head.appendChild(loaderScript);
+        });
 
         // IPC Listeners
         ipcRenderer.on('new-file', () => {

@@ -1,6 +1,14 @@
 #!/bin/bash
 # Post-install script for ArmEditor
 
+# Fix chrome-sandbox permissions (required for Electron)
+if [ -f /opt/ArmEditor/chrome-sandbox ]; then
+    echo "Fixing chrome-sandbox permissions..."
+    chown root:root /opt/ArmEditor/chrome-sandbox
+    chmod 4755 /opt/ArmEditor/chrome-sandbox
+    echo "✅ Chrome sandbox configured!"
+fi
+
 # Create symlink to make 'armeditor' command available
 echo "Creating armeditor command..."
 ln -sf /opt/ArmEditor/armeditor /usr/bin/armeditor
