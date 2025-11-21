@@ -21,7 +21,7 @@ function createWindow() {
         height: 1000,
         minWidth: 1200,
         minHeight: 800,
-        title: 'ArmEditor - Professional ARM IDE',
+        title: 'HopeIDE - Professional ARM Development IDE',
         icon: path.join(__dirname, '../../resources/icon.png'),
         webPreferences: {
             nodeIntegration: true,
@@ -537,15 +537,16 @@ function findFiles(dir, ext, fileList = []) {
 function showAbout() {
     dialog.showMessageBox(mainWindow, {
         type: 'info',
-        title: 'About ArmEditor',
-        message: 'ArmEditor v1.0.0',
+        title: 'About HopeIDE',
+        message: 'HopeIDE v2.0.0',
         detail: 'Professional ARM Development IDE\n\n' +
                 'Features:\n' +
-                '• AI Code Assistant\n' +
+                '• Real-time Debugging\n' +
+                '• Disassembly & Hex View\n' +
                 '• Memory Analyzer\n' +
-                '• Performance Profiler\n' +
+                '• Register Viewer\n' +
                 '• STM32CubeMX Import\n' +
-                '• Real-time Debugging\n\n' +
+                '• Target Auto-Detection\n\n' +
                 'Better than Keil/IAR, completely free!\n\n' +
                 'Built with Electron + Monaco Editor\n' +
                 'License: MIT'
