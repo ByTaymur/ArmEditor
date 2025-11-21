@@ -223,6 +223,219 @@
             font-size: 11px;
         }
 
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: #2d2d30;
+            border: 1px solid #3e3e42;
+            border-radius: 8px;
+            width: 600px;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+
+        .modal-header {
+            background: #1e1e1e;
+            padding: 16px;
+            border-bottom: 1px solid #3e3e42;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #d4d4d4;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            max-height: 60vh;
+        }
+
+        .modal-section {
+            margin-bottom: 20px;
+        }
+
+        .modal-section h3 {
+            font-size: 13px;
+            color: #569cd6;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #252526;
+        }
+
+        .info-label {
+            color: #9cdcfe;
+            font-size: 12px;
+        }
+
+        .info-value {
+            color: #ce9178;
+            font-size: 12px;
+            font-family: 'Consolas', monospace;
+        }
+
+        .info-value.success {
+            color: #4ec9b0;
+        }
+
+        .info-value.error {
+            color: #f14c4c;
+        }
+
+        .settings-group {
+            margin-bottom: 15px;
+        }
+
+        .settings-group label {
+            display: block;
+            font-size: 12px;
+            color: #cccccc;
+            margin-bottom: 5px;
+        }
+
+        .settings-group select,
+        .settings-group input {
+            width: 100%;
+            background: #1e1e1e;
+            border: 1px solid #3e3e42;
+            color: #d4d4d4;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .settings-group select:focus,
+        .settings-group input:focus {
+            outline: none;
+            border-color: #007acc;
+        }
+
+        .modal-footer {
+            padding: 16px;
+            border-top: 1px solid #3e3e42;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn-secondary {
+            background: #3e3e42;
+            color: #d4d4d4;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .btn-secondary:hover {
+            background: #4e4e52;
+        }
+
+        /* Debug Panel Styles */
+        .debug-panel {
+            display: none;
+            width: 300px;
+            background: #252526;
+            border-left: 1px solid #3e3e42;
+            flex-direction: column;
+        }
+
+        .debug-panel.active {
+            display: flex;
+        }
+
+        .debug-section {
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .debug-section-header {
+            padding: 8px 12px;
+            background: #2d2d30;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .debug-section-content {
+            padding: 8px;
+            font-size: 11px;
+            font-family: 'Consolas', monospace;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .watch-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid #1e1e1e;
+        }
+
+        .watch-name {
+            color: #9cdcfe;
+        }
+
+        .watch-value {
+            color: #ce9178;
+        }
+
+        .watch-type {
+            color: #4ec9b0;
+            font-size: 10px;
+        }
+
+        .register-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 0;
+        }
+
+        .register-name {
+            color: #dcdcaa;
+        }
+
+        .register-value {
+            color: #b5cea8;
+        }
+
         /* Scrollbar */
         ::-webkit-scrollbar {
             width: 10px;
@@ -257,6 +470,9 @@
             <button class="btn success" onclick="flashDevice()">⚡ Flash</button>
             <div class="separator"></div>
             <button class="btn" onclick="analyzeCode()">🤖 AI Analyze</button>
+            <div class="separator"></div>
+            <button class="btn" onclick="openTargetSetup()">⚙️ Target Setup</button>
+            <button class="btn" onclick="openCompilerSettings()">🔧 Compiler</button>
         </div>
 
         <!-- Main -->
@@ -299,6 +515,179 @@
         <div class="statusbar">
             <div id="status-left">Ready</div>
             <div id="status-right">ArmEditor v1.0.0</div>
+        </div>
+    </div>
+
+    <!-- Target Setup Modal -->
+    <div class="modal-overlay" id="targetSetupModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>⚙️ Cortex-M Target Driver Setup</h2>
+                <button class="modal-close" onclick="closeTargetSetup()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-section">
+                    <h3>🔌 Debug Adapter</h3>
+                    <div class="info-row">
+                        <span class="info-label">Adapter Type</span>
+                        <span class="info-value" id="adapter-type">Detecting...</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Serial Number</span>
+                        <span class="info-value" id="adapter-serial">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Firmware Version</span>
+                        <span class="info-value" id="adapter-firmware">-</span>
+                    </div>
+                </div>
+
+                <div class="modal-section">
+                    <h3>🎯 Target Detection</h3>
+                    <div class="info-row">
+                        <span class="info-label">IDCODE</span>
+                        <span class="info-value success" id="target-idcode">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Device</span>
+                        <span class="info-value" id="target-device">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Core</span>
+                        <span class="info-value" id="target-core">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Flash Size</span>
+                        <span class="info-value" id="target-flash">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">RAM Size</span>
+                        <span class="info-value" id="target-ram">-</span>
+                    </div>
+                </div>
+
+                <div class="modal-section">
+                    <h3>⚡ Debug Settings</h3>
+                    <div class="settings-group">
+                        <label>Clock Speed (kHz)</label>
+                        <select id="debug-clock">
+                            <option value="1000">1000 kHz</option>
+                            <option value="4000" selected>4000 kHz</option>
+                            <option value="8000">8000 kHz</option>
+                            <option value="10000">10000 kHz</option>
+                        </select>
+                    </div>
+                    <div class="settings-group">
+                        <label>Reset Type</label>
+                        <select id="reset-type">
+                            <option value="hw">Hardware Reset</option>
+                            <option value="sw" selected>Software Reset</option>
+                            <option value="connect">Connect Under Reset</option>
+                        </select>
+                    </div>
+                    <div class="settings-group">
+                        <label>Interface</label>
+                        <select id="debug-interface">
+                            <option value="swd" selected>SWD</option>
+                            <option value="jtag">JTAG</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="detectTarget()">🔍 Re-detect</button>
+                <button class="btn success" onclick="applyTargetSettings()">✓ Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compiler Settings Modal -->
+    <div class="modal-overlay" id="compilerSettingsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>🔧 Compiler Settings</h2>
+                <button class="modal-close" onclick="closeCompilerSettings()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-section">
+                    <h3>🛠️ Toolchain</h3>
+                    <div class="settings-group">
+                        <label>ARM Compiler</label>
+                        <select id="compiler-version">
+                            <option value="gcc">ARM GCC (arm-none-eabi-gcc)</option>
+                            <option value="clang">LLVM/Clang</option>
+                        </select>
+                    </div>
+                    <div class="settings-group">
+                        <label>CPU</label>
+                        <select id="cpu-type">
+                            <option value="cortex-m0">Cortex-M0</option>
+                            <option value="cortex-m0plus">Cortex-M0+</option>
+                            <option value="cortex-m3">Cortex-M3</option>
+                            <option value="cortex-m4" selected>Cortex-M4</option>
+                            <option value="cortex-m7">Cortex-M7</option>
+                            <option value="cortex-m33">Cortex-M33</option>
+                        </select>
+                    </div>
+                    <div class="settings-group">
+                        <label>FPU</label>
+                        <select id="fpu-type">
+                            <option value="none">No FPU</option>
+                            <option value="fpv4-sp-d16" selected>FPv4-SP-D16 (Single Precision)</option>
+                            <option value="fpv5-sp-d16">FPv5-SP-D16</option>
+                            <option value="fpv5-d16">FPv5-D16 (Double Precision)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-section">
+                    <h3>⚡ Optimization</h3>
+                    <div class="settings-group">
+                        <label>Optimization Level</label>
+                        <select id="opt-level">
+                            <option value="-O0">-O0 (No Optimization - Debug)</option>
+                            <option value="-O1">-O1 (Optimize)</option>
+                            <option value="-O2" selected>-O2 (Optimize More)</option>
+                            <option value="-O3">-O3 (Optimize Most)</option>
+                            <option value="-Os">-Os (Optimize Size)</option>
+                            <option value="-Ofast">-Ofast (Fast - Unsafe)</option>
+                        </select>
+                    </div>
+                    <div class="settings-group">
+                        <label>Debug Level</label>
+                        <select id="debug-level">
+                            <option value="-g0">-g0 (No Debug Info)</option>
+                            <option value="-g1">-g1 (Minimal)</option>
+                            <option value="-g2">-g2 (Default)</option>
+                            <option value="-g3" selected>-g3 (Maximum Debug Info)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-section">
+                    <h3>📝 Preprocessor Defines</h3>
+                    <div class="settings-group">
+                        <label>Defines (one per line)</label>
+                        <textarea id="preprocessor-defines" style="width:100%; height:80px; background:#1e1e1e; border:1px solid #3e3e42; color:#d4d4d4; padding:8px; border-radius:4px; font-family:Consolas,monospace; font-size:12px;">USE_HAL_DRIVER
+STM32F4xx
+HSE_VALUE=8000000</textarea>
+                    </div>
+                </div>
+
+                <div class="modal-section">
+                    <h3>📁 Include Paths</h3>
+                    <div class="settings-group">
+                        <label>Include Paths (one per line)</label>
+                        <textarea id="include-paths" style="width:100%; height:60px; background:#1e1e1e; border:1px solid #3e3e42; color:#d4d4d4; padding:8px; border-radius:4px; font-family:Consolas,monospace; font-size:12px;">./inc
+./Drivers/CMSIS/Include
+./Drivers/STM32F4xx_HAL_Driver/Inc</textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeCompilerSettings()">Cancel</button>
+                <button class="btn success" onclick="applyCompilerSettings()">✓ Apply</button>
+            </div>
         </div>
     </div>
 
@@ -429,6 +818,218 @@
         outputAppend('ArmEditor - Professional ARM IDE\n');
         outputAppend('Better than Keil/IAR, completely free!\n');
         outputAppend('Loading Monaco Editor...\n');
+
+        // ============ TARGET SETUP MODAL ============
+        let targetSettings = {
+            adapter: null,
+            idcode: null,
+            device: null,
+            clock: 4000,
+            resetType: 'sw',
+            interface: 'swd'
+        };
+
+        function openTargetSetup() {
+            document.getElementById('targetSetupModal').classList.add('active');
+            detectTarget();
+        }
+
+        function closeTargetSetup() {
+            document.getElementById('targetSetupModal').classList.remove('active');
+        }
+
+        async function detectTarget() {
+            outputAppend('\n🔍 Detecting target...\n');
+
+            document.getElementById('adapter-type').textContent = 'Detecting...';
+            document.getElementById('target-idcode').textContent = 'Scanning...';
+
+            // Simulate ST-Link detection via st-info or OpenOCD
+            const { exec } = require('child_process');
+
+            // Try st-info first (STM32 tools)
+            exec('st-info --probe 2>/dev/null || echo "no-stlink"', (error, stdout, stderr) => {
+                if (stdout.includes('no-stlink') || error) {
+                    // Try OpenOCD detection
+                    detectWithOpenOCD();
+                } else {
+                    parseSTLinkInfo(stdout);
+                }
+            });
+        }
+
+        function parseSTLinkInfo(output) {
+            const lines = output.split('\n');
+            let serial = '-';
+            let version = '-';
+            let chipId = '-';
+            let flash = '-';
+            let sram = '-';
+            let device = 'Unknown';
+
+            lines.forEach(line => {
+                if (line.includes('serial:')) {
+                    serial = line.split('serial:')[1]?.trim() || '-';
+                }
+                if (line.includes('flash:')) {
+                    flash = line.split('flash:')[1]?.trim() || '-';
+                }
+                if (line.includes('sram:')) {
+                    sram = line.split('sram:')[1]?.trim() || '-';
+                }
+                if (line.includes('chipid:')) {
+                    chipId = line.split('chipid:')[1]?.trim() || '-';
+                }
+                if (line.includes('descr:')) {
+                    device = line.split('descr:')[1]?.trim() || 'Unknown';
+                }
+            });
+
+            updateTargetUI({
+                adapterType: 'ST-LINK/V2',
+                serial: serial,
+                firmware: version,
+                idcode: chipId,
+                device: device,
+                core: 'ARM Cortex-M',
+                flash: flash,
+                ram: sram
+            });
+        }
+
+        function detectWithOpenOCD() {
+            const { exec } = require('child_process');
+
+            // OpenOCD one-shot detection
+            const cmd = 'timeout 3 openocd -f interface/stlink.cfg -f target/stm32f4x.cfg -c "init; targets; exit" 2>&1 || echo "detection-failed"';
+
+            exec(cmd, (error, stdout, stderr) => {
+                if (stdout.includes('detection-failed') || error) {
+                    // No hardware detected - show simulated values for demo
+                    updateTargetUI({
+                        adapterType: 'ST-LINK/V3 (Demo)',
+                        serial: '003400343...',
+                        firmware: 'V3J9M3B5S1',
+                        idcode: '0x5BA02477',
+                        device: 'STM32F7x7',
+                        core: 'ARM Cortex-M7',
+                        flash: '2048 KB',
+                        ram: '512 KB'
+                    });
+                    outputAppend('⚠️ No hardware detected - showing demo values\n');
+                } else {
+                    // Parse OpenOCD output
+                    parseOpenOCDOutput(stdout);
+                }
+            });
+        }
+
+        function parseOpenOCDOutput(output) {
+            let idcode = '-';
+            let device = 'Unknown';
+
+            // Look for IDCODE in output
+            const idcodeMatch = output.match(/IDCODE[:\s]+([0-9a-fA-Fx]+)/i);
+            if (idcodeMatch) {
+                idcode = idcodeMatch[1];
+            }
+
+            // Detect device from IDCODE
+            const deviceMap = {
+                '0x1BA01477': { name: 'STM32F1xx', core: 'Cortex-M3' },
+                '0x2BA01477': { name: 'STM32F4xx', core: 'Cortex-M4' },
+                '0x5BA02477': { name: 'STM32F7xx', core: 'Cortex-M7' },
+                '0x6BA02477': { name: 'STM32H7xx', core: 'Cortex-M7' },
+            };
+
+            const detected = deviceMap[idcode] || { name: 'Unknown', core: 'Cortex-M' };
+
+            updateTargetUI({
+                adapterType: 'ST-LINK',
+                serial: '-',
+                firmware: '-',
+                idcode: idcode,
+                device: detected.name,
+                core: detected.core,
+                flash: '-',
+                ram: '-'
+            });
+        }
+
+        function updateTargetUI(info) {
+            document.getElementById('adapter-type').textContent = info.adapterType;
+            document.getElementById('adapter-type').className = 'info-value success';
+            document.getElementById('adapter-serial').textContent = info.serial;
+            document.getElementById('adapter-firmware').textContent = info.firmware;
+            document.getElementById('target-idcode').textContent = info.idcode;
+            document.getElementById('target-device').textContent = info.device;
+            document.getElementById('target-core').textContent = info.core;
+            document.getElementById('target-flash').textContent = info.flash;
+            document.getElementById('target-ram').textContent = info.ram;
+
+            targetSettings.idcode = info.idcode;
+            targetSettings.device = info.device;
+
+            outputAppend(`✅ Target: ${info.device} (${info.idcode})\n`);
+        }
+
+        function applyTargetSettings() {
+            targetSettings.clock = document.getElementById('debug-clock').value;
+            targetSettings.resetType = document.getElementById('reset-type').value;
+            targetSettings.interface = document.getElementById('debug-interface').value;
+
+            outputAppend(`⚙️ Target settings applied:\n`);
+            outputAppend(`   Clock: ${targetSettings.clock} kHz\n`);
+            outputAppend(`   Reset: ${targetSettings.resetType}\n`);
+            outputAppend(`   Interface: ${targetSettings.interface}\n`);
+
+            closeTargetSetup();
+        }
+
+        // ============ COMPILER SETTINGS MODAL ============
+        let compilerSettings = {
+            compiler: 'gcc',
+            cpu: 'cortex-m4',
+            fpu: 'fpv4-sp-d16',
+            optLevel: '-O2',
+            debugLevel: '-g3',
+            defines: ['USE_HAL_DRIVER', 'STM32F4xx'],
+            includePaths: ['./inc']
+        };
+
+        function openCompilerSettings() {
+            document.getElementById('compilerSettingsModal').classList.add('active');
+        }
+
+        function closeCompilerSettings() {
+            document.getElementById('compilerSettingsModal').classList.remove('active');
+        }
+
+        function applyCompilerSettings() {
+            compilerSettings.compiler = document.getElementById('compiler-version').value;
+            compilerSettings.cpu = document.getElementById('cpu-type').value;
+            compilerSettings.fpu = document.getElementById('fpu-type').value;
+            compilerSettings.optLevel = document.getElementById('opt-level').value;
+            compilerSettings.debugLevel = document.getElementById('debug-level').value;
+            compilerSettings.defines = document.getElementById('preprocessor-defines').value.split('\n').filter(d => d.trim());
+            compilerSettings.includePaths = document.getElementById('include-paths').value.split('\n').filter(p => p.trim());
+
+            outputAppend(`🔧 Compiler settings applied:\n`);
+            outputAppend(`   CPU: ${compilerSettings.cpu}\n`);
+            outputAppend(`   FPU: ${compilerSettings.fpu}\n`);
+            outputAppend(`   Optimization: ${compilerSettings.optLevel}\n`);
+            outputAppend(`   Defines: ${compilerSettings.defines.length} items\n`);
+
+            closeCompilerSettings();
+        }
+
+        // Close modals with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeTargetSetup();
+                closeCompilerSettings();
+            }
+        });
     </script>
 </body>
 </html>
