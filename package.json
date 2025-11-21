@@ -27,31 +27,38 @@
     "appId": "com.hopeide.ide",
     "productName": "HopeIDE",
     "linux": {
-      "target": ["deb"],
+      "target": [
+        "deb"
+      ],
       "category": "Development",
       "maintainer": "HopeIDE Team",
-      "icon": "resources/icon.png"
+      "icon": "resources/icon.png",
+      "executableName": "hopeide",
+      "desktop": {
+        "Name": "HopeIDE",
+        "Comment": "Professional ARM Development IDE - Umut IDE",
+        "Terminal": false,
+        "Type": "Application",
+        "Categories": "Development;IDE;"
+      }
     },
     "deb": {
-      "depends": [
-        "gconf2",
-        "gconf-service",
-        "libnotify4",
-        "libappindicator1",
-        "libxtst6",
-        "libnss3"
-      ]
+      "depends": [],
+      "afterInstall": "resources/postinstall.sh"
     },
     "files": [
       "src/**/*",
       "resources/**/*",
+      "node_modules/monaco-editor/**/*",
       "package.json"
     ],
     "extraResources": [
       {
         "from": "resources/",
         "to": "resources/",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ]
   }
