@@ -32,7 +32,6 @@
       ],
       "category": "Development",
       "maintainer": "HopeIDE Team",
-      "icon": "resources/icon.png",
       "executableName": "hopeide",
       "desktop": {
         "Name": "HopeIDE",
