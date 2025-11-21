@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -578,7 +579,8 @@
             padding: 8px 0;
         }
 
-        .file-item, .folder-item {
+        .file-item,
+        .folder-item {
             padding: 6px 16px;
             cursor: pointer;
             font-size: 13px;
@@ -588,7 +590,8 @@
             user-select: none;
         }
 
-        .file-item:hover, .folder-item:hover {
+        .file-item:hover,
+        .folder-item:hover {
             background: #2a2d2e;
         }
 
@@ -902,6 +905,7 @@
         }
     </style>
 </head>
+
 <body>
     <!-- TOP MENU -->
     <div class="top-menu">
@@ -942,7 +946,8 @@
                                 <span>Welcome</span>
                             </div>
                         </div>
-                        <textarea class="code-editor" id="code-editor" placeholder="Select a file to edit..."></textarea>
+                        <textarea class="code-editor" id="code-editor"
+                            placeholder="Select a file to edit..."></textarea>
                     </div>
                 </div>
             </div>
@@ -1054,11 +1059,13 @@
                     <div class="memory-controls">
                         <div class="form-group" style="margin: 0;">
                             <label class="form-label">Start Address (Hex)</label>
-                            <input type="text" class="form-control" id="memory-address" value="0x08000000" style="width: 150px;">
+                            <input type="text" class="form-control" id="memory-address" value="0x08000000"
+                                style="width: 150px;">
                         </div>
                         <div class="form-group" style="margin: 0;">
                             <label class="form-label">Size (bytes)</label>
-                            <input type="number" class="form-control" id="memory-size" value="256" style="width: 120px;">
+                            <input type="number" class="form-control" id="memory-size" value="256"
+                                style="width: 120px;">
                         </div>
                         <button class="btn btn-primary" onclick="readMemory()">📖 Read</button>
                         <button class="btn btn-secondary" onclick="saveMemory()">💾 Save to File</button>
@@ -1225,7 +1232,8 @@
                             🔄 Reset
                         </button>
                     </div>
-                    <div style="margin-top: 15px; padding: 10px; background: #1e1e1e; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 12px;" id="debug-status">
+                    <div style="margin-top: 15px; padding: 10px; background: #1e1e1e; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 12px;"
+                        id="debug-status">
                         <span style="color: #858585;">Debug Status: Not Running</span>
                     </div>
                 </div>
@@ -1235,7 +1243,8 @@
                     <div class="card-title">
                         <span class="card-title-icon">📊</span>
                         Variable Viewer
-                        <button class="btn btn-sm" onclick="addVariable()" style="margin-left: auto; font-size: 12px;">+ Add Variable</button>
+                        <button class="btn btn-sm" onclick="addVariable()" style="margin-left: auto; font-size: 12px;">+
+                            Add Variable</button>
                     </div>
                     <div class="variable-table-container">
                         <table class="debug-table">
@@ -1265,9 +1274,11 @@
                     <div class="card-title">
                         <span class="card-title-icon">🎚️</span>
                         Register Viewer
-                        <button class="btn btn-sm" onclick="refreshRegisters()" style="margin-left: auto; font-size: 12px;">🔄 Refresh</button>
+                        <button class="btn btn-sm" onclick="refreshRegisters()"
+                            style="margin-left: auto; font-size: 12px;">🔄 Refresh</button>
                     </div>
-                    <div class="register-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px;">
+                    <div class="register-grid"
+                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px;">
                         <div class="register-item" id="reg-r0">
                             <div class="register-name">R0</div>
                             <div class="register-value">0x00000000</div>
@@ -1340,7 +1351,8 @@
                     <div class="card-title">
                         <span class="card-title-icon">🔴</span>
                         Breakpoints
-                        <button class="btn btn-sm" onclick="addBreakpoint()" style="margin-left: auto; font-size: 12px;">+ Add Breakpoint</button>
+                        <button class="btn btn-sm" onclick="addBreakpoint()"
+                            style="margin-left: auto; font-size: 12px;">+ Add Breakpoint</button>
                     </div>
                     <div class="breakpoint-list" id="breakpoint-list">
                         <div style="text-align: center; color: #858585; padding: 20px;">
@@ -1367,9 +1379,11 @@
                     <div class="card-title">
                         <span class="card-title-icon">🔍</span>
                         Disassembly View
-                        <button class="btn btn-sm" onclick="refreshDisassembly()" style="margin-left: auto; font-size: 12px;">🔄 Refresh</button>
+                        <button class="btn btn-sm" onclick="refreshDisassembly()"
+                            style="margin-left: auto; font-size: 12px;">🔄 Refresh</button>
                     </div>
-                    <div class="disassembly-view" id="disassembly-view" style="font-family: 'Courier New', monospace; font-size: 12px; background: #1e1e1e; border-radius: 4px; padding: 10px; max-height: 400px; overflow-y: auto;">
+                    <div class="disassembly-view" id="disassembly-view"
+                        style="font-family: 'Courier New', monospace; font-size: 12px; background: #1e1e1e; border-radius: 4px; padding: 10px; max-height: 400px; overflow-y: auto;">
                         <div style="text-align: center; color: #858585; padding: 20px;">
                             Start debugging to view disassembly
                         </div>
@@ -1383,17 +1397,22 @@
                         SWV Trace Viewer (Serial Wire Viewer)
                         <div style="margin-left: auto; display: flex; gap: 10px; align-items: center;">
                             <label style="font-size: 11px; color: #858585;">CPU Freq (MHz):</label>
-                            <input type="number" id="swv-cpu-freq" value="168" style="width: 70px; padding: 4px 8px; background: #1e1e1e; border: 1px solid #3e3e42; color: #cccccc; border-radius: 4px; font-size: 12px;">
-                            <button class="btn btn-sm btn-success" onclick="enableSWV()" id="swv-enable-btn">▶️ Enable</button>
-                            <button class="btn btn-sm btn-danger" onclick="disableSWV()" id="swv-disable-btn" style="display: none;">⏹️ Disable</button>
+                            <input type="number" id="swv-cpu-freq" value="168"
+                                style="width: 70px; padding: 4px 8px; background: #1e1e1e; border: 1px solid #3e3e42; color: #cccccc; border-radius: 4px; font-size: 12px;">
+                            <button class="btn btn-sm btn-success" onclick="enableSWV()" id="swv-enable-btn">▶️
+                                Enable</button>
+                            <button class="btn btn-sm btn-danger" onclick="disableSWV()" id="swv-disable-btn"
+                                style="display: none;">⏹️ Disable</button>
                             <button class="btn btn-sm btn-secondary" onclick="clearSWVTrace()">🗑️ Clear</button>
                         </div>
                     </div>
-                    <div style="background: #1e1e1e; border-radius: 4px; padding: 10px; font-family: 'Courier New', monospace; font-size: 12px;">
+                    <div
+                        style="background: #1e1e1e; border-radius: 4px; padding: 10px; font-family: 'Courier New', monospace; font-size: 12px;">
                         <div style="margin-bottom: 10px; color: #858585; font-size: 11px;">
                             💡 Tip: Use ITM_SendChar() in your code for printf-style debugging without UART
                         </div>
-                        <div id="swv-trace-output" style="max-height: 300px; overflow-y: auto; background: #000000; padding: 10px; border-radius: 4px; border: 1px solid #3e3e42;">
+                        <div id="swv-trace-output"
+                            style="max-height: 300px; overflow-y: auto; background: #000000; padding: 10px; border-radius: 4px; border: 1px solid #3e3e42;">
                             <div style="color: #858585; text-align: center; padding: 10px;">
                                 SWV Trace disabled. Click "Enable" to start capturing ITM trace data.
                             </div>
@@ -1418,7 +1437,7 @@
                     </div>
                 </div>
                 <div class="console-content" id="console-output">
-                    <div class="console-line">🌟 HopeIDE (Umut IDE) v1.0.0</div>
+                    <div class="console-line">🌟 HopeIDE (Umut IDE) v3.0.0 - Professional Edition</div>
                     <div class="console-line">Ready.</div>
                 </div>
             </div>
@@ -2199,7 +2218,7 @@
             const cpuFreq = parseInt(document.getElementById('swv-cpu-freq').value) * 1000000;
             const swoFreq = 2000000; // 2 MHz SWO frequency
 
-            appendConsole(`📡 Enabling SWV Trace (CPU: ${cpuFreq/1000000} MHz, SWO: ${swoFreq/1000000} MHz)...`, 'normal');
+            appendConsole(`📡 Enabling SWV Trace (CPU: ${cpuFreq / 1000000} MHz, SWO: ${swoFreq / 1000000} MHz)...`, 'normal');
 
             // Send enable command to backend
             ipcRenderer.send('swv-enable', { cpuFreq, swoFreq });
@@ -2298,4 +2317,5 @@
         });
     </script>
 </body>
+
 </html>
