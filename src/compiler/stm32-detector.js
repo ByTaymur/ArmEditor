@@ -204,16 +204,33 @@ class STM32Detector {
                     }
                 }
 
+                // Extract STLink Info
+                const stlinkMatch = allOutput.match(/STLINK\s+([^\s]+)/i);
+                const version = stlinkMatch ? stlinkMatch[1] : null;
+
+                // Serial number often appears in "serial: ..." or similar, but OpenOCD might not always show it in default log
+                // We'll try to find it if present, otherwise just use what we have
+                // Some versions show "Info : STLINK V2J29S7 (API v2) VID:PID 0483:3748"
+
+                const fullVersionMatch = allOutput.match(/STLINK\s+(.*?)(\s+VID|$)/i);
+                const fullVersion = fullVersionMatch ? fullVersionMatch[1] : version;
+
                 if (idcodeMatch) {
+                    const idcode = idcodeMatch[1].toLowerCase();
+
                     resolve({
-                        idcode: idcodeMatch[1].toLowerCase(),
+                        idcode: idcode,
                         interface: 'stlink',
                         voltage: voltage,
+                        stlink: {
+                            version: fullVersion,
+                            serial: 'Detected' // Placeholder as OpenOCD standard output might not always have serial without -d
+                        },
                         output: allOutput
                     });
-                } else {
-                    reject(new Error('No debugger found'));
+                    return;
                 }
+                reject(new Error('No debugger found'));
             });
 
             proc.on('error', (err) => {

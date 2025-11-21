@@ -726,6 +726,46 @@ ipcMain.on('debug-continue', async () => {
     }
 });
 
+// Target Setup IPC Handlers
+ipcMain.on('get-target-info', async () => {
+    try {
+        const detector = new STM32Detector();
+        // We use a quick detection
+        const result = await detector.readIDCODE();
+
+        // Find chip name from database
+        let chipName = 'Unknown';
+        for (const [family, chips] of Object.entries(detector.idcodeDatabase)) {
+            for (const [name, idcode] of Object.entries(chips)) {
+                if (idcode.toLowerCase() === result.idcode.toLowerCase()) {
+                    chipName = name;
+                    break;
+                }
+            }
+        }
+
+        mainWindow.webContents.send('target-info-result', {
+            stlink: result.stlink,
+            chip: {
+                idcode: result.idcode,
+                name: chipName,
+                voltage: result.voltage
+            }
+        });
+    } catch (err) {
+        // Send empty/error result
+        mainWindow.webContents.send('target-info-result', {
+            error: err.message
+        });
+    }
+});
+
+ipcMain.on('save-target-settings', (event, settings) => {
+    // Store settings for future use (e.g. in OpenOCDFlasher)
+    global.targetSettings = settings;
+    mainWindow.webContents.send('output-append', '✅ Target settings saved\n');
+});
+
 ipcMain.on('debug-pause', async () => {
     if (gdbInterface && debugActive) {
         try {
