@@ -1234,499 +1234,318 @@
             </div>
 
             <!-- DEBUG VIEW -->
-            <div class="view" id="debug-view" style="display: flex; height: 100%; overflow: hidden;">
-                <!-- MAIN DEBUG AREA -->
-                <div style="flex: 1; padding: 20px; overflow-y: auto;">
-                    <!-- DEBUG CONTROLS -->
-                    <div class="card">
-                        <div class="card-title">
-                            <span class="card-title-icon">🐛</span>
-                            Debug Controls
+            <div class="view" id="debug-view" style="padding: 20px; overflow-y: auto;">
+                <!-- DEBUG CONTROLS -->
+                <div class="card">
+                    <div class="card-title">
+                        <span class="card-title-icon">🐛</span>
+                        Debug Controls
+                    </div>
+                    <div class="debug-controls" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn btn-success" onclick="debugRun()" title="Run (F5)">
+                            ▶️ Run
+                        </button>
+                        <button class="btn btn-danger" onclick="debugStop()" title="Stop (Shift+F5)">
+                            ⏹️ Stop
+                        </button>
+                        <button class="btn btn-warning" onclick="debugPause()" title="Pause">
+                            ⏸️ Pause
+                        </button>
+                        <button class="btn btn-primary" onclick="debugContinue()" title="Continue">
+                            ▶️ Continue
+                        </button>
+                        <div style="width: 2px; background: #3e3e42; margin: 0 5px;"></div>
+                        <button class="btn btn-info" onclick="debugStepOver()" title="Step Over (F10)">
+                            ⏭️ Step Over
+                        </button>
+                        <button class="btn btn-info" onclick="debugStepInto()" title="Step Into (F11)">
+                            ⤵️ Step Into
+                        </button>
+                        <button class="btn btn-info" onclick="debugStepOut()" title="Step Out (Shift+F11)">
+                            ⤴️ Step Out
+                        </button>
+                        <div style="width: 2px; background: #3e3e42; margin: 0 5px;"></div>
+                        <button class="btn btn-secondary" onclick="debugReset()" title="Reset MCU">
+                            🔄 Reset
+                        </button>
+                    </div>
+                    <div style="margin-top: 15px; padding: 10px; background: #1e1e1e; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 12px;"
+                        id="debug-status">
+                        <span style="color: #858585;">Debug Status: Not Running</span>
+                    </div>
+                </div>
+
+                <!-- VARIABLE VIEWER -->
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-title">
+                        <span class="card-title-icon">📊</span>
+                        Variable Viewer
+                        <button class="btn btn-sm" onclick="addVariable()" style="margin-left: auto; font-size: 12px;">+
+                            Add Variable</button>
+                    </div>
+                    <div class="variable-table-container">
+                        <table class="debug-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 30px;">📌</th>
+                                    <th>Variable Name</th>
+                                    <th>Type</th>
+                                    <th>Value</th>
+                                    <th>Address</th>
+                                    <th style="width: 80px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="variable-list">
+                                <tr>
+                                    <td colspan="6" style="text-align: center; color: #858585; padding: 20px;">
+                                        No variables added. Click "+ Add Variable" to monitor a variable.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- REGISTER VIEWER -->
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-title">
+                        <span class="card-title-icon">🎚️</span>
+                        Register Viewer
+                        <button class="btn btn-sm" onclick="refreshRegisters()"
+                            style="margin-left: auto; font-size: 12px;">🔄 Refresh</button>
+                    </div>
+                    <div class="register-grid"
+                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px;">
+                        <div class="register-item" id="reg-r0">
+                            <div class="register-name">R0</div>
+                            <div class="register-value">0x00000000</div>
                         </div>
-                        <div class="debug-controls" style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <button class="btn btn-success" onclick="debugRun()" title="Run (F5)">
-                                ▶️ Run
-                            </button>
-                            <button class="btn btn-danger" onclick="debugStop()" title="Stop (Shift+F5)">
-                                ⏹️ Stop
-                            </button>
-                            <button class="btn btn-warning" onclick="debugPause()" title="Pause">
-                                ⏸️ Pause
-                            </button>
-                            <button class="btn btn-primary" onclick="debugContinue()" title="Continue">
-                                ▶️ Continue
-                            </button>
-                            <div style="width: 2px; background: #3e3e42; margin: 0 5px;"></div>
-                            <button class="btn btn-info" onclick="debugStepOver()" title="Step Over (F10)">
-                                ⏭️ Step Over
-                            </button>
-                            <button class="btn btn-info" onclick="debugStepInto()" title="Step Into (F11)">
-                                ⤵️ Step Into
-                            </button>
-                            <button class="btn btn-info" onclick="debugStepOut()" title="Step Out (Shift+F11)">
-                                ⤴️ Step Out
-                            </button>
-                            <div style="width: 2px; background: #3e3e42; margin: 0 5px;"></div>
-                            <button class="btn btn-secondary" onclick="debugReset()" title="Reset MCU">
-                                🔄 Reset
-                            </button>
+                        <div class="register-item" id="reg-r1">
+                            <div class="register-name">R1</div>
+                            <div class="register-value">0x00000000</div>
                         </div>
-                        <div style="margin-top: 15px; padding: 10px; background: #1e1e1e; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 12px;"
-                            id="debug-status">
-                            <span style="color: #858585;">Debug Status: Not Running</span>
+                        <div class="register-item" id="reg-r2">
+                            <div class="register-name">R2</div>
+                            <div class="register-value">0x00000000</div>
+                        </div>
+                        <div class="register-item" id="reg-r3">
+                            <div class="register-name">R3</div>
+                            <div class="register-value">0x00000000</div>
+                        </div>
+                        <div class="register-item" id="reg-r4">
+                            <div class="register-name">R4</div>
+                            <div class="register-value">0x00000000</div>
+                        </div>
+                        <div class="register-item" id="reg-r5">
+                            <div class="register-name">R5</div>
+                            <div class="register-value">0x00000000</div>
+                        </div>
+                        <div class="register-item" id="reg-r6">
+                            <div class="register-name">R6</div>
+                            <div class="register-value">0x00000000</div>
+                        </div>
+                        <div class="register-item" id="reg-r7">
+                            <div class="register-name">R7</div>
+                            <div class="register-value">0x00000000</div>
+                        </div>
+                        <div class="register-item" id="reg-r8">
+                            <div class="register-name">R8</div>
+                            <div class="register-value">0x00000000</div>
+                        </div>
+                        <div class="register-item" id="reg-r9">
+                            <div class="register-name">R9</div>
+                            <div class="register-value">0x00000000</div>
+                        </div>
+                        <div class="register-item" id="reg-r10">
+                            <div class="register-name">R10</div>
+                            <div class="register-value">0x00000000</div>
+                        </div>
+                        <div class="register-item" id="reg-r11">
+                            <div class="register-name">R11</div>
+                            <div class="register-value">0x00000000</div>
+                        </div>
+                        <div class="register-item" id="reg-r12">
+                            <div class="register-name">R12</div>
+                            <div class="register-value">0x00000000</div>
+                        </div>
+                        <div class="register-item highlight" id="reg-sp">
+                            <div class="register-name">SP</div>
+                            <div class="register-value">0x20020000</div>
+                        </div>
+                        <div class="register-item highlight" id="reg-lr">
+                            <div class="register-name">LR</div>
+                            <div class="register-value">0x00000000</div>
+                        </div>
+                        <div class="register-item highlight" id="reg-pc">
+                            <div class="register-name">PC</div>
+                            <div class="register-value">0x08000000</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- RIGHT SIDE PANEL - DEBUG PANELS -->
-                <div
-                    style="width: 350px; background: #1e1e1e; border-left: 1px solid #3e3e42; display: flex; flex-direction: column; overflow-y: auto;">
-                    <!-- VARIABLE VIEWER -->
-                    <div style="border-bottom: 1px solid #3e3e42;">
-                        <div
-                            style="background: #2d2d30; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #3e3e42;">
-                            <div
-                                style="font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                                <span>📊</span> Variable Viewer
-                            </div>
-                            <button class="btn btn-sm btn-secondary" style="padding: 4px 10px; font-size: 11px;">+ Add
-                                Variable</button>
-                        </div>
-                        <div style="padding: 15px; min-height: 120px; max-height: 200px; overflow-y: auto;">
-                            <table style="width: 100%; font-size: 12px; font-family: 'Consolas', monospace;">
-                                <thead style="color: #858585; border-bottom: 1px solid #3e3e42;">
-                                    <tr>
-                                        <th style="padding: 5px; text-align: left;">Variable Name</th>
-                                        <th style="padding: 5px; text-align: left;">Type</th>
-                                        <th style="padding: 5px; text-align: left;">Value</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="variable-list">
-                                    <tr>
-                                        <td colspan="3" style="padding: 20px; text-align: center; color: #858585;">
-                                            No variables added. Click "+ Add Variable" to monitor a variable
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                <!-- BREAKPOINTS -->
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-title">
+                        <span class="card-title-icon">🔴</span>
+                        Breakpoints
+                        <button class="btn btn-sm" onclick="addBreakpoint()"
+                            style="margin-left: auto; font-size: 12px;">+ Add Breakpoint</button>
+                    </div>
+                    <div class="breakpoint-list" id="breakpoint-list">
+                        <div style="text-align: center; color: #858585; padding: 20px;">
+                            No breakpoints set. Click "+ Add Breakpoint" to add one.
                         </div>
                     </div>
+                </div>
 
-                    <!-- REGISTER VIEWER -->
-                    <div style="border-bottom: 1px solid #3e3e42;">
-                        <div
-                            style="background: #2d2d30; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #3e3e42;">
-                            <div
-                                style="font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                                <span>📋</span> Register Viewer
-                            </div>
-                            <button class="btn btn-sm btn-secondary" style="padding: 4px 10px; font-size: 11px;"
-                                onclick="refreshRegisters()">🔄 Refresh</button>
-                        </div>
-                        <div style="padding: 10px; min-height: 150px; max-height: 250px; overflow-y: auto;">
-                            <div id="register-grid"
-                                style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
-                                <!-- R0-R12 -->
-                                <div class="register-item">
-                                    <div class="register-name">R0</div>
-                                    <div class="register-value">0x00000000</div>
-                                </div>
-                                <div class="register-item">
-                                    <div class="register-name">R1</div>
-                                    <div class="register-value">0x00000000</div>
-                                </div>
-                                <div class="register-item">
-                                    <div class="register-name">R2</div>
-                                    <div class="register-value">0x00000000</div>
-                                </div>
-                                <div class="register-item">
-                                    <div class="register-name">R3</div>
-                                    <div class="register-value">0x00000000</div>
-                                </div>
-                                <div class="register-item">
-                                    <div class="register-name">R4</div>
-                                    <div class="register-value">0x00000000</div>
-                                </div>
-                                <div class="register-item">
-                                    <div class="register-name">R5</div>
-                                    <div class="register-value">0x00000000</div>
-                                </div>
-                                <div class="register-item">
-                                    <div class="register-name">R6</div>
-                                    <div class="register-value">0x00000000</div>
-                                </div>
-                                <div class="register-item">
-                                    <div class="register-name">R7</div>
-                                    <div class="register-value">0x00000000</div>
-                                </div>
-                                <div class="register-item">
-                                    <div class="register-name">R8</div>
-                                    <div class="register-value">0x00000000</div>
-                                </div>
-                                <div class="register-item">
-                                    <div class="register-name">R9</div>
-                                    <div class="register-value">0x00000000</div>
-                                </div>
-                                <div class="register-item">
-                                    <div class="register-name">R10</div>
-                                    <div class="register-value">0x00000000</div>
-                                </div>
-                                <div class="register-item">
-                                    <div class="register-name">R11</div>
-                                    <div class="register-value">0x00000000</div>
-                                </div>
-                                <div class="register-item">
-                                    <div class="register-name">R12</div>
-                                    <div class="register-value">0x20E52A04</div>
-                                </div>
-                                <div class="register-item">
-                                    <div class="register-name">SP</div>
-                                    <div class="register-value">0x00000000</div>
-                                </div>
-                                <div class="register-item">
-                                    <div class="register-name">LR</div>
-                                    <div class="register-value">0x00000000</div>
-                                </div>
-                                <div class="register-item">
-                                    <div class="register-name">PC</div>
-                                    <div class="register-value">0x08000000</div>
-                                </div>
-                            </div>
+                <!-- CALL STACK -->
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-title">
+                        <span class="card-title-icon">📚</span>
+                        Call Stack
+                    </div>
+                    <div class="callstack-list" id="callstack-list">
+                        <div style="text-align: center; color: #858585; padding: 20px;">
+                            Start debugging to view call stack
                         </div>
                     </div>
+                </div>
 
-                    <!-- BREAKPOINTS -->
-                    <div style="border-bottom: 1px solid #3e3e42;">
-                        <div
-                            style="background: #2d2d30; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #3e3e42;">
-                            <div
-                                style="font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                                <span>🔴</span> Breakpoints
-                            </div>
-                            <button class="btn btn-sm btn-secondary" style="padding: 4px 10px; font-size: 11px;">+ Add
-                                Breakpoint</button>
-                        </div>
-                        <div style="padding: 15px; min-height: 100px; max-height: 150px; overflow-y: auto;">
-                            <div id="breakpoint-list" style="font-size: 12px; color: #858585; text-align: center;">
-                                No breakpoints set. Click "+ Add Breakpoint" to add one.
-                            </div>
+                <!-- DISASSEMBLY VIEW -->
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-title">
+                        <span class="card-title-icon">🔍</span>
+                        Disassembly View
+                        <button class="btn btn-sm" onclick="refreshDisassembly()"
+                            style="margin-left: auto; font-size: 12px;">🔄 Refresh</button>
+                    </div>
+                    <div class="disassembly-view" id="disassembly-view"
+                        style="font-family: 'Courier New', monospace; font-size: 12px; background: #1e1e1e; border-radius: 4px; padding: 10px; max-height: 400px; overflow-y: auto;">
+                        <div style="text-align: center; color: #858585; padding: 20px;">
+                            Start debugging to view disassembly
                         </div>
                     </div>
+                </div>
 
-                    <!-- CALL STACK -->
-                    <div style="border-bottom: 1px solid #3e3e42;">
-                        <div style="background: #2d2d30; padding: 10px 15px; border-bottom: 1px solid #3e3e42;">
-                            <div
-                                style="font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                                <span>📚</span> Call Stack
-                            </div>
-                        </div>
-                        <div style="padding: 15px; min-height: 100px; max-height: 150px; overflow-y: auto;">
-                            <div id="callstack-list" style="font-size: 12px; color: #858585; text-align: center;">
-                                Start debugging to view call stack
-                            </div>
+                <!-- SWV TRACE VIEWER -->
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-title">
+                        <span class="card-title-icon">📡</span>
+                        SWV Trace Viewer (Serial Wire Viewer)
+                        <div style="margin-left: auto; display: flex; gap: 10px; align-items: center;">
+                            <label style="font-size: 11px; color: #858585;">CPU Freq (MHz):</label>
+                            <input type="number" id="swv-cpu-freq" value="168"
+                                style="width: 70px; padding: 4px 8px; background: #1e1e1e; border: 1px solid #3e3e42; color: #cccccc; border-radius: 4px; font-size: 12px;">
+                            <button class="btn btn-sm btn-success" onclick="enableSWV()" id="swv-enable-btn">▶️
+                                Enable</button>
+                            <button class="btn btn-sm btn-danger" onclick="disableSWV()" id="swv-disable-btn"
+                                style="display: none;">⏹️ Disable</button>
+                            <button class="btn btn-sm btn-secondary" onclick="clearSWVTrace()">🗑️ Clear</button>
                         </div>
                     </div>
-
-                    <!-- DISASSEMBLY VIEW -->
-                    <div>
-                        <div
-                            style="background: #2d2d30; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #3e3e42;">
-                            <div
-                                style="font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                                <span>🔧</span> Disassembly View
-                            </div>
-                            <button class="btn btn-sm btn-secondary" style="padding: 4px 10px; font-size: 11px;"
-                                onclick="refreshDisassembly()">🔄 Refresh</button>
+                    <div
+                        style="background: #1e1e1e; border-radius: 4px; padding: 10px; font-family: 'Courier New', monospace; font-size: 12px;">
+                        <div style="margin-bottom: 10px; color: #858585; font-size: 11px;">
+                            💡 Tip: Use ITM_SendChar() in your code for printf-style debugging without UART
                         </div>
-                        <div
-                            style="padding: 10px; min-height: 120px; overflow-y: auto; font-family: 'Consolas', monospace; font-size: 11px;">
-                            <div id="disassembly-view" style="color: #858585;">
-                                Start debugging to view disassembly
+                        <div id="swv-trace-output"
+                            style="max-height: 300px; overflow-y: auto; background: #000000; padding: 10px; border-radius: 4px; border: 1px solid #3e3e42;">
+                            <div style="color: #858585; text-align: center; padding: 10px;">
+                                SWV Trace disabled. Click "Enable" to start capturing ITM trace data.
                             </div>
+                        </div>
+                        <div style="margin-top: 10px; display: flex; gap: 10px; align-items: center;">
+                            <span style="color: #858585; font-size: 11px;">Status:</span>
+                            <span id="swv-status" style="color: #858585; font-size: 11px;">Disabled</span>
+                            <span style="margin-left: auto; color: #858585; font-size: 11px;">Packets:</span>
+                            <span id="swv-packet-count" style="color: #4ec9b0; font-size: 11px;">0</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Continue with other sections... -->
-            <div class="view" id="placeholder-after-debug"></div>
-            <script>
-                // Remove placeholder div
-                document.getElementById('placeholder-after-debug').remove();
-            </script>
-
-            <!-- VARIABLE VIEWER -->
-            <div class="card" style="margin-top: 20px;">
-                <div class="card-title">
-                    <span class="card-title-icon">📊</span>
-                    Variable Viewer
-                    <button class="btn btn-sm" onclick="addVariable()" style="margin-left: auto; font-size: 12px;">+
-                        Add Variable</button>
-                </div>
-                <div class="variable-table-container">
-                    <table class="debug-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 30px;">📌</th>
-                                <th>Variable Name</th>
-                                <th>Type</th>
-                                <th>Value</th>
-                                <th>Address</th>
-                                <th style="width: 80px;">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="variable-list">
-                            <tr>
-                                <td colspan="6" style="text-align: center; color: #858585; padding: 20px;">
-                                    No variables added. Click "+ Add Variable" to monitor a variable.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- REGISTER VIEWER -->
-            <div class="card" style="margin-top: 20px;">
-                <div class="card-title">
-                    <span class="card-title-icon">🎚️</span>
-                    Register Viewer
-                    <button class="btn btn-sm" onclick="refreshRegisters()"
-                        style="margin-left: auto; font-size: 12px;">🔄 Refresh</button>
-                </div>
-                <div class="register-grid"
-                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px;">
-                    <div class="register-item" id="reg-r0">
-                        <div class="register-name">R0</div>
-                        <div class="register-value">0x00000000</div>
-                    </div>
-                    <div class="register-item" id="reg-r1">
-                        <div class="register-name">R1</div>
-                        <div class="register-value">0x00000000</div>
-                    </div>
-                    <div class="register-item" id="reg-r2">
-                        <div class="register-name">R2</div>
-                        <div class="register-value">0x00000000</div>
-                    </div>
-                    <div class="register-item" id="reg-r3">
-                        <div class="register-name">R3</div>
-                        <div class="register-value">0x00000000</div>
-                    </div>
-                    <div class="register-item" id="reg-r4">
-                        <div class="register-name">R4</div>
-                        <div class="register-value">0x00000000</div>
-                    </div>
-                    <div class="register-item" id="reg-r5">
-                        <div class="register-name">R5</div>
-                        <div class="register-value">0x00000000</div>
-                    </div>
-                    <div class="register-item" id="reg-r6">
-                        <div class="register-name">R6</div>
-                        <div class="register-value">0x00000000</div>
-                    </div>
-                    <div class="register-item" id="reg-r7">
-                        <div class="register-name">R7</div>
-                        <div class="register-value">0x00000000</div>
-                    </div>
-                    <div class="register-item" id="reg-r8">
-                        <div class="register-name">R8</div>
-                        <div class="register-value">0x00000000</div>
-                    </div>
-                    <div class="register-item" id="reg-r9">
-                        <div class="register-name">R9</div>
-                        <div class="register-value">0x00000000</div>
-                    </div>
-                    <div class="register-item" id="reg-r10">
-                        <div class="register-name">R10</div>
-                        <div class="register-value">0x00000000</div>
-                    </div>
-                    <div class="register-item" id="reg-r11">
-                        <div class="register-name">R11</div>
-                        <div class="register-value">0x00000000</div>
-                    </div>
-                    <div class="register-item" id="reg-r12">
-                        <div class="register-name">R12</div>
-                        <div class="register-value">0x00000000</div>
-                    </div>
-                    <div class="register-item highlight" id="reg-sp">
-                        <div class="register-name">SP</div>
-                        <div class="register-value">0x20020000</div>
-                    </div>
-                    <div class="register-item highlight" id="reg-lr">
-                        <div class="register-name">LR</div>
-                        <div class="register-value">0x00000000</div>
-                    </div>
-                    <div class="register-item highlight" id="reg-pc">
-                        <div class="register-name">PC</div>
-                        <div class="register-value">0x08000000</div>
+            <!-- OUTPUT CONSOLE -->
+            <div class="output-console">
+                <div class="console-header">
+                    <div class="console-title">OUTPUT</div>
+                    <div class="console-actions">
+                        <button class="console-btn" onclick="clearConsole()" title="Clear">🗑️</button>
+                        <button class="console-btn" onclick="saveConsoleLog()" title="Save Log">💾</button>
                     </div>
                 </div>
-            </div>
-
-            <!-- BREAKPOINTS -->
-            <div class="card" style="margin-top: 20px;">
-                <div class="card-title">
-                    <span class="card-title-icon">🔴</span>
-                    Breakpoints
-                    <button class="btn btn-sm" onclick="addBreakpoint()" style="margin-left: auto; font-size: 12px;">+
-                        Add Breakpoint</button>
-                </div>
-                <div class="breakpoint-list" id="breakpoint-list">
-                    <div style="text-align: center; color: #858585; padding: 20px;">
-                        No breakpoints set. Click "+ Add Breakpoint" to add one.
-                    </div>
-                </div>
-            </div>
-
-            <!-- CALL STACK -->
-            <div class="card" style="margin-top: 20px;">
-                <div class="card-title">
-                    <span class="card-title-icon">📚</span>
-                    Call Stack
-                </div>
-                <div class="callstack-list" id="callstack-list">
-                    <div style="text-align: center; color: #858585; padding: 20px;">
-                        Start debugging to view call stack
-                    </div>
-                </div>
-            </div>
-
-            <!-- DISASSEMBLY VIEW -->
-            <div class="card" style="margin-top: 20px;">
-                <div class="card-title">
-                    <span class="card-title-icon">🔍</span>
-                    Disassembly View
-                    <button class="btn btn-sm" onclick="refreshDisassembly()"
-                        style="margin-left: auto; font-size: 12px;">🔄 Refresh</button>
-                </div>
-                <div class="disassembly-view" id="disassembly-view"
-                    style="font-family: 'Courier New', monospace; font-size: 12px; background: #1e1e1e; border-radius: 4px; padding: 10px; max-height: 400px; overflow-y: auto;">
-                    <div style="text-align: center; color: #858585; padding: 20px;">
-                        Start debugging to view disassembly
-                    </div>
-                </div>
-            </div>
-
-            <!-- SWV TRACE VIEWER -->
-            <div class="card" style="margin-top: 20px;">
-                <div class="card-title">
-                    <span class="card-title-icon">📡</span>
-                    SWV Trace Viewer (Serial Wire Viewer)
-                    <div style="margin-left: auto; display: flex; gap: 10px; align-items: center;">
-                        <label style="font-size: 11px; color: #858585;">CPU Freq (MHz):</label>
-                        <input type="number" id="swv-cpu-freq" value="168"
-                            style="width: 70px; padding: 4px 8px; background: #1e1e1e; border: 1px solid #3e3e42; color: #cccccc; border-radius: 4px; font-size: 12px;">
-                        <button class="btn btn-sm btn-success" onclick="enableSWV()" id="swv-enable-btn">▶️
-                            Enable</button>
-                        <button class="btn btn-sm btn-danger" onclick="disableSWV()" id="swv-disable-btn"
-                            style="display: none;">⏹️ Disable</button>
-                        <button class="btn btn-sm btn-secondary" onclick="clearSWVTrace()">🗑️ Clear</button>
-                    </div>
-                </div>
-                <div
-                    style="background: #1e1e1e; border-radius: 4px; padding: 10px; font-family: 'Courier New', monospace; font-size: 12px;">
-                    <div style="margin-bottom: 10px; color: #858585; font-size: 11px;">
-                        💡 Tip: Use ITM_SendChar() in your code for printf-style debugging without UART
-                    </div>
-                    <div id="swv-trace-output"
-                        style="max-height: 300px; overflow-y: auto; background: #000000; padding: 10px; border-radius: 4px; border: 1px solid #3e3e42;">
-                        <div style="color: #858585; text-align: center; padding: 10px;">
-                            SWV Trace disabled. Click "Enable" to start capturing ITM trace data.
-                        </div>
-                    </div>
-                    <div style="margin-top: 10px; display: flex; gap: 10px; align-items: center;">
-                        <span style="color: #858585; font-size: 11px;">Status:</span>
-                        <span id="swv-status" style="color: #858585; font-size: 11px;">Disabled</span>
-                        <span style="margin-left: auto; color: #858585; font-size: 11px;">Packets:</span>
-                        <span id="swv-packet-count" style="color: #4ec9b0; font-size: 11px;">0</span>
-                    </div>
+                <div class="console-content" id="console-output">
+                    <div class="console-line">🌟 HopeIDE (Umut IDE) v3.0.0 - Professional Edition</div>
+                    <div class="console-line">Ready.</div>
                 </div>
             </div>
         </div>
 
-        <!-- OUTPUT CONSOLE -->
-        <div class="output-console">
-            <div class="console-header">
-                <div class="console-title">OUTPUT</div>
-                <div class="console-actions">
-                    <button class="console-btn" onclick="clearConsole()" title="Clear">🗑️</button>
-                    <button class="console-btn" onclick="saveConsoleLog()" title="Save Log">💾</button>
+        <!-- DEVICE INFO PANEL -->
+        <div class="device-info-panel">
+            <div class="info-section">
+                <div class="info-section-title">Connection Status</div>
+                <div class="info-row">
+                    <span class="info-label">Status:</span>
+                    <span class="info-value">
+                        <span class="connection-indicator disconnected" id="connection-indicator"></span>
+                        <span id="connection-status">Disconnected</span>
+                    </span>
                 </div>
             </div>
-            <div class="console-content" id="console-output">
-                <div class="console-line">🌟 HopeIDE (Umut IDE) v3.0.0 - Professional Edition</div>
-                <div class="console-line">Ready.</div>
-            </div>
-        </div>
-    </div>
 
-    <!-- DEVICE INFO PANEL -->
-    <div class="device-info-panel">
-        <div class="info-section">
-            <div class="info-section-title">Connection Status</div>
-            <div class="info-row">
-                <span class="info-label">Status:</span>
-                <span class="info-value">
-                    <span class="connection-indicator disconnected" id="connection-indicator"></span>
-                    <span id="connection-status">Disconnected</span>
-                </span>
+            <div class="info-section" id="stlink-info-section" style="display: none;">
+                <div class="info-section-title">ST-Link Information</div>
+                <div class="info-row">
+                    <span class="info-label">Version:</span>
+                    <span class="info-value" id="stlink-version">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Firmware:</span>
+                    <span class="info-value" id="stlink-firmware">-</span>
+                </div>
             </div>
-        </div>
 
-        <div class="info-section" id="stlink-info-section" style="display: none;">
-            <div class="info-section-title">ST-Link Information</div>
-            <div class="info-row">
-                <span class="info-label">Version:</span>
-                <span class="info-value" id="stlink-version">-</span>
+            <div class="info-section" id="mcu-info-section" style="display: none;">
+                <div class="info-section-title">MCU Information</div>
+                <div class="info-row">
+                    <span class="info-label">MCU Type:</span>
+                    <span class="info-value" id="mcu-type" style="color: #4ec9b0; font-weight: 600;">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Device:</span>
+                    <span class="info-value" id="mcu-device">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Device ID:</span>
+                    <span class="info-value" id="mcu-id">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Flash Size:</span>
+                    <span class="info-value" id="mcu-flash">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">RAM Size:</span>
+                    <span class="info-value" id="mcu-ram">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Core:</span>
+                    <span class="info-value" id="mcu-core">-</span>
+                </div>
             </div>
-            <div class="info-row">
-                <span class="info-label">Firmware:</span>
-                <span class="info-value" id="stlink-firmware">-</span>
-            </div>
-        </div>
 
-        <div class="info-section" id="mcu-info-section" style="display: none;">
-            <div class="info-section-title">MCU Information</div>
-            <div class="info-row">
-                <span class="info-label">MCU Type:</span>
-                <span class="info-value" id="mcu-type" style="color: #4ec9b0; font-weight: 600;">-</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Device:</span>
-                <span class="info-value" id="mcu-device">-</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Device ID:</span>
-                <span class="info-value" id="mcu-id">-</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Flash Size:</span>
-                <span class="info-value" id="mcu-flash">-</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">RAM Size:</span>
-                <span class="info-value" id="mcu-ram">-</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Core:</span>
-                <span class="info-value" id="mcu-core">-</span>
+            <div class="info-section">
+                <div class="info-section-title">Quick Actions</div>
+                <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="showView('stlink')">
+                    🔌 Connection Settings
+                </button>
+                <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="showView('flash')">
+                    ⚡ Flash Firmware
+                </button>
+                <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="showView('memory')">
+                    💾 Memory Browser
+                </button>
             </div>
         </div>
-
-        <div class="info-section">
-            <div class="info-section-title">Quick Actions</div>
-            <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="showView('stlink')">
-                🔌 Connection Settings
-            </button>
-            <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="showView('flash')">
-                ⚡ Flash Firmware
-            </button>
-            <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="showView('memory')">
-                💾 Memory Browser
-            </button>
-        </div>
-    </div>
     </div>
 
     <!-- STATUS BAR -->
