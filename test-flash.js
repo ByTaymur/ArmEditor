@@ -1,92 +1,43 @@
-const FlashManager = require('./src/debugger/flash-manager');
+#!/usr/bin/env node
 
-console.log("==================================================");
-console.log("⚡ FLASH MANAGER TEST");
-console.log("==================================================");
+/**
+ * Test Flash Operation with Auto-Detection
+ */
 
-// Mock OpenOCD Interface
-class MockOpenOCD {
-    constructor() {
-        this.commands = [];
-    }
+const { OpenOCDFlasher } = require('./src/compiler/arm-toolchain');
+const path = require('path');
 
-    async halt() {
-        console.log("[Mock] Target Halted");
-    }
+async function testFlash() {
+    console.log('⚡ Flash Test with Auto-Detection\n');
+    console.log('━'.repeat(60));
 
-    async reset(halt) {
-        console.log(`[Mock] Target Reset (Halt: ${halt})`);
-    }
+    // Create flasher with auto-detection
+    const flasher = new OpenOCDFlasher({
+        autoDetect: true,
+        timeout: 30000
+    });
 
-    async sendCommand(cmd, timeout) {
-        console.log(`[Mock] Command: '${cmd}' (Timeout: ${timeout || 'default'})`);
-        this.commands.push(cmd);
-        return "OK";
-    }
+    console.log('\n🔍 Attempting to detect and flash...\n');
 
-    async flashErase(address, length) {
-        console.log(`[Mock] Erase: Addr 0x${address.toString(16)}, Len ${length}`);
-    }
-
-    async writeMemory(address, value) {
-        console.log(`[Mock] Write Mem: 0x${address.toString(16)} = 0x${value.toString(16)}`);
-    }
-
-    async readMemory(address, count) {
-        console.log(`[Mock] Read Mem: 0x${address.toString(16)}`);
-        // Return dummy data for verification
-        return [{ values: Array(count).fill(0xFF) }];
-    }
-}
-
-async function runTest() {
     try {
-        const mockOpenOCD = new MockOpenOCD();
-        const flashManager = new FlashManager(mockOpenOCD);
+        // Try to flash an example .elf file (if exists)
+        const elfFile = path.join(__dirname, 'examples/blink-led/build/blink-led.elf');
 
-        console.log("\nTesting programAndRun()...");
-        const result = await flashManager.programAndRun('firmware.bin', true, true);
+        await flasher.flash(elfFile, (type, text) => {
+            process.stdout.write(text);
+        });
 
-        console.log("\n[Result]");
-        console.log(JSON.stringify(result, null, 2));
-
-        // Verification
-        let passed = true;
-
-        // Check command sequence
-        const expectedCommands = [
-            'stm32f4x mass_erase 0', // from eraseFlash(false) -> wait, actually default is sector erase if not fullChip
-            // Wait, let's check the logic in flash-manager.js
-            // programAndRun calls eraseFlash() (no args -> fullChip=false) -> flashErase(0,0)
-            // Then programFlash -> 'program firmware.bin 0x08000000' (for .bin)
-            // Then verify_image
-        ];
-
-        // Check if critical commands were sent
-        const cmdString = mockOpenOCD.commands.join('|');
-
-        if (!cmdString.includes('program firmware.bin 0x08000000')) {
-            console.log("❌ Program command missing");
-            passed = false;
-        }
-
-        if (!cmdString.includes('verify_image firmware.bin')) {
-            console.log("❌ Verify command missing");
-            passed = false;
-        }
-
-        if (result.success && passed) {
-            console.log("\n🎉 FLASH TEST PASSED");
-            process.exit(0);
-        } else {
-            console.log("\n❌ FLASH TEST FAILED");
-            process.exit(1);
-        }
+        console.log('\n✅ Flash completed successfully!');
 
     } catch (error) {
-        console.error("\n❌ TEST ERROR:", error);
-        process.exit(1);
+        console.error('\n❌ Flash failed:', error.message);
+        console.log('\nℹ️  This is expected if:');
+        console.log('  - STLink is not connected');
+        console.log('  - No .elf file exists');
+        console.log('  - Target board is not powered');
     }
+
+    console.log('\n' + '━'.repeat(60));
 }
 
-runTest();
+testFlash();

@@ -1,73 +1,102 @@
-const { execSync } = require('child_process');
-const os = require('os');
-const fs = require('fs');
-const path = require('path');
+#!/usr/bin/env node
 
-console.log("==================================================");
-console.log("🖥️  SYSTEM DIAGNOSTICS");
-console.log("==================================================");
+/**
+ * COMPREHENSIVE AUTO-DETECTION TEST
+ * Tests the entire auto-detection system step by step
+ */
 
-// 1. OS Information
-console.log(`\n[OS Info]`);
-console.log(`Platform: ${os.platform()}`);
-console.log(`Release: ${os.release()}`);
-console.log(`Arch: ${os.arch()}`);
-console.log(`CPUs: ${os.cpus().length}`);
-console.log(`Memory: ${Math.round(os.totalmem() / 1024 / 1024 / 1024)} GB`);
+const STM32Detector = require('./src/compiler/stm32-detector');
+const { OpenOCDFlasher } = require('./src/compiler/arm-toolchain');
 
-// 2. Node.js Environment
-console.log(`\n[Node.js Environment]`);
-console.log(`Node Version: ${process.version}`);
-console.log(`Path: ${process.execPath}`);
+console.log('═'.repeat(70));
+console.log('  🧪 AUTO-DETECTION SYSTEM - COMPREHENSIVE TEST');
+console.log('═'.repeat(70));
+console.log('');
 
-// 3. Check Dependencies
-console.log(`\n[External Tools]`);
+async function runTests() {
+    // TEST 1: STM32Detector Basic Detection
+    console.log('📋 TEST 1: STM32Detector.detect()');
+    console.log('─'.repeat(70));
 
-function checkCommand(name, cmd) {
+    const detector = new STM32Detector();
+
     try {
-        const output = execSync(cmd, { stdio: 'pipe' }).toString().trim().split('\n')[0];
-        console.log(`✅ ${name}: Found (${output})`);
-        return true;
-    } catch (e) {
-        console.log(`❌ ${name}: NOT FOUND`);
-        return false;
+        const result = await detector.detect();
+
+        if (result.success) {
+            console.log('✅ Detection: SUCCESS');
+            console.log(`   Chip: ${result.chip.name}`);
+            console.log(`   Family: ${result.chip.family}`);
+            console.log(`   Series: ${result.chip.series}`);
+            console.log(`   IDCODE: ${result.idcode}`);
+            console.log(`   Target: ${result.chip.target}`);
+            console.log(`   Interface: ${result.interface}`);
+            console.log(`   Voltage: ${result.voltage ? result.voltage.toFixed(3) + 'V' : 'N/A'}`);
+
+            // Get compiler flags
+            const flags = detector.getCompilerFlags(result.chip);
+            console.log(`   CPU: ${flags.cpu}`);
+            console.log(`   FPU: ${flags.fpu || 'none'}`);
+            console.log(`   Defines: ${flags.defines.join(', ')}`);
+
+            console.log('');
+
+            // TEST 2: OpenOCDFlasher Detection
+            console.log('📋 TEST 2: OpenOCDFlasher.detectAndConfigure()');
+            console.log('─'.repeat(70));
+
+            const flasher = new OpenOCDFlasher({
+                autoDetect: true
+            });
+
+            const config = await flasher.detectAndConfigure();
+
+            if (config.success) {
+                console.log('✅ Configuration: SUCCESS');
+                console.log(`   Mode: ${config.mode}`);
+                console.log(`   Chip: ${config.chip.name}`);
+                console.log(`   Target: ${config.target}`);
+                console.log(`   Message: ${config.message}`);
+
+                if (config.compilerFlags) {
+                    console.log('');
+                    console.log('   📝 Recommended Compiler Flags:');
+                    console.log(`      -mcpu=${config.compilerFlags.cpu}`);
+                    if (config.compilerFlags.fpu) {
+                        console.log(`      ${config.compilerFlags.fpu}`);
+                    }
+                    config.compilerFlags.defines.forEach(def => {
+                        console.log(`      -D${def}`);
+                    });
+                }
+            } else {
+                console.log('❌ Configuration: FAILED');
+                console.log(`   ${config.message}`);
+            }
+
+        } else {
+            console.log('❌ Detection: FAILED');
+            console.log(`   Message: ${result.message}`);
+
+            if (result.suggestion) {
+                console.log('');
+                console.log('   💡 Suggestions:');
+                result.suggestion.split('\n').forEach(line => {
+                    if (line.trim()) console.log(`   ${line}`);
+                });
+            }
+        }
+
+    } catch (error) {
+        console.log('❌ ERROR:', error.message);
+        console.log('');
+        console.log('Stack:', error.stack);
     }
+
+    console.log('');
+    console.log('═'.repeat(70));
+    console.log('  TEST COMPLETE');
+    console.log('═'.repeat(70));
 }
 
-const tools = [
-    { name: 'OpenOCD', cmd: 'openocd --version 2>&1' },
-    { name: 'ARM GCC', cmd: 'arm-none-eabi-gcc --version' },
-    { name: 'GDB', cmd: 'arm-none-eabi-gdb --version || gdb-multiarch --version' },
-    { name: 'Make', cmd: 'make --version' },
-    { name: 'Python 3', cmd: 'python3 --version' }
-];
-
-let allToolsFound = true;
-for (const tool of tools) {
-    if (!checkCommand(tool.name, tool.cmd)) {
-        allToolsFound = false;
-    }
-}
-
-// 4. Check Project Structure
-console.log(`\n[Project Structure]`);
-const requiredDirs = ['src', 'resources', 'node_modules'];
-let structureOk = true;
-
-for (const dir of requiredDirs) {
-    if (fs.existsSync(path.join(__dirname, dir))) {
-        console.log(`✅ ${dir}/ exists`);
-    } else {
-        console.log(`❌ ${dir}/ MISSING`);
-        structureOk = false;
-    }
-}
-
-console.log("\n==================================================");
-if (allToolsFound && structureOk) {
-    console.log("🎉 SYSTEM CHECK PASSED");
-    process.exit(0);
-} else {
-    console.log("⚠️  SYSTEM CHECK FAILED - Missing dependencies");
-    process.exit(1);
-}
+runTests();

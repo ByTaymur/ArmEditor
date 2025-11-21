@@ -565,8 +565,130 @@
             flex-direction: column;
         }
 
-        .explorer-header {
-            padding: 10px 15px;
+        /* Debug Panel - Sağ Sidebar */
+        .debug-panel {
+            width: 320px;
+            background: #252526;
+            border-left: 1px solid #3e3e42;
+            display: none;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .debug-panel.visible {
+            display: flex;
+        }
+
+        .debug-section {
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .debug-section-header {
+            padding: 8px 12px;
+            background: #2d2d30;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .debug-section-header:hover {
+            background: #37373d;
+        }
+
+        .debug-section-content {
+            padding: 8px;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .debug-section-content.collapsed {
+            display: none;
+        }
+
+        .register-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+        }
+
+        .register-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 4px;
+            background: #1e1e1e;
+            border-radius: 2px;
+            font-family: 'Consolas', monospace;
+            font-size: 11px;
+        }
+
+        .register-name {
+            color: #9cdcfe;
+        }
+
+        .register-value {
+            color: #ce9178;
+        }
+
+        .variable-item,
+        .breakpoint-item {
+            padding: 4px 8px;
+            background: #1e1e1e;
+            margin-bottom: 4px;
+            border-radius: 2px;
+            font-size: 11px;
+        }
+
+        .debug-toolbar {
+            padding: 8px;
+            background: #2d2d30;
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .debug-btn {
+            background: #0e639c;
+            border: none;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .debug-btn:hover {
+            background: #1177bb;
+        }
+
+        .debug-btn.success {
+            background: #107c10;
+        }
+
+        .debug-btn.danger {
+            background: #c5000b;
+        }
+
+        .debug-status {
+            padding: 8px 12px;
+            background: #1e1e1e;
+            font-size: 11px;
+            color: #888;
+        }
+
+        .debug-status.running {
+            color: #4ec9b0;
+        }
+
+        .debug-status.stopped {
+            color: #f48771;
+        }
+
+        .sidebar-header {
+            padding: 12px;
             background: #2d2d30;
             border-bottom: 1px solid #3e3e42;
             font-size: 13px;
@@ -907,37 +1029,48 @@
 </head>
 
 <body>
-    <!-- TOP MENU -->
-    <div class="top-menu">
-        <div class="menu-item" onclick="openProject()">📂 Open Project</div>
-        <div class="menu-item" onclick="buildProject()">🔨 Build</div>
-        <div class="menu-item" onclick="buildAndFlash()">⚡ Build & Flash</div>
-        <div class="menu-item" onclick="showView('stlink')">🔌 ST-Link</div>
-    </div>
-
-    <!-- MAIN CONTAINER -->
-    <div class="main-container">
-        <!-- SIDEBAR -->
-        <div class="sidebar">
-            <div class="sidebar-icon active" data-tooltip="Editor" onclick="showView('editor')">📝</div>
-            <div class="sidebar-icon" data-tooltip="Debug" onclick="showView('debug')">🐛</div>
-            <div class="sidebar-icon" data-tooltip="ST-Link Manager" onclick="showView('stlink')">🔌</div>
-            <div class="sidebar-icon" data-tooltip="Memory Browser" onclick="showView('memory')">💾</div>
-            <div class="sidebar-icon" data-tooltip="Flash Download" onclick="showView('flash')">⚡</div>
-            <div class="sidebar-icon" data-tooltip="Option Bytes" onclick="showView('options')">⚙️</div>
+    <div class="container">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <button class="btn" onclick="openFile()">📂 Open File</button>
+            <button class="btn" onclick="openProject()">📁 Open Project</button>
+            <button class="btn" onclick="saveFile()">💾 Save</button>
+            <div class="separator"></div>
+            <button class="btn success" onclick="buildProject()">🔨 Build (F7)</button>
+            <button class="btn" onclick="cleanProject()">🧹 Clean</button>
+            <div class="separator"></div>
+            <button class="btn success" onclick="flashDevice()">⚡ Flash</button>
+            <button class="btn" onclick="openTargetSettings()">⚙️ Target Settings</button>
+            <div class="separator"></div>
+            <button class="btn success" onclick="startDebug()">▶️ Debug (F5)</button>
+            <button class="btn danger" onclick="stopDebug()">⏹️ Stop</button>
+            <div class="separator"></div>
+            <button class="btn" onclick="toggleDebugPanel()">🔧 Debug Panel</button>
+            <button class="btn" onclick="analyzeCode()">🤖 AI Analyze</button>
         </div>
 
-        <!-- CONTENT AREA -->
-        <div class="content-area">
-            <!-- EDITOR VIEW -->
-            <div class="view active" id="editor-view">
-                <div class="editor-view">
-                    <div class="file-explorer">
-                        <div class="explorer-header">PROJECT EXPLORER</div>
-                        <div class="file-tree" id="file-tree">
-                            <div style="padding: 20px; text-align: center; color: #858585;">
-                                Open a project to start
-                            </div>
+        <!-- Main -->
+        <div class="main">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="sidebar-header">PROJECT</div>
+                <div class="sidebar-content">
+                    <div id="project-info" class="project-name">No project opened</div>
+                    <div id="file-tree" style="margin-top: 10px; overflow-y: auto; max-height: calc(100vh - 200px);">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Editor -->
+            <div class="editor-area">
+                <div class="tabs" id="tabs"></div>
+                <div id="editor-container">
+                    <div class="welcome" id="welcome">
+                        <h1>🚀 ArmEditor</h1>
+                        <p>Professional ARM Development IDE<br>Better than Keil/IAR, completely free!</p>
+                        <div class="welcome-actions">
+                            <button class="btn" onclick="openFile()">Open File</button>
+                            <button class="btn success" onclick="openProject()">Open Project</button>
                         </div>
                     </div>
                     <div class="editor-container">
@@ -1441,6 +1574,128 @@
 
                 </div>
             </div>
+
+            <!-- Debug Panel - Sağ Sidebar -->
+            <div class="debug-panel" id="debug-panel">
+                <!-- Debug Toolbar -->
+                <div class="debug-toolbar">
+                    <button class="debug-btn success" onclick="debugContinue()">▶️ Continue</button>
+                    <button class="debug-btn" onclick="debugPause()">⏸️ Pause</button>
+                    <button class="debug-btn" onclick="debugStepOver()">⏭️ Step Over</button>
+                    <button class="debug-btn" onclick="debugStepInto()">⤵️ Step Into</button>
+                    <button class="debug-btn" onclick="debugStepOut()">⤴️ Step Out</button>
+                    <button class="debug-btn" onclick="debugReset()">🔄 Reset</button>
+                </div>
+
+                <!-- Debug Status -->
+                <div class="debug-status" id="debug-status">Status: Stopped</div>
+
+                <!-- Registers -->
+                <div class="debug-section">
+                    <div class="debug-section-header" onclick="toggleSection('registers')">
+                        <span>🎚️ Registers</span>
+                        <span id="registers-toggle">▼</span>
+                    </div>
+                    <div class="debug-section-content" id="registers-content">
+                        <div class="register-grid" id="register-grid">
+                            <div class="register-item"><span class="register-name">R0</span><span
+                                    class="register-value">0x00000000</span></div>
+                            <div class="register-item"><span class="register-name">R1</span><span
+                                    class="register-value">0x00000000</span></div>
+                            <div class="register-item"><span class="register-name">R2</span><span
+                                    class="register-value">0x00000000</span></div>
+                            <div class="register-item"><span class="register-name">R3</span><span
+                                    class="register-value">0x00000000</span></div>
+                            <div class="register-item"><span class="register-name">R4</span><span
+                                    class="register-value">0x00000000</span></div>
+                            <div class="register-item"><span class="register-name">R5</span><span
+                                    class="register-value">0x00000000</span></div>
+                            <div class="register-item"><span class="register-name">R6</span><span
+                                    class="register-value">0x00000000</span></div>
+                            <div class="register-item"><span class="register-name">R7</span><span
+                                    class="register-value">0x00000000</span></div>
+                            <div class="register-item"><span class="register-name">R8</span><span
+                                    class="register-value">0x00000000</span></div>
+                            <div class="register-item"><span class="register-name">R9</span><span
+                                    class="register-value">0x00000000</span></div>
+                            <div class="register-item"><span class="register-name">R10</span><span
+                                    class="register-value">0x00000000</span></div>
+                            <div class="register-item"><span class="register-name">R11</span><span
+                                    class="register-value">0x00000000</span></div>
+                            <div class="register-item"><span class="register-name">R12</span><span
+                                    class="register-value">0x00000000</span></div>
+                            <div class="register-item"><span class="register-name">SP</span><span
+                                    class="register-value">0x20020000</span></div>
+                            <div class="register-item"><span class="register-name">LR</span><span
+                                    class="register-value">0x00000000</span></div>
+                            <div class="register-item"><span class="register-name">PC</span><span
+                                    class="register-value">0x08000000</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Variables -->
+                <div class="debug-section">
+                    <div class="debug-section-header" onclick="toggleSection('variables')">
+                        <span>📊 Variables</span>
+                        <span id="variables-toggle">▼</span>
+                    </div>
+                    <div class="debug-section-content" id="variables-content">
+                        <div id="variables-list">
+                            <div style="color: #888; font-size: 11px;">Start debugging to view variables</div>
+                        </div>
+                        <button class="debug-btn" onclick="addVariable()" style="margin-top: 8px; width: 100%;">+ Add
+                            Variable</button>
+                    </div>
+                </div>
+
+                <!-- Breakpoints -->
+                <div class="debug-section">
+                    <div class="debug-section-header" onclick="toggleSection('breakpoints')">
+                        <span>🔴 Breakpoints</span>
+                        <span id="breakpoints-toggle">▼</span>
+                    </div>
+                    <div class="debug-section-content" id="breakpoints-content">
+                        <div id="breakpoints-list">
+                            <div style="color: #888; font-size: 11px;">No breakpoints set</div>
+                        </div>
+                        <button class="debug-btn" onclick="addBreakpoint()" style="margin-top: 8px; width: 100%;">+ Add
+                            Breakpoint</button>
+                    </div>
+                </div>
+
+                <!-- Call Stack -->
+                <div class="debug-section">
+                    <div class="debug-section-header" onclick="toggleSection('callstack')">
+                        <span>📚 Call Stack</span>
+                        <span id="callstack-toggle">▼</span>
+                    </div>
+                    <div class="debug-section-content" id="callstack-content">
+                        <div id="callstack-list">
+                            <div style="color: #888; font-size: 11px;">Start debugging to view call stack</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Memory View -->
+                <div class="debug-section">
+                    <div class="debug-section-header" onclick="toggleSection('memory')">
+                        <span>🧠 Memory</span>
+                        <span id="memory-toggle">▼</span>
+                    </div>
+                    <div class="debug-section-content" id="memory-content">
+                        <div style="display: flex; gap: 4px; margin-bottom: 8px;">
+                            <input type="text" id="memory-address" placeholder="0x20000000"
+                                style="flex: 1; background: #1e1e1e; border: 1px solid #3e3e42; color: #d4d4d4; padding: 4px; font-size: 11px;">
+                            <button class="debug-btn" onclick="readMemory()">Read</button>
+                        </div>
+                        <div id="memory-view"
+                            style="font-family: 'Consolas', monospace; font-size: 10px; color: #ce9178;">
+                            --
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- DEVICE INFO PANEL -->
@@ -1550,14 +1805,124 @@
             }
         }
 
-        // Console functions
-        function appendConsole(message, type = 'normal') {
-            const console = document.getElementById('console-output');
-            const line = document.createElement('div');
-            line.className = 'console-line ' + type;
-            line.textContent = message;
-            console.appendChild(line);
-            console.scrollTop = console.scrollHeight;
+        // IPC Listeners
+        ipcRenderer.on('new-file', () => {
+            if (editor) {
+                editor.setValue('');
+                currentFile = null;
+                updateUI();
+            }
+        });
+
+        ipcRenderer.on('open-file', (event, data) => {
+            if (editor) {
+                editor.setValue(data.content);
+                currentFile = data;
+                updateUI();
+                document.getElementById('welcome').style.display = 'none';
+                document.getElementById('editor').style.display = 'block';
+            }
+        });
+
+        ipcRenderer.on('open-project', (event, data) => {
+            document.getElementById('project-info').textContent = data.path;
+            outputAppend(`📁 Opened project: ${data.path}\n`);
+
+            // Load and display file tree
+            loadFileTree(data.path);
+        });
+
+        // Load file tree for project
+        function loadFileTree(projectPath) {
+            const fs = require('fs');
+            const path = require('path');
+            const fileTreeEl = document.getElementById('file-tree');
+
+            try {
+                const files = fs.readdirSync(projectPath);
+                let html = '<div style="font-size: 12px;">';
+
+                // Sort: directories first, then files
+                const sorted = files.sort((a, b) => {
+                    const aPath = path.join(projectPath, a);
+                    const bPath = path.join(projectPath, b);
+                    const aIsDir = fs.statSync(aPath).isDirectory();
+                    const bIsDir = fs.statSync(bPath).isDirectory();
+
+                    if (aIsDir && !bIsDir) return -1;
+                    if (!aIsDir && bIsDir) return 1;
+                    return a.localeCompare(b);
+                });
+
+                sorted.forEach(file => {
+                    // Skip hidden files and build directories
+                    if (file.startsWith('.') || file === 'build' || file === 'node_modules') return;
+
+                    const fullPath = path.join(projectPath, file);
+                    const stats = fs.statSync(fullPath);
+
+                    if (stats.isDirectory()) {
+                        html += `<div style="padding: 4px; cursor: pointer; color: #569cd6;" onclick="toggleFolder('${fullPath}')">📁 ${file}</div>`;
+                    } else {
+                        const ext = path.extname(file);
+                        let icon = '📄';
+                        if (['.c', '.h', '.cpp', '.hpp'].includes(ext)) icon = '📝';
+                        else if (ext === '.s' || ext === '.asm') icon = '⚙️';
+                        else if (ext === '.ld') icon = '🔗';
+
+                        html += `<div style="padding: 4px; padding-left: 10px; cursor: pointer; color: #dcdcdc;" onclick="openFileFromTree('${fullPath}')">${icon} ${file}</div>`;
+                    }
+                });
+
+                html += '</div>';
+
+                // Add auto-detection info
+                html += `<div style="margin-top: 15px; padding: 8px; background: #1e1e1e; border-radius: 4px; font-size: 11px;">
+                    <div style="color: #4ec9b0; font-weight: bold; margin-bottom: 5px;">🔍 Auto-Detection</div>
+                    <div style="color: #9cdcfe;">STM32 chip will be automatically detected during flash/debug</div>
+                    <div style="color: #6a9955; margin-top: 5px;">✓ No configuration needed!</div>
+                </div>`;
+
+                fileTreeEl.innerHTML = html;
+            } catch (err) {
+                fileTreeEl.innerHTML = `<div style="color: #f48771;">Error loading files: ${err.message}</div>`;
+            }
+        }
+
+        function openFileFromTree(filePath) {
+            ipcRenderer.send('open-file-path', filePath);
+        }
+
+        function toggleFolder(folderPath) {
+            outputAppend(`📁 ${folderPath}\n`);
+        }
+
+        ipcRenderer.on('get-editor-content', (event, action) => {
+            if (editor) {
+                const content = editor.getValue();
+                if (action === 'save') {
+                    ipcRenderer.send('save-file-content', content);
+                } else if (action === 'save-as') {
+                    ipcRenderer.send('save-file-as-content', content);
+                }
+            }
+        });
+
+        ipcRenderer.on('file-saved', (event, path) => {
+            outputAppend(`💾 Saved: ${path}\n`);
+        });
+
+        ipcRenderer.on('output-clear', () => {
+            document.getElementById('output').textContent = '';
+        });
+
+        ipcRenderer.on('output-append', (event, text) => {
+            outputAppend(text);
+        });
+
+        // UI Functions
+        function openFile() {
+            ipcRenderer.send('open-file-dialog');
         }
 
         function clearConsole() {
@@ -1597,12 +1962,9 @@
             ipcRenderer.send('build-project', true); // With auto-flash
         }
 
-        function flashFirmware() {
-            if (!currentDevice) {
-                appendConsole('Error: No device connected', 'error');
-                return;
-            }
-            showView('flash');
+        function flashDevice() {
+            outputAppend('⚡ Flashing...\n');
+            ipcRenderer.send('flash-device');
         }
 
         // ST-Link functions
@@ -1611,9 +1973,154 @@
             ipcRenderer.send('scan-stlinks');
         }
 
-        function connectDevice(deviceId) {
-            appendConsole('Connecting to device...', 'normal');
-            ipcRenderer.send('connect-stlink', deviceId);
+        // Debug Functions
+        let debugActive = false;
+
+        function startDebug() {
+            outputAppend('\n▶️ Starting debug session...\n');
+            debugActive = true;
+            updateDebugStatus('Running');
+            showDebugPanel();
+            ipcRenderer.send('debug-start');
+        }
+
+        function stopDebug() {
+            outputAppend('⏹️ Stopping debug session...\n');
+            debugActive = false;
+            updateDebugStatus('Stopped');
+            ipcRenderer.send('debug-stop');
+        }
+
+        function debugContinue() {
+            if (!debugActive) return;
+            outputAppend('▶️ Continue...\n');
+            ipcRenderer.send('debug-continue');
+        }
+
+        function debugPause() {
+            if (!debugActive) return;
+            outputAppend('⏸️ Pause...\n');
+            ipcRenderer.send('debug-pause');
+        }
+
+        function debugStepOver() {
+            if (!debugActive) return;
+            outputAppend('⏭️ Step Over...\n');
+            ipcRenderer.send('debug-step-over');
+        }
+
+        function debugStepInto() {
+            if (!debugActive) return;
+            outputAppend('⤵️ Step Into...\n');
+            ipcRenderer.send('debug-step-into');
+        }
+
+        function debugStepOut() {
+            if (!debugActive) return;
+            outputAppend('⤴️ Step Out...\n');
+            ipcRenderer.send('debug-step-out');
+        }
+
+        function debugReset() {
+            outputAppend('🔄 Reset...\n');
+            ipcRenderer.send('debug-reset');
+        }
+
+        function toggleDebugPanel() {
+            const panel = document.getElementById('debug-panel');
+            panel.classList.toggle('visible');
+        }
+
+        function showDebugPanel() {
+            const panel = document.getElementById('debug-panel');
+            panel.classList.add('visible');
+        }
+
+        function toggleSection(section) {
+            const content = document.getElementById(section + '-content');
+            const toggle = document.getElementById(section + '-toggle');
+            content.classList.toggle('collapsed');
+            toggle.textContent = content.classList.contains('collapsed') ? '▶' : '▼';
+        }
+
+        function updateDebugStatus(status) {
+            const statusEl = document.getElementById('debug-status');
+            statusEl.textContent = 'Status: ' + status;
+            statusEl.className = 'debug-status ' + status.toLowerCase();
+        }
+
+        function updateRegisters(registers) {
+            const grid = document.getElementById('register-grid');
+            const items = grid.querySelectorAll('.register-item');
+            const regNames = ['R0', 'R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8', 'R9', 'R10', 'R11', 'R12', 'SP', 'LR', 'PC'];
+
+            items.forEach((item, i) => {
+                const name = regNames[i].toLowerCase();
+                if (registers[name]) {
+                    item.querySelector('.register-value').textContent = registers[name];
+                }
+            });
+        }
+
+        function addVariable() {
+            const name = prompt('Variable name:');
+            if (name) {
+                ipcRenderer.send('debug-add-variable', name);
+            }
+        }
+
+        function addBreakpoint() {
+            const location = prompt('Breakpoint location (file:line):');
+            if (location) {
+                ipcRenderer.send('debug-add-breakpoint', location);
+            }
+        }
+
+        function readMemory() {
+            const address = document.getElementById('memory-address').value || '0x20000000';
+            ipcRenderer.send('debug-read-memory', address);
+        }
+
+        // IPC Listeners for Debug
+        ipcRenderer.on('debug-registers', (event, registers) => {
+            updateRegisters(registers);
+        });
+
+        ipcRenderer.on('debug-status-update', (event, status) => {
+            updateDebugStatus(status);
+        });
+
+        ipcRenderer.on('debug-memory', (event, data) => {
+            const view = document.getElementById('memory-view');
+            view.textContent = data;
+        });
+
+        ipcRenderer.on('debug-variables', (event, variables) => {
+            const list = document.getElementById('variables-list');
+            if (variables.length === 0) {
+                list.innerHTML = '<div style="color: #888; font-size: 11px;">No variables</div>';
+            } else {
+                list.innerHTML = variables.map(v =>
+                    `<div class="variable-item"><span>${v.name}</span>: <span style="color: #ce9178;">${v.value}</span></div>`
+                ).join('');
+            }
+        });
+
+        ipcRenderer.on('debug-breakpoints', (event, breakpoints) => {
+            const list = document.getElementById('breakpoints-list');
+            if (breakpoints.length === 0) {
+                list.innerHTML = '<div style="color: #888; font-size: 11px;">No breakpoints</div>';
+            } else {
+                list.innerHTML = breakpoints.map(bp =>
+                    `<div class="breakpoint-item">🔴 ${bp.file}:${bp.line}</div>`
+                ).join('');
+            }
+        });
+
+        function outputAppend(text) {
+            const output = document.getElementById('output');
+            output.textContent += text;
+            output.scrollTop = output.scrollHeight;
         }
 
         function disconnectDevice(deviceId) {
@@ -2315,6 +2822,361 @@
             appendConsole(`❌ SWV Error: ${error}`, 'error');
             disableSWV();
         });
+    </script>
+    <!-- Target Setup Modal -->
+    <div id="target-setup-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Cortex-M Target Driver Setup</h2>
+                <span class="close" onclick="closeTargetSettings()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="tabs">
+                    <button class="tab-link active" onclick="openTab(event, 'DebugInfo')">Debug Adapter</button>
+                    <button class="tab-link" onclick="openTab(event, 'TargetSettings')">Target Settings</button>
+                    <button class="tab-link" onclick="openTab(event, 'FlashDownload')">Flash Download</button>
+                </div>
+
+                <!-- Debug Info Tab -->
+                <div id="DebugInfo" class="tab-content" style="display: block;">
+                    <fieldset>
+                        <legend>Debug Adapter</legend>
+                        <div class="form-group">
+                            <label>Unit:</label>
+                            <select id="adapter-unit" disabled>
+                                <option>ST-LINK/V2</option>
+                                <option>ST-LINK/V3</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Serial No:</label>
+                            <input type="text" id="adapter-serial" readonly value="Detecting...">
+                        </div>
+                        <div class="form-group">
+                            <label>Firmware:</label>
+                            <input type="text" id="adapter-fw" readonly value="Detecting...">
+                        </div>
+                    </fieldset>
+
+                    <fieldset>
+                        <legend>SW Device</legend>
+                        <div id="sw-device-list">
+                            <table class="device-table">
+                                <thead>
+                                    <tr>
+                                        <th>IDCODE</th>
+                                        <th>Device Name</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="detected-devices">
+                                    <tr>
+                                        <td colspan="2">Scanning...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </fieldset>
+                </div>
+
+                <!-- Target Settings Tab -->
+                <div id="TargetSettings" class="tab-content">
+                    <fieldset>
+                        <legend>Target Com</legend>
+                        <div class="form-group">
+                            <label>Port:</label>
+                            <select id="target-port">
+                                <option value="swd">SW</option>
+                                <option value="jtag">JTAG</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Clock:</label>
+                            <select id="target-clock">
+                                <option value="4000">4 MHz</option>
+                                <option value="2000" selected>2 MHz</option>
+                                <option value="1000">1 MHz</option>
+                                <option value="500">500 kHz</option>
+                            </select>
+                        </div>
+                    </fieldset>
+
+                    <fieldset>
+                        <legend>Connect & Reset Options</legend>
+                        <div class="form-group">
+                            <label>Connect:</label>
+                            <select id="connect-mode">
+                                <option value="normal">Normal</option>
+                                <option value="under-reset">Under Reset</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Reset:</label>
+                            <select id="reset-mode">
+                                <option value="sysresetreq">Autodetect</option>
+                                <option value="vectreset">VectReset</option>
+                                <option value="sysresetreq">SysResetReq</option>
+                            </select>
+                        </div>
+                    </fieldset>
+                </div>
+
+                <!-- Flash Download Tab -->
+                <div id="FlashDownload" class="tab-content">
+                    <fieldset>
+                        <legend>Download Options</legend>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="verify-code" checked>
+                            <label for="verify-code">Verify Code Download</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="download-to-flash" checked>
+                            <label for="download-to-flash">Download to Flash</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="reset-run" checked>
+                            <label for="reset-run">Reset and Run</label>
+                        </div>
+                    </fieldset>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeTargetSettings()">Cancel</button>
+                <button class="btn success" onclick="saveTargetSettings()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: #252526;
+            margin: 10% auto;
+            padding: 0;
+            border: 1px solid #3e3e42;
+            width: 600px;
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+            color: #cccccc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .modal-header {
+            padding: 10px 15px;
+            background-color: #2d2d30;
+            border-bottom: 1px solid #3e3e42;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: normal;
+        }
+
+        .close {
+            color: #aaaaaa;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #ffffff;
+        }
+
+        .modal-body {
+            padding: 15px;
+            min-height: 300px;
+        }
+
+        .modal-footer {
+            padding: 10px 15px;
+            background-color: #2d2d30;
+            border-top: 1px solid #3e3e42;
+            text-align: right;
+        }
+
+        /* Tabs */
+        .tabs {
+            overflow: hidden;
+            border-bottom: 1px solid #3e3e42;
+            margin-bottom: 15px;
+        }
+
+        .tab-link {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 8px 16px;
+            transition: 0.3s;
+            color: #cccccc;
+            border-top: 2px solid transparent;
+        }
+
+        .tab-link:hover {
+            background-color: #3e3e42;
+        }
+
+        .tab-link.active {
+            background-color: #252526;
+            border-top: 2px solid #007acc;
+            border-bottom: 1px solid #252526;
+            margin-bottom: -1px;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeEffect 0.5s;
+        }
+
+        @keyframes fadeEffect {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Forms */
+        fieldset {
+            border: 1px solid #3e3e42;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+
+        legend {
+            padding: 0 5px;
+            color: #007acc;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .form-group label {
+            width: 100px;
+            display: inline-block;
+        }
+
+        .form-group input,
+        .form-group select {
+            flex: 1;
+            padding: 4px;
+            background-color: #3c3c3c;
+            border: 1px solid #3e3e42;
+            color: #cccccc;
+        }
+
+        .checkbox-group {
+            margin-bottom: 5px;
+        }
+
+        .device-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+        }
+
+        .device-table th,
+        .device-table td {
+            border: 1px solid #3e3e42;
+            padding: 5px;
+            text-align: left;
+        }
+
+        .device-table th {
+            background-color: #2d2d30;
+        }
+    </style>
+
+    <script>
+        // Modal Functions
+        function openTargetSettings() {
+            document.getElementById('target-setup-modal').style.display = 'block';
+            // Trigger detection info refresh
+            ipcRenderer.send('get-target-info');
+        }
+
+        function closeTargetSettings() {
+            document.getElementById('target-setup-modal').style.display = 'none';
+        }
+
+        function saveTargetSettings() {
+            const settings = {
+                clock: document.getElementById('target-clock').value,
+                connect: document.getElementById('connect-mode').value,
+                reset: document.getElementById('reset-mode').value,
+                verify: document.getElementById('verify-code').checked,
+                downloadToFlash: document.getElementById('download-to-flash').checked,
+                resetRun: document.getElementById('reset-run').checked
+            };
+            ipcRenderer.send('save-target-settings', settings);
+            closeTargetSettings();
+        }
+
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tab-link");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+
+        // IPC Listeners for Modal
+        ipcRenderer.on('target-info-result', (event, data) => {
+            if (data.stlink) {
+                document.getElementById('adapter-serial').value = data.stlink.serial || 'Unknown';
+                document.getElementById('adapter-fw').value = data.stlink.version || 'Unknown';
+                // Try to guess version from string
+                if (data.stlink.version && data.stlink.version.includes('V3')) {
+                    document.getElementById('adapter-unit').value = 'ST-LINK/V3';
+                }
+            }
+
+            const tbody = document.getElementById('detected-devices');
+            if (data.chip) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td>${data.chip.idcode}</td>
+                        <td>${data.chip.name || 'Unknown Cortex-M'}</td>
+                    </tr>
+                `;
+            } else {
+                tbody.innerHTML = '<tr><td colspan="2">No device detected</td></tr>';
+            }
+        });
+
+        // Close modal when clicking outside
+        window.onclick = function (event) {
+            const modal = document.getElementById('target-setup-modal');
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
     </script>
 </body>
 

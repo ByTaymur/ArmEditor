@@ -1,81 +1,58 @@
-const STM32Tools = require('./src/stm32/stm32-tools');
+#!/usr/bin/env node
 
-console.log("==================================================");
-console.log("🔍 STM32 DETECTION TEST");
-console.log("==================================================");
+/**
+ * Test STM32 Auto-Detection System
+ */
 
-// Mock OpenOCD Interface
-class MockOpenOCD {
-    constructor() {
-        this.connected = true;
-        console.log("[Mock] OpenOCD Initialized");
-    }
+const STM32Detector = require('./src/compiler/stm32-detector');
 
-    async readMemory(address, count, width = 32) {
-        console.log(`[Mock] Read Memory: 0x${address.toString(16).toUpperCase()} (Count: ${count}, Width: ${width})`);
+async function test() {
+    console.log('🔍 STM32 Auto-Detection Test\n');
+    console.log('━'.repeat(50));
 
-        // Simulate STM32F407 Response
-        if (address === 0xE0042000) { // DBGMCU_IDCODE
-            // DevID: 0x413 (STM32F405/407), RevID: 0x1000 (Rev A)
-            return [{ values: [0x10006413] }];
-        }
+    const detector = new STM32Detector();
 
-        if (address === 0x1FFF7A10) { // Unique ID (96-bit)
-            // Random UID
-            return [
-                { values: [0x00350042] }, // UID0
-                { values: [0x30345115] }, // UID1
-                { values: [0x30345115] }  // UID2
-            ];
-        }
+    console.log('Scanning for connected STM32...\n');
 
-        if (address === 0x1FFF7A22) { // Flash Size
-            // 1024 KB
-            return [{ values: [1024] }];
-        }
-
-        return [{ values: Array(count).fill(0) }];
-    }
-}
-
-async function runTest() {
     try {
-        const mockOpenOCD = new MockOpenOCD();
-        const tools = new STM32Tools(mockOpenOCD);
+        const result = await detector.detect();
 
-        console.log("\nTesting getDeviceInfo()...");
-        const info = await tools.getDeviceInfo();
+        console.log('\n📊 Detection Results:');
+        console.log('━'.repeat(50));
 
-        console.log("\n[Result]");
-        console.log(JSON.stringify(info, null, 2));
+        if (result.success) {
+            console.log('✅ Status:', 'SUCCESS');
+            console.log('🎯 Chip:', result.chip.name);
+            console.log('📋 Family:', result.chip.family);
+            console.log('🔧 OpenOCD Target:', result.chip.target);
+            console.log('🔌 IDCODE:', result.idcode);
+            console.log('⚡ Voltage:', result.voltage ? result.voltage.toFixed(2) + 'V' : 'N/A');
 
-        // Verification
-        let passed = true;
-        if (info.deviceID !== '0x413') {
-            console.log("❌ Device ID mismatch");
-            passed = false;
-        }
-        if (info.deviceName !== 'STM32F405/407/415/417') {
-            console.log("❌ Device Name mismatch");
-            passed = false;
-        }
-        if (info.flash.size !== 1024) {
-            console.log("❌ Flash Size mismatch");
-            passed = false;
-        }
+            const config = detector.getOpenOCDConfig(result.chip);
+            console.log('\n📝 OpenOCD Configuration:');
+            console.log('  Interface:', config.interfaceConfig);
+            console.log('  Target:', config.targetConfig);
 
-        if (passed) {
-            console.log("\n🎉 DETECTION TEST PASSED");
-            process.exit(0);
+            const flags = detector.getCompilerFlags(result.chip);
+            console.log('\n💻 Compiler Flags:');
+            console.log('  CPU:', flags.cpu);
+            console.log('  FPU:', flags.fpu || 'none');
+            console.log('  Defines:', flags.defines.join(', '));
+
         } else {
-            console.log("\n❌ DETECTION TEST FAILED");
-            process.exit(1);
+            console.log('❌ Status:', 'FAILED');
+            console.log('💬 Message:', result.message);
+            if (result.suggestion) {
+                console.log('\n💡 Suggestion:');
+                console.log(result.suggestion);
+            }
         }
+
+        console.log('\n' + '━'.repeat(50));
 
     } catch (error) {
-        console.error("\n❌ TEST ERROR:", error);
-        process.exit(1);
+        console.error('\n❌ Error:', error.message);
     }
 }
 
-runTest();
+test();
