@@ -966,202 +966,28 @@
 
         <!-- CONTENT AREA -->
         <div class="content-area">
-            <!-- EDITOR VIEW (Modified to include Debug Panel) -->
-            <div class="view active" id="editor-view" style="display: flex; height: 100%;">
-                <!-- LEFT: EDITOR & FILE EXPLORER -->
-                <div style="flex: 1; display: flex; flex-direction: column; min-width: 0;">
-                    <div class="editor-view" style="flex: 1; display: flex;">
-                        <div class="file-explorer">
-                            <div class="explorer-header">PROJECT EXPLORER</div>
-                            <div class="file-tree" id="file-tree">
-                                <div style="padding: 20px; text-align: center; color: #858585;">
-                                    Open a project to start
-                                </div>
-                            </div>
-                        </div>
-                        <div class="editor-container" style="flex: 1; display: flex; flex-direction: column;">
-                            <div class="editor-tabs" id="editor-tabs">
-                                <div class="editor-tab active">
-                                    <span>Welcome</span>
-                                </div>
-                            </div>
-                            <textarea class="code-editor" id="code-editor"
-                                placeholder="Select a file to edit..."></textarea>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- RIGHT: DEBUG SIDEBAR (Vertical) -->
-                <div class="debug-sidebar" id="debug-sidebar"
-                    style="width: 350px; background: #1e1e1e; border-left: 1px solid #3e3e42; display: flex; flex-direction: column; overflow-y: auto;">
-
-                    <!-- CONNECTION STATUS -->
-                    <div style="padding: 15px; border-bottom: 1px solid #3e3e42;">
-                        <div
-                            style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-                            <span style="font-weight: 600; font-size: 12px; color: #cccccc;">🔌 CONNECTION</span>
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <div id="connection-indicator"
-                                    style="width: 8px; height: 8px; border-radius: 50%; background: #666;"></div>
-                                <span id="connection-status-text"
-                                    style="font-size: 11px; color: #858585;">Disconnected</span>
-                            </div>
-                        </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-                            <button class="btn btn-sm btn-primary" onclick="buildAndFlash()" title="Flash Firmware">⚡
-                                Flash</button>
-                            <button class="btn btn-sm btn-secondary" onclick="openOptionsDialog()" title="Settings">⚙️
-                                Settings</button>
-                        </div>
-                    </div>
-
-                    <!-- DEBUG CONTROLS -->
-                    <div style="padding: 15px; border-bottom: 1px solid #3e3e42;">
-                        <div style="font-weight: 600; font-size: 12px; color: #cccccc; margin-bottom: 10px;">🐛 CONTROLS
-                        </div>
-                        <div style="display: flex; flex-wrap: wrap; gap: 5px; justify-content: center;">
-                            <button class="btn btn-success btn-sm" onclick="debugRun()" title="Run (F5)"
-                                style="flex: 1;">▶️</button>
-                            <button class="btn btn-danger btn-sm" onclick="debugStop()" title="Stop (Shift+F5)"
-                                style="flex: 1;">⏹️</button>
-                            <button class="btn btn-warning btn-sm" onclick="debugPause()" title="Pause"
-                                style="flex: 1;">⏸️</button>
-                            <button class="btn btn-info btn-sm" onclick="debugStepOver()" title="Step Over (F10)"
-                                style="flex: 1;">⏭️</button>
-                            <button class="btn btn-info btn-sm" onclick="debugStepInto()" title="Step Into (F11)"
-                                style="flex: 1;">⤵️</button>
-                            <button class="btn btn-secondary btn-sm" onclick="debugReset()" title="Reset"
-                                style="flex: 1;">🔄</button>
-                        </div>
-                        <div id="debug-status"
-                            style="margin-top: 8px; font-size: 11px; color: #858585; text-align: center; font-family: monospace;">
-                            Not Running
-                        </div>
-                    </div>
-
-                    <!-- REGISTERS -->
-                    <div
-                        style="flex: 1; display: flex; flex-direction: column; min-height: 200px; border-bottom: 1px solid #3e3e42;">
-                        <div
-                            style="padding: 10px 15px; background: #252526; display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-weight: 600; font-size: 12px; color: #cccccc;">📋 REGISTERS</span>
-                            <button class="btn btn-sm" onclick="refreshRegisters()"
-                                style="padding: 2px 6px; font-size: 10px;">🔄</button>
-                        </div>
-                        <div style="padding: 10px; overflow-y: auto; flex: 1;">
-                            <div
-                                style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-family: 'Consolas', monospace; font-size: 11px;">
-                                <div
-                                    style="display: flex; justify-content: space-between; background: #2d2d30; padding: 4px;">
-                                    <span style="color: #858585;">R0</span> <span
-                                        style="color: #4ec9b0;">0x00000000</span>
-                                </div>
-                                <div
-                                    style="display: flex; justify-content: space-between; background: #2d2d30; padding: 4px;">
-                                    <span style="color: #858585;">R1</span> <span
-                                        style="color: #4ec9b0;">0x00000000</span>
-                                </div>
-                                <div
-                                    style="display: flex; justify-content: space-between; background: #2d2d30; padding: 4px;">
-                                    <span style="color: #858585;">R2</span> <span
-                                        style="color: #4ec9b0;">0x00000000</span>
-                                </div>
-                                <div
-                                    style="display: flex; justify-content: space-between; background: #2d2d30; padding: 4px;">
-                                    <span style="color: #858585;">R3</span> <span
-                                        style="color: #4ec9b0;">0x00000000</span>
-                                </div>
-                                <div
-                                    style="display: flex; justify-content: space-between; background: #2d2d30; padding: 4px;">
-                                    <span style="color: #858585;">R4</span> <span
-                                        style="color: #4ec9b0;">0x00000000</span>
-                                </div>
-                                <div
-                                    style="display: flex; justify-content: space-between; background: #2d2d30; padding: 4px;">
-                                    <span style="color: #858585;">R5</span> <span
-                                        style="color: #4ec9b0;">0x00000000</span>
-                                </div>
-                                <div
-                                    style="display: flex; justify-content: space-between; background: #2d2d30; padding: 4px;">
-                                    <span style="color: #858585;">R6</span> <span
-                                        style="color: #4ec9b0;">0x00000000</span>
-                                </div>
-                                <div
-                                    style="display: flex; justify-content: space-between; background: #2d2d30; padding: 4px;">
-                                    <span style="color: #858585;">R7</span> <span
-                                        style="color: #4ec9b0;">0x00000000</span>
-                                </div>
-                                <div
-                                    style="display: flex; justify-content: space-between; background: #2d2d30; padding: 4px;">
-                                    <span style="color: #858585;">R8</span> <span
-                                        style="color: #4ec9b0;">0x00000000</span>
-                                </div>
-                                <div
-                                    style="display: flex; justify-content: space-between; background: #2d2d30; padding: 4px;">
-                                    <span style="color: #858585;">R9</span> <span
-                                        style="color: #4ec9b0;">0x00000000</span>
-                                </div>
-                                <div
-                                    style="display: flex; justify-content: space-between; background: #2d2d30; padding: 4px;">
-                                    <span style="color: #858585;">R10</span> <span
-                                        style="color: #4ec9b0;">0x00000000</span>
-                                </div>
-                                <div
-                                    style="display: flex; justify-content: space-between; background: #2d2d30; padding: 4px;">
-                                    <span style="color: #858585;">R11</span> <span
-                                        style="color: #4ec9b0;">0x00000000</span>
-                                </div>
-                                <div
-                                    style="display: flex; justify-content: space-between; background: #2d2d30; padding: 4px;">
-                                    <span style="color: #858585;">R12</span> <span
-                                        style="color: #4ec9b0;">0x00000000</span>
-                                </div>
-                                <div
-                                    style="display: flex; justify-content: space-between; background: #2d2d30; padding: 4px; border-left: 2px solid #007acc;">
-                                    <span style="color: #fff;">SP</span> <span style="color: #4ec9b0;">0x20000000</span>
-                                </div>
-                                <div
-                                    style="display: flex; justify-content: space-between; background: #2d2d30; padding: 4px; border-left: 2px solid #007acc;">
-                                    <span style="color: #fff;">LR</span> <span style="color: #4ec9b0;">0x08000000</span>
-                                </div>
-                                <div
-                                    style="display: flex; justify-content: space-between; background: #2d2d30; padding: 4px; border-left: 2px solid #007acc;">
-                                    <span style="color: #fff;">PC</span> <span style="color: #4ec9b0;">0x08000000</span>
-                                </div>
+            <!-- EDITOR VIEW -->
+            <div class="view active" id="editor-view">
+                <div class="editor-view">
+                    <div class="file-explorer">
+                        <div class="explorer-header">PROJECT EXPLORER</div>
+                        <div class="file-tree" id="file-tree">
+                            <div style="padding: 20px; text-align: center; color: #858585;">
+                                Open a project to start
                             </div>
                         </div>
                     </div>
-
-                    <!-- VARIABLES -->
-                    <div style="flex: 1; display: flex; flex-direction: column; min-height: 150px;">
-                        <div
-                            style="padding: 10px 15px; background: #252526; display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-weight: 600; font-size: 12px; color: #cccccc;">📊 VARIABLES</span>
-                            <button class="btn btn-sm" onclick="addVariable()"
-                                style="padding: 2px 6px; font-size: 10px;">+</button>
+                    <div class="editor-container">
+                        <div class="editor-tabs" id="editor-tabs">
+                            <div class="editor-tab active">
+                                <span>Welcome</span>
+                            </div>
                         </div>
-                        <div style="padding: 0; overflow-y: auto; flex: 1;">
-                            <table
-                                style="width: 100%; font-size: 11px; font-family: 'Consolas', monospace; border-collapse: collapse;">
-                                <thead style="background: #2d2d30; color: #858585;">
-                                    <tr>
-                                        <th style="padding: 4px; text-align: left;">Name</th>
-                                        <th style="padding: 4px; text-align: left;">Value</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="variable-list">
-                                    <tr>
-                                        <td colspan="2" style="padding: 15px; text-align: center; color: #666;">No
-                                            variables</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                        <textarea class="code-editor" id="code-editor"
+                            placeholder="Select a file to edit..."></textarea>
                     </div>
-
                 </div>
             </div>
-
 
             <!-- ST-LINK VIEW -->
             <div class="view stlink-view" id="stlink-view">
