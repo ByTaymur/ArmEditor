@@ -693,6 +693,24 @@ ipcMain.on('save-file-as-content', (event, content) => {
     }
 });
 
+// File tree click handler
+ipcMain.on('open-file-path', (event, filePath) => {
+    try {
+        const content = fs.readFileSync(filePath, 'utf-8');
+        const fileName = path.basename(filePath);
+        currentFilePath = filePath;
+
+        mainWindow.webContents.send('open-file', {
+            path: filePath,
+            name: fileName,
+            content: content
+        });
+    } catch (err) {
+        mainWindow.webContents.send('output-append', `❌ Error opening file: ${err.message}\n`);
+    }
+});
+
+
 // Debug IPC Handlers
 ipcMain.on('debug-start', () => startDebug());
 ipcMain.on('debug-stop', () => stopDebug());
