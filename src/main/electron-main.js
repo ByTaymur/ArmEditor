@@ -13,16 +13,16 @@ const GDBBackend = require('../debugger/gdb-backend');
 const OpenOCDInterface = require('../debugger/openocd-interface');
 const FlashManager = require('../debugger/flash-manager');
 const STM32Tools = require('../stm32/stm32-tools');
-
-let mainWindow;
-let currentProjectPath = null;
-let currentFilePath = null;
-
 // Debug instances
 let gdbBackend = null;
+const STM32CubeProgrammer = require('../programmer/stm32-cube-programmer');
+const ProjectManager = require('../project/project-manager');
+const TemplateManager = require('../project/template-manager');
 let openocdInterface = null;
 let flashManager = null;
 let stm32Tools = null;
+let projectManager = null;
+let templateManager = null;
 let debugSession = {
     active: false,
     breakpoints: new Map(),
@@ -1041,10 +1041,58 @@ ipcMain.on('flash-program', async (event, filePath) => {
         }
 
     } catch (error) {
-        console.error('[Flash] Exception:', error);
-        mainWindow.webContents.send('output-append', `❌ Flash error: ${error.message}\n`);
+        console.error('[Flash] OpenOCD flash failed:', error);
+        mainWindow.webContents.send('output-append', `⚠️  OpenOCD flash failed: ${error.message}\n`);
 
-        // Clean up
+        // TRY FALLBACK: STM32CubeProgrammer
+        try {
+            mainWindow.webContents.send('output-append', `\n🔄 Trying STM32CubeProgrammer fallback...\n`);
+
+            const cubeProg = new STM32CubeProgrammer();
+
+            if (!cubeProg.isInstalled()) {
+                mainWindow.webContents.send('output-append',
+                    `❌ STM32CubeProgrammer not installed\n` +
+                    `   Run: ./install-cubeprog.sh to install\n`
+                );
+                return;
+            }
+
+            mainWindow.webContents.send('output-append',
+                `✅ Found CubeProgrammer v${cubeProg.getVersion()}\n`
+            );
+
+            // Listen to output
+            cubeProg.on('output', (data) => {
+                mainWindow.webContents.send('output-append', data);
+            });
+
+            // Convert .hex to .bin if needed (CubeProgrammer prefers .bin)
+            let flashFile = filePath;
+            if (filePath.endsWith('.hex')) {
+                // For now, try .hex directly, CubeProgrammer supports it
+                mainWindow.webContents.send('output-append', `📝 Flashing HEX file: ${path.basename(filePath)}\n`);
+            }
+
+            // Flash with CubeProgrammer
+            await cubeProg.flashBinary(flashFile, 0x08000000, 0);
+
+            mainWindow.webContents.send('output-append', `\n✅ Flash successful via CubeProgrammer!\n`);
+
+        } catch (fallbackError) {
+            console.error('[Flash] CubeProgrammer fallback also failed:', fallbackError);
+            mainWindow.webContents.send('output-append',
+                `\n❌ All flash methods failed!\n` +
+                `   Last error: ${fallbackError.message}\n` +
+                `\n📌 Troubleshooting:\n` +
+                `   1. Check target voltage (should be 3.0-3.6V)\n` +
+                `   2. Verify ST-Link connections\n` +
+                `   3. Try power-cycling the target\n` +
+                `   4. Install STM32CubeProgrammer: ./install-cubeprog.sh\n`
+            );
+        }
+
+        // Clean up OpenOCD
         try {
             if (openocdInterface) await openocdInterface.stop();
         } catch (e) { }
@@ -1547,14 +1595,32 @@ ipcMain.on('connect-stlink', async (event, deviceId) => {
         let detectedMcuType = null;
         let detectedChipId = null;
         let openocd = null;
+        let targetVoltage = null; // Declare at function scope
 
         try {
             // Start OpenOCD
             openocd = new OpenOCDInterface();
 
-            // Listen to OpenOCD output
+            // Listen to OpenOCD output and parse voltage
             openocd.on('output', (data) => {
                 console.log('[OpenOCD]', data);
+
+                // Parse target voltage from OpenOCD output
+                const voltageMatch = data.match(/Target voltage:\s*(\d+\.\d+)/i);
+                if (voltageMatch) {
+                    targetVoltage = parseFloat(voltageMatch[1]);
+                    mainWindow.webContents.send('output-append',
+                        `⚡ Target Voltage: ${targetVoltage.toFixed(2)}V\n`
+                    );
+
+                    // Warn if voltage is low (but continue)
+                    if (targetVoltage < 3.0) {
+                        mainWindow.webContents.send('output-append',
+                            `⚠️  Low Voltage Warning: ${targetVoltage.toFixed(2)}V (recommended: 3.0-3.6V)\n` +
+                            `   This may cause connection instability!\n`
+                        );
+                    }
+                }
             });
 
             // If auto-detect, try to probe the device first
@@ -1699,14 +1765,6 @@ ipcMain.on('connect-stlink', async (event, deviceId) => {
         // Connect TCL
         await openocd.connectTCL();
         mainWindow.webContents.send('output-append', '✅ TCL connected\n');
-
-        // Try to reset target to ensure it's in a good state
-        try {
-            await openocd.reset(true); // Reset halt
-            await new Promise(resolve => setTimeout(resolve, 100));
-        } catch (e) {
-            console.log('[Connect] Reset failed (non-fatal):', e.message);
-        }
 
         // Get device info using STM32Tools with timeout
         let deviceInfo = null;
@@ -2056,6 +2114,216 @@ ipcMain.on('swv-read', async (event) => {
     } catch (error) {
         // Ignore read errors during polling
         console.error('[SWV Read Error]', error.message);
+    }
+});
+
+// ============================================================================
+// PROJECT SETTINGS
+// ============================================================================
+
+let settingsWindow = null;
+
+function openProjectSettings() {
+    if (settingsWindow) {
+        settingsWindow.focus();
+        return;
+    }
+
+    settingsWindow = new BrowserWindow({
+        width: 900,
+        height: 700,
+        parent: mainWindow,
+        modal: false,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false
+        },
+        backgroundColor: '#1e1e1e',
+        title: 'Project Settings'
+    });
+
+    settingsWindow.loadFile(path.join(__dirname, '../renderer/project-settings.html'));
+
+    settingsWindow.on('closed', () => {
+        settingsWindow = null;
+    });
+
+    // Load current project configuration
+    settingsWindow.webContents.on('did-finish-load', () => {
+        if (currentProjectPath) {
+            projectManager = projectManager || new ProjectManager(currentProjectPath);
+            const config = projectManager.config;
+            settingsWindow.webContents.send('load-config', config);
+        }
+    });
+}
+
+ipcMain.on('open-project-settings', () => {
+    openProjectSettings();
+});
+
+ipcMain.on('project-settings-apply', (event, config) => {
+    if (!currentProjectPath) {
+        console.error('[ProjectSettings] No project loaded');
+        return;
+    }
+
+    try {
+        projectManager = projectManager || new ProjectManager(currentProjectPath);
+
+        const validation = projectManager.validateConfig(config);
+        if (!validation.valid) {
+            mainWindow.webContents.send('output-append',
+                `❌ Invalid project configuration:\n` +
+                validation.errors.map(e => `   - ${e}\n`).join('')
+            );
+            return;
+        }
+
+        projectManager.config = config;
+        projectManager.saveConfig();
+        projectManager.saveMakefile();
+
+        mainWindow.webContents.send('output-append', '✅ Project settings applied\n');
+        mainWindow.webContents.send('output-append', '📝 Makefile regenerated\n');
+
+    } catch (error) {
+        console.error('[ProjectSettings] Apply error:', error);
+        mainWindow.webContents.send('output-append', `❌ Settings error: ${error.message}\n`);
+    }
+});
+
+ipcMain.on('project-settings-save', (event, config) => {
+    if (!currentProjectPath) {
+        console.error('[ProjectSettings] No project loaded');
+        return;
+    }
+
+    try {
+        projectManager = projectManager || new ProjectManager(currentProjectPath);
+
+        const validation = projectManager.validateConfig(config);
+        if (!validation.valid) {
+            mainWindow.webContents.send('output-append',
+                `❌ Invalid project configuration:\n` +
+                validation.errors.map(e => `   - ${e}\n`).join('')
+            );
+            event.reply('project-settings-error', validation.errors);
+            return;
+        }
+
+        projectManager.config = config;
+        projectManager.saveConfig();
+        projectManager.saveMakefile();
+
+        mainWindow.webContents.send('output-append', '✅ Project settings saved\n');
+        mainWindow.webContents.send('output-append', '📝 Makefile regenerated from project.json\n');
+
+        event.reply('project-settings-saved');
+
+    } catch (error) {
+        console.error('[ProjectSettings] Save error:', error);
+        mainWindow.webContents.send('output-append', `❌ Settings save error: ${error.message}\n`);
+        event.reply('project-settings-error', [error.message]);
+    }
+});
+
+// ============================================================================
+// NEW PROJECT / TEMPLATES
+// ============================================================================
+
+let newProjectWindow = null;
+
+function openNewProjectWizard() {
+    if (newProjectWindow) {
+        newProjectWindow.focus();
+        return;
+    }
+
+    newProjectWindow = new BrowserWindow({
+        width: 800,
+        height: 600,
+        parent: mainWindow,
+        modal: false,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false
+        },
+        backgroundColor: '#1e1e1e',
+        title: 'New Project'
+    });
+
+    newProjectWindow.loadFile(path.join(__dirname, '../renderer/new-project.html'));
+
+    newProjectWindow.on('closed', () => {
+        newProjectWindow = null;
+    });
+
+    // Send template list when window is ready
+    newProjectWindow.webContents.on('did-finish-load', () => {
+        templateManager = templateManager || new TemplateManager();
+        const templates = templateManager.listTemplates();
+        newProjectWindow.webContents.send('templates-list', templates);
+    });
+}
+
+ipcMain.on('open-new-project', () => {
+    openNewProjectWizard();
+});
+
+ipcMain.on('get-templates-list', (event) => {
+    templateManager = templateManager || new TemplateManager();
+    const templates = templateManager.listTemplates();
+    event.reply('templates-list', templates);
+});
+
+ipcMain.on('select-project-path', async (event) => {
+    const result = await dialog.showOpenDialog(mainWindow, {
+        properties: ['openDirectory', 'createDirectory'],
+        title: 'Select Project Location'
+    });
+
+    if (!result.canceled && result.filePaths.length > 0) {
+        event.reply('project-path-selected', result.filePaths[0]);
+    }
+});
+
+ipcMain.on('create-project-from-template', async (event, options) => {
+    try {
+        templateManager = templateManager || new TemplateManager();
+
+        mainWindow.webContents.send('output-append', `\n🆕 Creating new project: ${options.projectName}\n`);
+        mainWindow.webContents.send('output-append', `📋 Template: ${options.templateId}\n`);
+        mainWindow.webContents.send('output-append', `📁 Location: ${options.projectPath}\n`);
+
+        const result = await templateManager.createFromTemplate(
+            options.templateId,
+            options.projectPath,
+            {
+                projectName: options.projectName,
+                downloadHAL: true
+            }
+        );
+
+        if (result.success) {
+            mainWindow.webContents.send('output-append', `✅ Project created successfully!\n`);
+            mainWindow.webContents.send('output-append', `📝 Configuration saved to project.json\n`);
+
+            // Auto-open the project
+            currentProjectPath = result.projectPath;
+            projectManager = new ProjectManager(currentProjectPath);
+
+            mainWindow.webContents.send('output-append', `📂 Project opened: ${path.basename(currentProjectPath)}\n`);
+
+            event.reply('project-created', { success: true });
+        } else {
+            throw new Error('Template creation failed');
+        }
+
+    } catch (error) {
+        console.error('[NewProject] Error:', error);
+        mainWindow.webContents.send('output-append', `❌ Project creation failed: ${error.message}\n`);
+        event.reply('project-created', { success: false, error: error.message });
     }
 });
 

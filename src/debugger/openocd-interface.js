@@ -38,8 +38,8 @@ class OpenOCDInterface extends EventEmitter {
 
             this.process = spawn('openocd', [
                 ...configFiles.flatMap(f => ['-f', f]),
-                '-c', 'adapter speed 500', // Lower speed for stability (was 1800)
-                '-c', 'reset_config none separate', // Software reset only (safer for clones/bad wiring)
+                '-c', 'adapter speed 100', // Lowest speed for maximum stability
+                '-c', 'reset_config srst_only srst_nogate connect_assert_srst', // Connect under reset (Hardware Reset)
                 '-c', 'gdb_port 3333',
                 '-c', 'tcl_port 6666',
                 '-c', 'telnet_port 4444'
@@ -241,15 +241,28 @@ class OpenOCDInterface extends EventEmitter {
     /**
      * Memory operations
      */
-    async readMemory(address, count, width = 32, timeout = 30000) {
+    async readMemory(address, count, width = 32, timeout = 5000) {
         const widthCmd = {
             8: 'mdh',
             16: 'mdh',
             32: 'mdw'
         }[width] || 'mdw';
 
-        const result = await this.sendCommand(`${widthCmd} ${address} ${count}`, timeout);
-        return this.parseMemoryDump(result);
+        try {
+            // Ensure target is halted before reading memory
+            await this.sendCommand('halt', 1000).catch(() => {
+                // Ignore halt errors, target might already be halted
+            });
+
+            const result = await this.sendCommand(`${widthCmd} ${address} ${count}`, timeout);
+            return this.parseMemoryDump(result);
+        } catch (error) {
+            // Add more context to timeout errors
+            if (error.message.includes('timeout')) {
+                throw new Error(`Memory read timeout at ${address.toString(16)}: Target may be sleeping or SWD not properly connected`);
+            }
+            throw error;
+        }
     }
 
     async writeMemory(address, value, width = 32) {
