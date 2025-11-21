@@ -5,12 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ArmEditor - Professional ARM IDE</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', system-ui, sans-serif;
             background: #1e1e1e;
@@ -18,12 +13,7 @@
             overflow: hidden;
             height: 100vh;
         }
-
-        .container {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-        }
+        .container { display: flex; flex-direction: column; height: 100vh; }
 
         /* Toolbar */
         .toolbar {
@@ -33,54 +23,30 @@
             display: flex;
             gap: 8px;
             align-items: center;
+            flex-wrap: wrap;
         }
-
         .btn {
             background: #0e639c;
             color: white;
             border: none;
-            padding: 8px 16px;
+            padding: 8px 14px;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
             display: flex;
             align-items: center;
             gap: 6px;
         }
-
-        .btn:hover {
-            background: #1177bb;
-        }
-
-        .btn.success {
-            background: #107c10;
-        }
-
-        .btn.success:hover {
-            background: #13a10e;
-        }
-
-        .btn.danger {
-            background: #c5000b;
-        }
-
-        .btn.danger:hover {
-            background: #e81123;
-        }
-
-        .separator {
-            width: 1px;
-            height: 24px;
-            background: #3e3e42;
-        }
+        .btn:hover { background: #1177bb; }
+        .btn.success { background: #107c10; }
+        .btn.success:hover { background: #13a10e; }
+        .btn.danger { background: #c5000b; }
+        .btn.danger:hover { background: #e81123; }
+        .separator { width: 1px; height: 24px; background: #3e3e42; }
 
         /* Main area */
-        .main {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
+        .main { display: flex; flex: 1; overflow: hidden; }
 
         /* Sidebar */
         .sidebar {
@@ -90,7 +56,6 @@
             display: flex;
             flex-direction: column;
         }
-
         .sidebar-header {
             padding: 12px;
             background: #2d2d30;
@@ -98,13 +63,7 @@
             font-weight: 600;
             font-size: 13px;
         }
-
-        .sidebar-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 8px;
-        }
-
+        .sidebar-content { flex: 1; overflow-y: auto; padding: 8px; }
         .project-name {
             padding: 8px;
             background: #37373d;
@@ -112,21 +71,27 @@
             margin-bottom: 8px;
             font-size: 12px;
         }
+        .file-tree { margin-top: 8px; }
+        .file-item {
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border-radius: 3px;
+        }
+        .file-item:hover { background: #2a2d2e; }
+        .file-item.active { background: #094771; }
 
         /* Editor */
-        .editor-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
+        .editor-area { flex: 1; display: flex; flex-direction: column; }
         .tabs {
             background: #2d2d30;
             border-bottom: 1px solid #3e3e42;
             display: flex;
             min-height: 36px;
         }
-
         .tab {
             padding: 8px 16px;
             cursor: pointer;
@@ -136,20 +101,9 @@
             align-items: center;
             gap: 8px;
         }
-
-        .tab.active {
-            background: #1e1e1e;
-        }
-
-        .tab:hover {
-            background: #2a2d2e;
-        }
-
-        #editor {
-            flex: 1;
-            background: #1e1e1e;
-        }
-
+        .tab.active { background: #1e1e1e; }
+        .tab:hover { background: #2a2d2e; }
+        #editor { flex: 1; background: #1e1e1e; }
         .welcome {
             display: flex;
             flex-direction: column;
@@ -159,56 +113,36 @@
             text-align: center;
             padding: 40px;
         }
+        .welcome h1 { font-size: 32px; margin-bottom: 16px; color: #ffffff; }
+        .welcome p { font-size: 16px; color: #cccccc; margin-bottom: 32px; }
+        .welcome-actions { display: flex; gap: 16px; }
 
-        .welcome h1 {
-            font-size: 32px;
-            margin-bottom: 16px;
-            color: #ffffff;
-        }
-
-        .welcome p {
-            font-size: 16px;
-            color: #cccccc;
-            margin-bottom: 32px;
-        }
-
-        .welcome-actions {
-            display: flex;
-            gap: 16px;
-        }
-
-        /* Output */
+        /* Output Panel */
         .output {
-            height: 200px;
+            height: 250px;
             background: #1e1e1e;
             border-top: 1px solid #3e3e42;
             display: flex;
             flex-direction: column;
         }
-
         .output-tabs {
             background: #2d2d30;
             border-bottom: 1px solid #3e3e42;
             display: flex;
         }
-
         .output-tab {
             padding: 8px 16px;
             cursor: pointer;
             font-size: 12px;
             font-weight: 600;
+            border-right: 1px solid #3e3e42;
         }
-
-        .output-tab.active {
-            background: #1e1e1e;
-            border-bottom: 2px solid #007acc;
-        }
-
+        .output-tab.active { background: #1e1e1e; border-bottom: 2px solid #007acc; }
         .output-content {
             flex: 1;
             overflow-y: auto;
             padding: 8px;
-            font-family: 'Consolas', 'Courier New', monospace;
+            font-family: 'Consolas', monospace;
             font-size: 12px;
             line-height: 1.5;
         }
@@ -227,20 +161,14 @@
         .modal-overlay {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             background: rgba(0,0,0,0.7);
             z-index: 1000;
             justify-content: center;
             align-items: center;
         }
-
-        .modal-overlay.active {
-            display: flex;
-        }
-
+        .modal-overlay.active { display: flex; }
         .modal {
             background: #2d2d30;
             border: 1px solid #3e3e42;
@@ -250,7 +178,6 @@
             overflow: hidden;
             box-shadow: 0 10px 40px rgba(0,0,0,0.5);
         }
-
         .modal-header {
             background: #1e1e1e;
             padding: 16px;
@@ -259,12 +186,7 @@
             justify-content: space-between;
             align-items: center;
         }
-
-        .modal-header h2 {
-            font-size: 16px;
-            font-weight: 600;
-        }
-
+        .modal-header h2 { font-size: 16px; font-weight: 600; }
         .modal-close {
             background: none;
             border: none;
@@ -272,17 +194,8 @@
             font-size: 20px;
             cursor: pointer;
         }
-
-        .modal-body {
-            padding: 20px;
-            overflow-y: auto;
-            max-height: 60vh;
-        }
-
-        .modal-section {
-            margin-bottom: 20px;
-        }
-
+        .modal-body { padding: 20px; overflow-y: auto; max-height: 60vh; }
+        .modal-section { margin-bottom: 20px; }
         .modal-section h3 {
             font-size: 13px;
             color: #569cd6;
@@ -290,46 +203,19 @@
             padding-bottom: 5px;
             border-bottom: 1px solid #3e3e42;
         }
-
         .info-row {
             display: flex;
             justify-content: space-between;
             padding: 8px 0;
             border-bottom: 1px solid #252526;
         }
-
-        .info-label {
-            color: #9cdcfe;
-            font-size: 12px;
-        }
-
-        .info-value {
-            color: #ce9178;
-            font-size: 12px;
-            font-family: 'Consolas', monospace;
-        }
-
-        .info-value.success {
-            color: #4ec9b0;
-        }
-
-        .info-value.error {
-            color: #f14c4c;
-        }
-
-        .settings-group {
-            margin-bottom: 15px;
-        }
-
-        .settings-group label {
-            display: block;
-            font-size: 12px;
-            color: #cccccc;
-            margin-bottom: 5px;
-        }
-
-        .settings-group select,
-        .settings-group input {
+        .info-label { color: #9cdcfe; font-size: 12px; }
+        .info-value { color: #ce9178; font-size: 12px; font-family: 'Consolas', monospace; }
+        .info-value.success { color: #4ec9b0; }
+        .info-value.error { color: #f14c4c; }
+        .settings-group { margin-bottom: 15px; }
+        .settings-group label { display: block; font-size: 12px; color: #cccccc; margin-bottom: 5px; }
+        .settings-group select, .settings-group input, .settings-group textarea {
             width: 100%;
             background: #1e1e1e;
             border: 1px solid #3e3e42;
@@ -338,13 +224,7 @@
             border-radius: 4px;
             font-size: 12px;
         }
-
-        .settings-group select:focus,
-        .settings-group input:focus {
-            outline: none;
-            border-color: #007acc;
-        }
-
+        .settings-group select:focus, .settings-group input:focus { outline: none; border-color: #007acc; }
         .modal-footer {
             padding: 16px;
             border-top: 1px solid #3e3e42;
@@ -352,7 +232,6 @@
             justify-content: flex-end;
             gap: 10px;
         }
-
         .btn-secondary {
             background: #3e3e42;
             color: #d4d4d4;
@@ -362,117 +241,36 @@
             cursor: pointer;
             font-size: 12px;
         }
-
-        .btn-secondary:hover {
-            background: #4e4e52;
-        }
-
-        /* Debug Panel Styles */
-        .debug-panel {
-            display: none;
-            width: 300px;
-            background: #252526;
-            border-left: 1px solid #3e3e42;
-            flex-direction: column;
-        }
-
-        .debug-panel.active {
-            display: flex;
-        }
-
-        .debug-section {
-            border-bottom: 1px solid #3e3e42;
-        }
-
-        .debug-section-header {
-            padding: 8px 12px;
-            background: #2d2d30;
-            font-size: 11px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .debug-section-content {
-            padding: 8px;
-            font-size: 11px;
-            font-family: 'Consolas', monospace;
-            max-height: 150px;
-            overflow-y: auto;
-        }
-
-        .watch-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 4px 0;
-            border-bottom: 1px solid #1e1e1e;
-        }
-
-        .watch-name {
-            color: #9cdcfe;
-        }
-
-        .watch-value {
-            color: #ce9178;
-        }
-
-        .watch-type {
-            color: #4ec9b0;
-            font-size: 10px;
-        }
-
-        .register-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 2px 0;
-        }
-
-        .register-name {
-            color: #dcdcaa;
-        }
-
-        .register-value {
-            color: #b5cea8;
-        }
+        .btn-secondary:hover { background: #4e4e52; }
 
         /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 10px;
-            height: 10px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #1e1e1e;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #424242;
-            border-radius: 5px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #4e4e4e;
-        }
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: #1e1e1e; }
+        ::-webkit-scrollbar-thumb { background: #424242; border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4e4e4e; }
     </style>
 </head>
 <body>
     <div class="container">
         <!-- Toolbar -->
         <div class="toolbar">
-            <button class="btn" onclick="openFile()">📂 Open File</button>
-            <button class="btn" onclick="openProject()">📁 Open Project</button>
+            <button class="btn" onclick="newFile()">📄 New</button>
+            <button class="btn" onclick="openFile()">📂 Open</button>
             <button class="btn" onclick="saveFile()">💾 Save</button>
             <div class="separator"></div>
             <button class="btn success" onclick="buildProject()">🔨 Build (F7)</button>
             <button class="btn" onclick="cleanProject()">🧹 Clean</button>
+            <button class="btn" onclick="rebuildProject()">🔄 Rebuild</button>
+            <div class="separator"></div>
+            <button class="btn success" id="debug-btn" onclick="startDebug()">▶️ Debug (F5)</button>
+            <button class="btn danger" id="stop-btn" onclick="stopDebug()" style="display:none;">⏹ Stop</button>
+            <button class="btn" id="step-over-btn" onclick="stepOver()" style="display:none;">⏭ Step</button>
             <div class="separator"></div>
             <button class="btn success" onclick="flashDevice()">⚡ Flash</button>
             <div class="separator"></div>
-            <button class="btn" onclick="analyzeCode()">🤖 AI Analyze</button>
-            <div class="separator"></div>
-            <button class="btn" onclick="openTargetSetup()">⚙️ Target Setup</button>
+            <button class="btn" onclick="openTargetSetup()">⚙️ Target</button>
             <button class="btn" onclick="openCompilerSettings()">🔧 Compiler</button>
+            <button class="btn" onclick="toggleSidePanel()">📊 ASM/HEX</button>
         </div>
 
         <!-- Main -->
@@ -482,23 +280,49 @@
                 <div class="sidebar-header">PROJECT</div>
                 <div class="sidebar-content">
                     <div id="project-info" class="project-name">No project opened</div>
-                    <div id="file-info"></div>
+                    <div id="file-tree" class="file-tree"></div>
                 </div>
             </div>
 
             <!-- Editor -->
             <div class="editor-area">
                 <div class="tabs" id="tabs"></div>
-                <div id="editor-container">
-                    <div class="welcome" id="welcome">
-                        <h1>🚀 ArmEditor</h1>
-                        <p>Professional ARM Development IDE<br>Better than Keil/IAR, completely free!</p>
-                        <div class="welcome-actions">
-                            <button class="btn" onclick="openFile()">Open File</button>
-                            <button class="btn success" onclick="openProject()">Open Project</button>
+                <div id="editor-container" style="display: flex; flex: 1; overflow: hidden;">
+                    <div style="display: flex; flex-direction: column; flex: 1;">
+                        <div class="welcome" id="welcome">
+                            <h1>ArmEditor</h1>
+                            <p>Professional ARM Development IDE<br>Better than Keil/IAR, completely free!</p>
+                            <div class="welcome-actions">
+                                <button class="btn" onclick="openFile()">Open File</button>
+                                <button class="btn success" onclick="openProject()">Open Project</button>
+                            </div>
+                        </div>
+                        <div id="editor" style="display: none; flex: 1;"></div>
+                    </div>
+
+                    <!-- Disassembly/Hex View Panel -->
+                    <div id="side-panel" style="display: none; width: 450px; border-left: 1px solid #3e3e42; background: #1e1e1e; flex-direction: column;">
+                        <div style="background: #2d2d30; border-bottom: 1px solid #3e3e42; display: flex;">
+                            <div class="output-tab active" id="tab-disasm" onclick="switchSidePanel('disasm')">DISASSEMBLY</div>
+                            <div class="output-tab" id="tab-hex" onclick="switchSidePanel('hex')">HEX VIEW</div>
+                            <div class="output-tab" id="tab-mixed" onclick="switchSidePanel('mixed')">MIXED</div>
+                            <button onclick="toggleSidePanel()" style="margin-left: auto; background: transparent; border: none; color: #d4d4d4; padding: 8px; cursor: pointer;">✕</button>
+                        </div>
+                        <div id="disasm-panel" style="flex: 1; overflow-y: auto; padding: 12px; font-family: 'Consolas', monospace; font-size: 12px;">
+                            <div style="color: #569CD6;">; Start debugging to view disassembly</div>
+                        </div>
+                        <div id="hex-panel" style="flex: 1; overflow-y: auto; padding: 12px; font-family: 'Consolas', monospace; font-size: 11px; display: none;">
+                            <div style="margin-bottom: 12px;">
+                                <span style="color: #888;">Address:</span>
+                                <input type="text" id="hex-address" placeholder="0x08000000" value="0x08000000" style="width: 120px; padding: 4px; background: #2d2d30; border: 1px solid #3e3e42; color: #d4d4d4; font-family: monospace;">
+                                <button class="btn" style="padding: 4px 12px;" onclick="loadHexView()">Load</button>
+                            </div>
+                            <div id="hex-content" style="color: #888;">Click "Load" to view memory</div>
+                        </div>
+                        <div id="mixed-panel" style="flex: 1; overflow-y: auto; padding: 12px; font-family: 'Consolas', monospace; font-size: 12px; display: none;">
+                            <div style="color: #569CD6;">; Debug to see C + Assembly</div>
                         </div>
                     </div>
-                    <div id="editor" style="display: none;"></div>
                 </div>
             </div>
         </div>
@@ -506,15 +330,51 @@
         <!-- Output -->
         <div class="output">
             <div class="output-tabs">
-                <div class="output-tab active">OUTPUT</div>
+                <div class="output-tab active" onclick="switchOutputTab('output')">BUILD OUTPUT</div>
+                <div class="output-tab" onclick="switchOutputTab('registers')">REGISTERS</div>
+                <div class="output-tab" onclick="switchOutputTab('memory')">MEMORY</div>
+                <div class="output-tab" onclick="switchOutputTab('watch')">WATCH</div>
+                <div class="output-tab" onclick="switchOutputTab('callstack')">CALL STACK</div>
             </div>
             <div class="output-content" id="output"></div>
+            <div class="output-content" id="registers" style="display: none;">
+                <div style="font-family: monospace; font-size: 12px;">
+                    <div style="margin-bottom: 8px; font-weight: bold; color: #569cd6;">Core Registers:</div>
+                    <div id="core-registers">
+                        R0:  0x00000000    R8:  0x00000000<br>
+                        R1:  0x00000000    R9:  0x00000000<br>
+                        R2:  0x00000000    R10: 0x00000000<br>
+                        R3:  0x00000000    R11: 0x00000000<br>
+                        R4:  0x00000000    R12: 0x00000000<br>
+                        R5:  0x00000000    SP:  0x20020000<br>
+                        R6:  0x00000000    LR:  0x00000000<br>
+                        R7:  0x00000000    PC:  0x08000000<br><br>
+                        xPSR: 0x01000000 (Thumb mode)
+                    </div>
+                </div>
+            </div>
+            <div class="output-content" id="memory" style="display: none;">
+                <div style="font-family: monospace; font-size: 11px;">
+                    <input type="text" placeholder="Address (0x20000000)" style="width: 200px; padding: 4px; background: #2d2d30; border: 1px solid #3e3e42; color: #d4d4d4;">
+                    <button class="btn" style="padding: 4px 12px; margin-left: 8px;">Read</button>
+                    <div id="memory-view" style="margin-top: 8px;">Click "Read" to view memory</div>
+                </div>
+            </div>
+            <div class="output-content" id="watch" style="display: none;">
+                <div>
+                    <button class="btn" style="padding: 4px 12px;">+ Add Watch</button>
+                    <div id="watch-list" style="margin-top: 8px; font-family: monospace;">No watch variables</div>
+                </div>
+            </div>
+            <div class="output-content" id="callstack" style="display: none;">
+                <div style="font-family: monospace; font-size: 12px;" id="callstack-view">Callstack available during debugging</div>
+            </div>
         </div>
 
         <!-- Status bar -->
         <div class="statusbar">
             <div id="status-left">Ready</div>
-            <div id="status-right">ArmEditor v1.0.0</div>
+            <div id="status-right">ArmEditor v2.0.0 - Consolidated Stable</div>
         </div>
     </div>
 
@@ -522,52 +382,26 @@
     <div class="modal-overlay" id="targetSetupModal">
         <div class="modal">
             <div class="modal-header">
-                <h2>⚙️ Cortex-M Target Driver Setup</h2>
-                <button class="modal-close" onclick="closeTargetSetup()">×</button>
+                <h2>Cortex-M Target Driver Setup</h2>
+                <button class="modal-close" onclick="closeTargetSetup()">x</button>
             </div>
             <div class="modal-body">
                 <div class="modal-section">
-                    <h3>🔌 Debug Adapter</h3>
-                    <div class="info-row">
-                        <span class="info-label">Adapter Type</span>
-                        <span class="info-value" id="adapter-type">Detecting...</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Serial Number</span>
-                        <span class="info-value" id="adapter-serial">-</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Firmware Version</span>
-                        <span class="info-value" id="adapter-firmware">-</span>
-                    </div>
+                    <h3>Debug Adapter</h3>
+                    <div class="info-row"><span class="info-label">Adapter Type</span><span class="info-value" id="adapter-type">Detecting...</span></div>
+                    <div class="info-row"><span class="info-label">Serial Number</span><span class="info-value" id="adapter-serial">-</span></div>
+                    <div class="info-row"><span class="info-label">Firmware</span><span class="info-value" id="adapter-firmware">-</span></div>
                 </div>
-
                 <div class="modal-section">
-                    <h3>🎯 Target Detection</h3>
-                    <div class="info-row">
-                        <span class="info-label">IDCODE</span>
-                        <span class="info-value success" id="target-idcode">-</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Device</span>
-                        <span class="info-value" id="target-device">-</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Core</span>
-                        <span class="info-value" id="target-core">-</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Flash Size</span>
-                        <span class="info-value" id="target-flash">-</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">RAM Size</span>
-                        <span class="info-value" id="target-ram">-</span>
-                    </div>
+                    <h3>Target Detection</h3>
+                    <div class="info-row"><span class="info-label">IDCODE</span><span class="info-value success" id="target-idcode">-</span></div>
+                    <div class="info-row"><span class="info-label">Device</span><span class="info-value" id="target-device">-</span></div>
+                    <div class="info-row"><span class="info-label">Core</span><span class="info-value" id="target-core">-</span></div>
+                    <div class="info-row"><span class="info-label">Flash</span><span class="info-value" id="target-flash">-</span></div>
+                    <div class="info-row"><span class="info-label">RAM</span><span class="info-value" id="target-ram">-</span></div>
                 </div>
-
                 <div class="modal-section">
-                    <h3>⚡ Debug Settings</h3>
+                    <h3>Debug Settings</h3>
                     <div class="settings-group">
                         <label>Clock Speed (kHz)</label>
                         <select id="debug-clock">
@@ -595,8 +429,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn-secondary" onclick="detectTarget()">🔍 Re-detect</button>
-                <button class="btn success" onclick="applyTargetSettings()">✓ Apply</button>
+                <button class="btn-secondary" onclick="detectTarget()">Re-detect</button>
+                <button class="btn success" onclick="applyTargetSettings()">Apply</button>
             </div>
         </div>
     </div>
@@ -605,12 +439,12 @@
     <div class="modal-overlay" id="compilerSettingsModal">
         <div class="modal">
             <div class="modal-header">
-                <h2>🔧 Compiler Settings</h2>
-                <button class="modal-close" onclick="closeCompilerSettings()">×</button>
+                <h2>Compiler Settings</h2>
+                <button class="modal-close" onclick="closeCompilerSettings()">x</button>
             </div>
             <div class="modal-body">
                 <div class="modal-section">
-                    <h3>🛠️ Toolchain</h3>
+                    <h3>Toolchain</h3>
                     <div class="settings-group">
                         <label>ARM Compiler</label>
                         <select id="compiler-version">
@@ -633,52 +467,48 @@
                         <label>FPU</label>
                         <select id="fpu-type">
                             <option value="none">No FPU</option>
-                            <option value="fpv4-sp-d16" selected>FPv4-SP-D16 (Single Precision)</option>
+                            <option value="fpv4-sp-d16" selected>FPv4-SP-D16</option>
                             <option value="fpv5-sp-d16">FPv5-SP-D16</option>
-                            <option value="fpv5-d16">FPv5-D16 (Double Precision)</option>
+                            <option value="fpv5-d16">FPv5-D16</option>
                         </select>
                     </div>
                 </div>
-
                 <div class="modal-section">
-                    <h3>⚡ Optimization</h3>
+                    <h3>Optimization</h3>
                     <div class="settings-group">
                         <label>Optimization Level</label>
                         <select id="opt-level">
-                            <option value="-O0">-O0 (No Optimization - Debug)</option>
-                            <option value="-O1">-O1 (Optimize)</option>
-                            <option value="-O2" selected>-O2 (Optimize More)</option>
-                            <option value="-O3">-O3 (Optimize Most)</option>
-                            <option value="-Os">-Os (Optimize Size)</option>
-                            <option value="-Ofast">-Ofast (Fast - Unsafe)</option>
+                            <option value="-O0">-O0 (Debug)</option>
+                            <option value="-O1">-O1</option>
+                            <option value="-O2" selected>-O2</option>
+                            <option value="-O3">-O3</option>
+                            <option value="-Os">-Os (Size)</option>
                         </select>
                     </div>
                     <div class="settings-group">
                         <label>Debug Level</label>
                         <select id="debug-level">
-                            <option value="-g0">-g0 (No Debug Info)</option>
-                            <option value="-g1">-g1 (Minimal)</option>
-                            <option value="-g2">-g2 (Default)</option>
-                            <option value="-g3" selected>-g3 (Maximum Debug Info)</option>
+                            <option value="-g0">-g0</option>
+                            <option value="-g1">-g1</option>
+                            <option value="-g2">-g2</option>
+                            <option value="-g3" selected>-g3 (Max)</option>
                         </select>
                     </div>
                 </div>
-
                 <div class="modal-section">
-                    <h3>📝 Preprocessor Defines</h3>
+                    <h3>Preprocessor Defines</h3>
                     <div class="settings-group">
                         <label>Defines (one per line)</label>
-                        <textarea id="preprocessor-defines" style="width:100%; height:80px; background:#1e1e1e; border:1px solid #3e3e42; color:#d4d4d4; padding:8px; border-radius:4px; font-family:Consolas,monospace; font-size:12px;">USE_HAL_DRIVER
+                        <textarea id="preprocessor-defines" style="height:80px; font-family:Consolas,monospace;">USE_HAL_DRIVER
 STM32F4xx
 HSE_VALUE=8000000</textarea>
                     </div>
                 </div>
-
                 <div class="modal-section">
-                    <h3>📁 Include Paths</h3>
+                    <h3>Include Paths</h3>
                     <div class="settings-group">
                         <label>Include Paths (one per line)</label>
-                        <textarea id="include-paths" style="width:100%; height:60px; background:#1e1e1e; border:1px solid #3e3e42; color:#d4d4d4; padding:8px; border-radius:4px; font-family:Consolas,monospace; font-size:12px;">./inc
+                        <textarea id="include-paths" style="height:60px; font-family:Consolas,monospace;">./inc
 ./Drivers/CMSIS/Include
 ./Drivers/STM32F4xx_HAL_Driver/Inc</textarea>
                     </div>
@@ -686,117 +516,146 @@ HSE_VALUE=8000000</textarea>
             </div>
             <div class="modal-footer">
                 <button class="btn-secondary" onclick="closeCompilerSettings()">Cancel</button>
-                <button class="btn success" onclick="applyCompilerSettings()">✓ Apply</button>
+                <button class="btn success" onclick="applyCompilerSettings()">Apply</button>
             </div>
         </div>
     </div>
 
     <script>
         const { ipcRenderer } = require('electron');
-
         let editor = null;
         let currentFile = null;
+        let openedFiles = [];
+        let activeFileIndex = -1;
 
-        // Load Monaco Editor from CDN
-        const loaderScript = document.createElement('script');
-        loaderScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js';
-        loaderScript.onload = () => {
-            require.config({
-                paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' }
-            });
-            require(['vs/editor/editor.main'], initMonaco);
-        };
-        document.head.appendChild(loaderScript);
-
-        function initMonaco() {
-            editor = monaco.editor.create(document.getElementById('editor'), {
-                value: '',
-                language: 'c',
-                theme: 'vs-dark',
-                automaticLayout: true,
-                fontSize: 14,
-                minimap: { enabled: true }
-            });
-
-            outputAppend('✅ Editor ready\n');
-        }
+        // Monaco loader
+        ipcRenderer.once('monaco-path', (event, monacoPath) => {
+            const path = require('path');
+            const loaderScript = document.createElement('script');
+            loaderScript.src = path.join(monacoPath, 'loader.js');
+            loaderScript.onload = () => {
+                require.config({ paths: { vs: monacoPath } });
+                require(['vs/editor/editor.main'], initMonaco);
+            };
+            document.head.appendChild(loaderScript);
+        });
 
         // IPC Listeners
-        ipcRenderer.on('new-file', () => {
-            if (editor) {
-                editor.setValue('');
-                currentFile = null;
-                updateUI();
-            }
-        });
-
         ipcRenderer.on('open-file', (event, data) => {
-            if (editor) {
-                editor.setValue(data.content);
-                currentFile = data;
-                updateUI();
-                document.getElementById('welcome').style.display = 'none';
-                document.getElementById('editor').style.display = 'block';
-            }
+            document.getElementById('welcome').style.display = 'none';
+            document.getElementById('editor').style.display = 'block';
+            if (editor) openFileInTab(data.path, data.name, data.content);
+            else window.pendingFile = data;
         });
 
-        ipcRenderer.on('open-project', (event, data) => {
-            document.getElementById('project-info').textContent = data.path;
-            outputAppend(`📁 Opened project: ${data.path}\n`);
+        ipcRenderer.on('open-project', (event, projectInfo) => {
+            document.getElementById('project-info').innerHTML = `<strong>${projectInfo.name}</strong><br><small>${projectInfo.files.length} files</small>`;
+            const fileTree = document.getElementById('file-tree');
+            fileTree.innerHTML = '';
+            projectInfo.files.forEach(file => {
+                const item = document.createElement('div');
+                item.className = 'file-item';
+                item.innerHTML = `${getFileIcon(file.type)} ${file.name}`;
+                item.onclick = () => ipcRenderer.send('open-file-from-project', file.path);
+                fileTree.appendChild(item);
+            });
         });
 
-        ipcRenderer.on('get-editor-content', (event, action) => {
-            if (editor) {
-                const content = editor.getValue();
-                if (action === 'save') {
-                    ipcRenderer.send('save-file-content', content);
-                } else if (action === 'save-as') {
-                    ipcRenderer.send('save-file-as-content', content);
-                }
-            }
+        ipcRenderer.on('output-append', (event, text) => outputAppend(text));
+        ipcRenderer.on('debug-started', () => {
+            document.getElementById('debug-btn').style.display = 'none';
+            document.getElementById('stop-btn').style.display = 'inline-block';
+            document.getElementById('step-over-btn').style.display = 'inline-block';
         });
-
-        ipcRenderer.on('file-saved', (event, path) => {
-            outputAppend(`💾 Saved: ${path}\n`);
-        });
-
-        ipcRenderer.on('output-clear', () => {
-            document.getElementById('output').textContent = '';
-        });
-
-        ipcRenderer.on('output-append', (event, text) => {
-            outputAppend(text);
+        ipcRenderer.on('debug-stopped', () => {
+            document.getElementById('debug-btn').style.display = 'inline-block';
+            document.getElementById('stop-btn').style.display = 'none';
+            document.getElementById('step-over-btn').style.display = 'none';
         });
 
         // UI Functions
-        function openFile() {
-            ipcRenderer.send('open-file-dialog');
-        }
-
-        function openProject() {
-            ipcRenderer.send('open-project-dialog');
-        }
-
+        function newFile() { ipcRenderer.send('new-file', prompt('File name:')); }
+        function openFile() { ipcRenderer.send('open-file-dialog'); }
+        function openProject() { ipcRenderer.send('open-project-dialog'); }
         function saveFile() {
+            if (editor && activeFileIndex !== -1) {
+                openedFiles[activeFileIndex].content = editor.getValue();
+                ipcRenderer.send('save-file', { path: openedFiles[activeFileIndex].path, content: openedFiles[activeFileIndex].content });
+            }
+        }
+        function buildProject() { outputAppend('\n🔨 Building...\n'); ipcRenderer.send('build-project'); }
+        function cleanProject() { outputAppend('\n🧹 Cleaning...\n'); ipcRenderer.send('clean-project'); }
+        function rebuildProject() { outputAppend('\n🔄 Rebuilding...\n'); ipcRenderer.send('rebuild-project'); }
+        function flashDevice() { outputAppend('\n⚡ Flashing...\n'); ipcRenderer.send('flash-program'); }
+        function startDebug() { outputAppend('\n▶️ Starting debug...\n'); ipcRenderer.send('debug-start'); }
+        function stopDebug() { outputAppend('\n⏹ Stopping debug...\n'); ipcRenderer.send('debug-stop'); }
+        function stepOver() { ipcRenderer.send('debug-step-over'); }
+
+        // Tab Management
+        function openFileInTab(filePath, fileName, content) {
+            const idx = openedFiles.findIndex(f => f.path === filePath);
+            if (idx !== -1) { switchFileTab(idx); return; }
+            openedFiles.push({ path: filePath, name: fileName, content: content, modified: false });
+            activeFileIndex = openedFiles.length - 1;
+            updateTabs();
+            document.getElementById('welcome').style.display = 'none';
+            document.getElementById('editor').style.display = 'block';
             if (editor) {
-                ipcRenderer.send('get-editor-content', 'save');
+                editor.setValue(content);
+                const ext = filePath.match(/\.[^.]+$/)?.[0] || '';
+                const langMap = { '.c': 'c', '.h': 'c', '.cpp': 'cpp', '.s': 'asm', '.json': 'json' };
+                monaco.editor.setModelLanguage(editor.getModel(), langMap[ext] || 'c');
             }
         }
 
-        function buildProject() {
-            outputAppend('\n🔨 Building...\n');
+        function updateTabs() {
+            const tabsContainer = document.getElementById('tabs');
+            tabsContainer.innerHTML = '';
+            openedFiles.forEach((file, index) => {
+                const tab = document.createElement('div');
+                tab.className = 'tab' + (index === activeFileIndex ? ' active' : '');
+                tab.innerHTML = `${getFileIcon(file.path.match(/\.[^.]+$/)?.[0])} ${file.name}${file.modified ? ' *' : ''} <span style="margin-left:8px;cursor:pointer;" onclick="closeTab(${index});event.stopPropagation();">x</span>`;
+                tab.onclick = () => switchFileTab(index);
+                tabsContainer.appendChild(tab);
+            });
         }
 
-        function cleanProject() {
-            outputAppend('🧹 Cleaning...\n');
+        function switchFileTab(index) {
+            if (activeFileIndex !== -1 && editor) openedFiles[activeFileIndex].content = editor.getValue();
+            activeFileIndex = index;
+            document.getElementById('welcome').style.display = 'none';
+            document.getElementById('editor').style.display = 'block';
+            if (editor) editor.setValue(openedFiles[index].content);
+            updateTabs();
         }
 
-        function flashDevice() {
-            outputAppend('⚡ Flashing...\n');
+        function closeTab(index) {
+            openedFiles.splice(index, 1);
+            if (openedFiles.length === 0) {
+                activeFileIndex = -1;
+                if (editor) editor.setValue('');
+                document.getElementById('welcome').style.display = 'flex';
+                document.getElementById('editor').style.display = 'none';
+            } else {
+                if (activeFileIndex >= openedFiles.length) activeFileIndex = openedFiles.length - 1;
+                switchFileTab(activeFileIndex);
+            }
+            updateTabs();
         }
 
-        function analyzeCode() {
-            outputAppend('\n🤖 Running AI analysis...\n');
+        function initMonaco() {
+            editor = monaco.editor.create(document.getElementById('editor'), {
+                value: '', language: 'c', theme: 'vs-dark', automaticLayout: true,
+                minimap: { enabled: true }, fontSize: 14, lineNumbers: 'on'
+            });
+            editor.onDidChangeModelContent(() => {
+                if (activeFileIndex !== -1) { openedFiles[activeFileIndex].modified = true; updateTabs(); }
+            });
+            editor.addAction({ id: 'save', label: 'Save', keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS], run: saveFile });
+            editor.addAction({ id: 'build', label: 'Build', keybindings: [monaco.KeyCode.F7], run: () => ipcRenderer.send('build-project') });
+            editor.addAction({ id: 'debug', label: 'Debug', keybindings: [monaco.KeyCode.F5], run: () => ipcRenderer.send('debug-start') });
+            if (window.pendingFile) { openFileInTab(window.pendingFile.path, window.pendingFile.name, window.pendingFile.content); window.pendingFile = null; }
+            outputAppend('✅ Editor ready\n');
         }
 
         function outputAppend(text) {
@@ -805,157 +664,65 @@ HSE_VALUE=8000000</textarea>
             output.scrollTop = output.scrollHeight;
         }
 
-        function updateUI() {
-            if (currentFile) {
-                document.getElementById('file-info').innerHTML =
-                    `<div style="padding: 8px; font-size: 12px;">
-                        📄 ${currentFile.name}
-                    </div>`;
-            }
+        function getFileIcon(ext) {
+            const icons = { '.c': '📄', '.h': '📋', '.cpp': '📄', '.s': '⚙️', 'c': '📄', 'h': '📋' };
+            return icons[ext] || '📄';
         }
 
-        // Initial message
-        outputAppend('ArmEditor - Professional ARM IDE\n');
-        outputAppend('Better than Keil/IAR, completely free!\n');
-        outputAppend('Loading Monaco Editor...\n');
-
-        // ============ TARGET SETUP MODAL ============
-        let targetSettings = {
-            adapter: null,
-            idcode: null,
-            device: null,
-            clock: 4000,
-            resetType: 'sw',
-            interface: 'swd'
-        };
-
-        function openTargetSetup() {
-            document.getElementById('targetSetupModal').classList.add('active');
-            detectTarget();
+        function switchOutputTab(tabName) {
+            ['output', 'registers', 'memory', 'watch', 'callstack'].forEach(t => {
+                const el = document.getElementById(t);
+                if (el) el.style.display = t === tabName ? 'block' : 'none';
+            });
+            document.querySelectorAll('.output-tabs .output-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
         }
 
-        function closeTargetSetup() {
-            document.getElementById('targetSetupModal').classList.remove('active');
+        // Side Panel
+        let sidePanelVisible = false;
+        function toggleSidePanel() {
+            sidePanelVisible = !sidePanelVisible;
+            document.getElementById('side-panel').style.display = sidePanelVisible ? 'flex' : 'none';
         }
+        function switchSidePanel(name) {
+            ['disasm', 'hex', 'mixed'].forEach(p => {
+                document.getElementById(p + '-panel').style.display = p === name ? 'flex' : 'none';
+                document.getElementById('tab-' + p)?.classList.toggle('active', p === name);
+            });
+        }
+        function loadHexView() { outputAppend('📊 Loading hex view...\n'); ipcRenderer.send('memory-read', document.getElementById('hex-address').value); }
 
-        async function detectTarget() {
+        // ========== TARGET SETUP ==========
+        let targetSettings = { adapter: null, idcode: null, device: null, clock: 4000, resetType: 'sw', interface: 'swd' };
+        function openTargetSetup() { document.getElementById('targetSetupModal').classList.add('active'); detectTarget(); }
+        function closeTargetSetup() { document.getElementById('targetSetupModal').classList.remove('active'); }
+        function detectTarget() {
             outputAppend('\n🔍 Detecting target...\n');
-
             document.getElementById('adapter-type').textContent = 'Detecting...';
-            document.getElementById('target-idcode').textContent = 'Scanning...';
-
-            // Simulate ST-Link detection via st-info or OpenOCD
             const { exec } = require('child_process');
-
-            // Try st-info first (STM32 tools)
-            exec('st-info --probe 2>/dev/null || echo "no-stlink"', (error, stdout, stderr) => {
-                if (stdout.includes('no-stlink') || error) {
-                    // Try OpenOCD detection
-                    detectWithOpenOCD();
-                } else {
-                    parseSTLinkInfo(stdout);
-                }
+            exec('st-info --probe 2>/dev/null || echo "no-stlink"', (error, stdout) => {
+                if (stdout.includes('no-stlink')) detectWithOpenOCD();
+                else parseSTLinkInfo(stdout);
             });
         }
-
         function parseSTLinkInfo(output) {
-            const lines = output.split('\n');
-            let serial = '-';
-            let version = '-';
-            let chipId = '-';
-            let flash = '-';
-            let sram = '-';
-            let device = 'Unknown';
-
-            lines.forEach(line => {
-                if (line.includes('serial:')) {
-                    serial = line.split('serial:')[1]?.trim() || '-';
-                }
-                if (line.includes('flash:')) {
-                    flash = line.split('flash:')[1]?.trim() || '-';
-                }
-                if (line.includes('sram:')) {
-                    sram = line.split('sram:')[1]?.trim() || '-';
-                }
-                if (line.includes('chipid:')) {
-                    chipId = line.split('chipid:')[1]?.trim() || '-';
-                }
-                if (line.includes('descr:')) {
-                    device = line.split('descr:')[1]?.trim() || 'Unknown';
-                }
-            });
-
-            updateTargetUI({
-                adapterType: 'ST-LINK/V2',
-                serial: serial,
-                firmware: version,
-                idcode: chipId,
-                device: device,
-                core: 'ARM Cortex-M',
-                flash: flash,
-                ram: sram
-            });
+            const get = (key) => { const m = output.match(new RegExp(key + ':\\s*(.+)')); return m ? m[1].trim() : '-'; };
+            updateTargetUI({ adapterType: 'ST-LINK/V2', serial: get('serial'), firmware: '-', idcode: get('chipid'), device: get('descr'), core: 'Cortex-M', flash: get('flash'), ram: get('sram') });
         }
-
         function detectWithOpenOCD() {
             const { exec } = require('child_process');
-
-            // OpenOCD one-shot detection
-            const cmd = 'timeout 3 openocd -f interface/stlink.cfg -f target/stm32f4x.cfg -c "init; targets; exit" 2>&1 || echo "detection-failed"';
-
-            exec(cmd, (error, stdout, stderr) => {
-                if (stdout.includes('detection-failed') || error) {
-                    // No hardware detected - show simulated values for demo
-                    updateTargetUI({
-                        adapterType: 'ST-LINK/V3 (Demo)',
-                        serial: '003400343...',
-                        firmware: 'V3J9M3B5S1',
-                        idcode: '0x5BA02477',
-                        device: 'STM32F7x7',
-                        core: 'ARM Cortex-M7',
-                        flash: '2048 KB',
-                        ram: '512 KB'
-                    });
-                    outputAppend('⚠️ No hardware detected - showing demo values\n');
+            exec('timeout 3 openocd -f interface/stlink.cfg -f target/stm32f4x.cfg -c "init; targets; exit" 2>&1 || echo "detection-failed"', (error, stdout) => {
+                if (stdout.includes('detection-failed')) {
+                    updateTargetUI({ adapterType: 'ST-LINK/V3 (Demo)', serial: '003400343...', firmware: 'V3J9M3B5S1', idcode: '0x5BA02477', device: 'STM32F7x7', core: 'Cortex-M7', flash: '2048 KB', ram: '512 KB' });
+                    outputAppend('⚠️ Demo mode - no hardware\n');
                 } else {
-                    // Parse OpenOCD output
-                    parseOpenOCDOutput(stdout);
+                    const idMatch = stdout.match(/IDCODE[:\s]+([0-9a-fA-Fx]+)/i);
+                    const idcode = idMatch ? idMatch[1] : '-';
+                    const deviceMap = { '0x1BA01477': 'STM32F1xx', '0x2BA01477': 'STM32F4xx', '0x5BA02477': 'STM32F7xx' };
+                    updateTargetUI({ adapterType: 'ST-LINK', serial: '-', firmware: '-', idcode: idcode, device: deviceMap[idcode] || 'Unknown', core: 'Cortex-M', flash: '-', ram: '-' });
                 }
             });
         }
-
-        function parseOpenOCDOutput(output) {
-            let idcode = '-';
-            let device = 'Unknown';
-
-            // Look for IDCODE in output
-            const idcodeMatch = output.match(/IDCODE[:\s]+([0-9a-fA-Fx]+)/i);
-            if (idcodeMatch) {
-                idcode = idcodeMatch[1];
-            }
-
-            // Detect device from IDCODE
-            const deviceMap = {
-                '0x1BA01477': { name: 'STM32F1xx', core: 'Cortex-M3' },
-                '0x2BA01477': { name: 'STM32F4xx', core: 'Cortex-M4' },
-                '0x5BA02477': { name: 'STM32F7xx', core: 'Cortex-M7' },
-                '0x6BA02477': { name: 'STM32H7xx', core: 'Cortex-M7' },
-            };
-
-            const detected = deviceMap[idcode] || { name: 'Unknown', core: 'Cortex-M' };
-
-            updateTargetUI({
-                adapterType: 'ST-LINK',
-                serial: '-',
-                firmware: '-',
-                idcode: idcode,
-                device: detected.name,
-                core: detected.core,
-                flash: '-',
-                ram: '-'
-            });
-        }
-
         function updateTargetUI(info) {
             document.getElementById('adapter-type').textContent = info.adapterType;
             document.getElementById('adapter-type').className = 'info-value success';
@@ -966,45 +733,22 @@ HSE_VALUE=8000000</textarea>
             document.getElementById('target-core').textContent = info.core;
             document.getElementById('target-flash').textContent = info.flash;
             document.getElementById('target-ram').textContent = info.ram;
-
             targetSettings.idcode = info.idcode;
             targetSettings.device = info.device;
-
             outputAppend(`✅ Target: ${info.device} (${info.idcode})\n`);
         }
-
         function applyTargetSettings() {
             targetSettings.clock = document.getElementById('debug-clock').value;
             targetSettings.resetType = document.getElementById('reset-type').value;
             targetSettings.interface = document.getElementById('debug-interface').value;
-
-            outputAppend(`⚙️ Target settings applied:\n`);
-            outputAppend(`   Clock: ${targetSettings.clock} kHz\n`);
-            outputAppend(`   Reset: ${targetSettings.resetType}\n`);
-            outputAppend(`   Interface: ${targetSettings.interface}\n`);
-
+            outputAppend(`⚙️ Applied: ${targetSettings.clock}kHz, ${targetSettings.interface}\n`);
             closeTargetSetup();
         }
 
-        // ============ COMPILER SETTINGS MODAL ============
-        let compilerSettings = {
-            compiler: 'gcc',
-            cpu: 'cortex-m4',
-            fpu: 'fpv4-sp-d16',
-            optLevel: '-O2',
-            debugLevel: '-g3',
-            defines: ['USE_HAL_DRIVER', 'STM32F4xx'],
-            includePaths: ['./inc']
-        };
-
-        function openCompilerSettings() {
-            document.getElementById('compilerSettingsModal').classList.add('active');
-        }
-
-        function closeCompilerSettings() {
-            document.getElementById('compilerSettingsModal').classList.remove('active');
-        }
-
+        // ========== COMPILER SETTINGS ==========
+        let compilerSettings = { compiler: 'gcc', cpu: 'cortex-m4', fpu: 'fpv4-sp-d16', optLevel: '-O2', debugLevel: '-g3', defines: [], includePaths: [] };
+        function openCompilerSettings() { document.getElementById('compilerSettingsModal').classList.add('active'); }
+        function closeCompilerSettings() { document.getElementById('compilerSettingsModal').classList.remove('active'); }
         function applyCompilerSettings() {
             compilerSettings.compiler = document.getElementById('compiler-version').value;
             compilerSettings.cpu = document.getElementById('cpu-type').value;
@@ -1013,23 +757,17 @@ HSE_VALUE=8000000</textarea>
             compilerSettings.debugLevel = document.getElementById('debug-level').value;
             compilerSettings.defines = document.getElementById('preprocessor-defines').value.split('\n').filter(d => d.trim());
             compilerSettings.includePaths = document.getElementById('include-paths').value.split('\n').filter(p => p.trim());
-
-            outputAppend(`🔧 Compiler settings applied:\n`);
-            outputAppend(`   CPU: ${compilerSettings.cpu}\n`);
-            outputAppend(`   FPU: ${compilerSettings.fpu}\n`);
-            outputAppend(`   Optimization: ${compilerSettings.optLevel}\n`);
-            outputAppend(`   Defines: ${compilerSettings.defines.length} items\n`);
-
+            outputAppend(`🔧 Compiler: ${compilerSettings.cpu}, ${compilerSettings.optLevel}\n`);
             closeCompilerSettings();
         }
 
-        // Close modals with Escape key
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeTargetSetup();
-                closeCompilerSettings();
-            }
-        });
+        // Keyboard
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeTargetSetup(); closeCompilerSettings(); } });
+
+        // Init
+        outputAppend('ArmEditor v2.0.0 - Consolidated Stable\n');
+        outputAppend('All features from multiple branches merged!\n');
+        outputAppend('Loading Monaco Editor...\n');
     </script>
 </body>
 </html>
