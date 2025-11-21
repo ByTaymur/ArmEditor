@@ -2,6 +2,7 @@ const { spawn, exec, execSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const net = require('net');
+const STM32Detector = require('./stm32-detector');
 
 class ARMToolchain {
     constructor() {
@@ -213,13 +214,64 @@ class MakefileBuilder {
 
 class OpenOCDFlasher {
     constructor(config = {}) {
-        this.interface = config.interface || 'stlink-v2';
-        this.target = config.target || 'stm32f4x';
+        this.interface = config.interface || 'stlink';
+        this.target = config.target || null; // null = auto-detect
         this.openocdPath = config.openocdPath || 'openocd';
         this.timeout = config.timeout || 60000; // 60 saniye default
         this.gdbPort = config.gdbPort || 3333;
         this.tclPort = config.tclPort || 6666;
         this.telnetPort = config.telnetPort || 4444;
+        this.autoDetect = config.autoDetect !== false; // Default true
+        this.detector = new STM32Detector();
+        this.detectedChip = null;
+    }
+
+    /**
+     * Auto-detect connected STM32 and configure OpenOCD accordingly
+     */
+    async detectAndConfigure() {
+        if (!this.autoDetect && this.target) {
+            // Manual configuration, skip detection
+            return {
+                success: true,
+                mode: 'manual',
+                target: this.target,
+                message: `Using manual configuration: ${this.target}`
+            };
+        }
+
+        // Perform auto-detection
+        const detection = await this.detector.detect();
+
+        if (detection.success && detection.chip) {
+            this.detectedChip = detection.chip;
+            this.target = detection.chip.target;
+
+            // Check voltage warning
+            let voltageWarning = '';
+            if (detection.voltage && detection.voltage < 2.5) {
+                voltageWarning = `\n⚠️ Warning: Low target voltage (${detection.voltage.toFixed(2)}V). Normal is 3.3V.`;
+            }
+
+            return {
+                success: true,
+                mode: 'auto',
+                chip: detection.chip,
+                target: this.target,
+                voltage: detection.voltage,
+                message: `${detection.message}${voltageWarning}`,
+                compilerFlags: this.detector.getCompilerFlags(detection.chip)
+            };
+        } else {
+            // Detection failed
+            return {
+                success: false,
+                mode: 'failed',
+                message: detection.message,
+                suggestion: detection.suggestion,
+                error: detection.error
+            };
+        }
     }
 
     // Port kullanımda mı kontrol et
@@ -269,14 +321,44 @@ class OpenOCDFlasher {
     }
 
     async flash(elfFile, onProgress = null) {
-        // Önce eski process'leri temizle
+        // Step 1: Auto-detect chip
+        if (onProgress) onProgress('stdout', '🔍 Detecting connected STM32 chip...\n');
+
+        const detection = await this.detectAndConfigure();
+
+        if (!detection.success) {
+            if (onProgress) {
+                onProgress('stderr', `\n${detection.message}\n`);
+                if (detection.suggestion) {
+                    onProgress('stderr', `\n${detection.suggestion}\n`);
+                }
+            }
+            throw new Error(detection.message);
+        }
+
+        // Show detection results
+        if (onProgress) {
+            onProgress('stdout', `${detection.message}\n`);
+            onProgress('stdout', `📋 Target: ${detection.chip.name} (${detection.chip.family})\n`);
+            onProgress('stdout', `🎯 OpenOCD Config: ${this.target}\n`);
+            if (detection.compilerFlags) {
+                onProgress('stdout', `💻 CPU: ${detection.compilerFlags.cpu}\n`);
+            }
+            onProgress('stdout', '\n');
+        }
+
+        // Step 2: Clean old processes
+        if (onProgress) onProgress('stdout', '🧹 Cleaning old OpenOCD processes...\n');
         await this.killExistingOpenOCD();
 
-        // Port'ların serbest olmasını bekle
+        // Step 3: Wait for ports
         const portsReady = await this.waitForPorts();
         if (!portsReady) {
             throw new Error('OpenOCD portları (3333, 4444, 6666) hala kullanımda. Lütfen eski debug oturumlarını kapatın.');
         }
+
+        // Step 4: Flash with auto-detected config
+        if (onProgress) onProgress('stdout', '⚡ Starting flash operation...\n');
 
         const args = [
             '-f', `interface/${this.interface}.cfg`,
@@ -358,6 +440,28 @@ class OpenOCDFlasher {
 
     // Debug oturumu başlat (OpenOCD server mode)
     async startDebugServer(onProgress = null) {
+        // Auto-detect chip if not already done
+        if (!this.detectedChip) {
+            if (onProgress) onProgress('stdout', '🔍 Detecting connected STM32 chip...\n');
+
+            const detection = await this.detectAndConfigure();
+
+            if (!detection.success) {
+                if (onProgress) {
+                    onProgress('stderr', `\n${detection.message}\n`);
+                    if (detection.suggestion) {
+                        onProgress('stderr', `\n${detection.suggestion}\n`);
+                    }
+                }
+                throw new Error(detection.message);
+            }
+
+            if (onProgress) {
+                onProgress('stdout', `${detection.message}\n`);
+                onProgress('stdout', `📋 Target: ${detection.chip.name}\n\n`);
+            }
+        }
+
         await this.killExistingOpenOCD();
         await this.waitForPorts();
 

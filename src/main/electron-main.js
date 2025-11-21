@@ -445,10 +445,9 @@ async function startDebug() {
     mainWindow.webContents.send('output-append', `📁 Using: ${path.basename(elfFile)}\n`);
 
     try {
-        // Initialize OpenOCD flasher
+        // Initialize OpenOCD flasher - auto-detect will determine the target
         openocdFlasher = new OpenOCDFlasher({
-            interface: 'stlink-v2',
-            target: 'stm32f4x'
+            autoDetect: true  // Auto-detect connected STM32
         });
 
         // Start OpenOCD server
@@ -665,15 +664,15 @@ function showAbout() {
         title: 'About ArmEditor',
         message: 'ArmEditor v1.0.0',
         detail: 'Professional ARM Development IDE\n\n' +
-                'Features:\n' +
-                '• AI Code Assistant\n' +
-                '• Memory Analyzer\n' +
-                '• Performance Profiler\n' +
-                '• STM32CubeMX Import\n' +
-                '• Real-time Debugging\n\n' +
-                'Better than Keil/IAR, completely free!\n\n' +
-                'Built with Electron + Monaco Editor\n' +
-                'License: MIT'
+            'Features:\n' +
+            '• AI Code Assistant\n' +
+            '• Memory Analyzer\n' +
+            '• Performance Profiler\n' +
+            '• STM32CubeMX Import\n' +
+            '• Real-time Debugging\n\n' +
+            'Better than Keil/IAR, completely free!\n\n' +
+            'Built with Electron + Monaco Editor\n' +
+            'License: MIT'
     });
 }
 
@@ -808,8 +807,7 @@ ipcMain.on('flash-device', async () => {
 
     try {
         const flasher = new OpenOCDFlasher({
-            interface: 'stlink-v2',
-            target: 'stm32f4x',
+            autoDetect: true,  // Auto-detect connected STM32
             timeout: 60000
         });
 

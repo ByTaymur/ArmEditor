@@ -7,7 +7,10 @@ class GDBInterface extends EventEmitter {
     constructor(options = {}) {
         super();
 
-        this.gdbPath = options.gdbPath || 'arm-none-eabi-gdb';
+        // Prevent memory leak warnings - we use many event listeners for commands
+        this.setMaxListeners(50);
+
+        this.gdbPath = options.gdbPath || this.detectGDBPath();
         this.elfFile = options.elfFile;
         this.port = options.port || 3333;
         this.host = options.host || 'localhost';
@@ -21,6 +24,23 @@ class GDBInterface extends EventEmitter {
         this.currentFile = null;
         this.pendingCommands = new Map();
         this.commandId = 0;
+    }
+
+    // Auto-detect available GDB
+    detectGDBPath() {
+        const candidates = ['gdb-multiarch', 'arm-none-eabi-gdb'];
+
+        for (const candidate of candidates) {
+            try {
+                execSync(`which ${candidate}`, { stdio: 'ignore' });
+                return candidate;
+            } catch (e) {
+                // Try next candidate
+            }
+        }
+
+        // Fallback
+        return 'arm-none-eabi-gdb';
     }
 
     // Timeout ile komut çalıştırma helper
@@ -384,7 +404,7 @@ class GDBInterface extends EventEmitter {
     // Tüm register'ları oku (batch)
     async readAllRegisters(timeout = null) {
         const registers = ['r0', 'r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7',
-                          'r8', 'r9', 'r10', 'r11', 'r12', 'sp', 'lr', 'pc'];
+            'r8', 'r9', 'r10', 'r11', 'r12', 'sp', 'lr', 'pc'];
         const results = {};
 
         for (const reg of registers) {
