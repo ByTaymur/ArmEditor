@@ -129,18 +129,24 @@ function closeWindow() {
 
 // Project operations
 function newProject() {
-    const { dialog } = require('electron').remote || require('@electron/remote');
-
-    dialog.showOpenDialog({
+    // Use IPC to communicate with main process for dialogs
+    ipcRenderer.send('show-open-dialog', {
         properties: ['openDirectory', 'createDirectory'],
         title: 'Select Project Location'
-    }).then(result => {
-        if (!result.canceled && result.filePaths.length > 0) {
-            const projectPath = result.filePaths[0];
-            createNewProject(projectPath);
-        }
     });
 }
+
+// Handle dialog response from main process
+ipcRenderer.on('dialog-open-result', (event, result) => {
+    if (result && result.filePaths && result.filePaths.length > 0) {
+        const projectPath = result.filePaths[0];
+        if (result.type === 'new-project') {
+            createNewProject(projectPath);
+        } else {
+            loadProject(projectPath);
+        }
+    }
+});
 
 function createNewProject(projectPath) {
     // Create project structure
@@ -182,15 +188,11 @@ function createProjectStructure(basePath, structure) {
 }
 
 function openProject() {
-    const { dialog } = require('electron').remote || require('@electron/remote');
-
-    dialog.showOpenDialog({
+    // Use IPC to communicate with main process for dialogs
+    ipcRenderer.send('show-open-dialog', {
         properties: ['openDirectory'],
-        title: 'Open Project'
-    }).then(result => {
-        if (!result.canceled && result.filePaths.length > 0) {
-            loadProject(result.filePaths[0]);
-        }
+        title: 'Open Project',
+        type: 'open-project'
     });
 }
 
@@ -259,7 +261,14 @@ function getFileIcon(filename) {
 }
 
 function openFile(filePath) {
-    const content = fs.readFileSync(filePath, 'utf-8');
+    let content;
+    try {
+        content = fs.readFileSync(filePath, 'utf-8');
+    } catch (err) {
+        console.error(`Failed to open file: ${err.message}`);
+        showNotification(`Failed to open file: ${err.message}`, 'error');
+        return;
+    }
     const filename = path.basename(filePath);
 
     // Add to open files
@@ -358,18 +367,46 @@ function saveFile() {
     if (!activeFile || !editor) return;
 
     const content = editor.getValue();
-    fs.writeFileSync(activeFile, content);
-    openFiles.set(activeFile, content);
-
-    console.log('File saved:', activeFile);
+    try {
+        fs.writeFileSync(activeFile, content);
+        openFiles.set(activeFile, content);
+        showNotification('File saved', 'success');
+    } catch (err) {
+        console.error(`Failed to save file: ${err.message}`);
+        showNotification(`Failed to save: ${err.message}`, 'error');
+    }
 }
 
 function saveAllFiles() {
+    let savedCount = 0;
+    let errorCount = 0;
+
     openFiles.forEach((content, filePath) => {
-        fs.writeFileSync(filePath, content);
+        try {
+            fs.writeFileSync(filePath, content);
+            savedCount++;
+        } catch (err) {
+            console.error(`Failed to save ${filePath}: ${err.message}`);
+            errorCount++;
+        }
     });
 
-    console.log('All files saved');
+    if (errorCount > 0) {
+        showNotification(`Saved ${savedCount} files, ${errorCount} failed`, 'warning');
+    } else {
+        showNotification(`All ${savedCount} files saved`, 'success');
+    }
+}
+
+// Notification helper
+function showNotification(message, type = 'info') {
+    const statusBar = document.getElementById('status-message');
+    if (statusBar) {
+        statusBar.textContent = message;
+        statusBar.className = `status-${type}`;
+        setTimeout(() => { statusBar.textContent = ''; }, 3000);
+    }
+    console.log(`[${type}] ${message}`);
 }
 
 // Build operations
@@ -491,11 +528,22 @@ function flashDevice() {
 }
 
 // Bottom panel
-function switchBottomTab(tab) {
+function switchBottomTab(tabName, element) {
     document.querySelectorAll('.bottom-tab').forEach(t => {
         t.classList.remove('active');
     });
-    event.target.classList.add('active');
+    if (element) {
+        element.classList.add('active');
+    }
+
+    // Show/hide appropriate panel content
+    document.querySelectorAll('.bottom-panel-content').forEach(p => {
+        p.style.display = 'none';
+    });
+    const targetPanel = document.getElementById(`panel-${tabName}`);
+    if (targetPanel) {
+        targetPanel.style.display = 'block';
+    }
 }
 
 function toggleTerminal() {
@@ -513,25 +561,21 @@ function checkVSCodeIntegration() {
 }
 
 function enableVSCodeIntegration() {
-    // Start WebSocket server for VS Code communication
-    const WebSocket = require('ws');
-    const wss = new WebSocket.Server({ port: 9876 });
+    // WebSocket server runs in main process - communicate via IPC
+    ipcRenderer.send('start-vscode-bridge');
 
-    wss.on('connection', (ws) => {
-        console.log('VS Code connected');
-
-        ws.on('message', (message) => {
-            const data = JSON.parse(message);
-            handleVSCodeMessage(data);
-        });
-
-        window.vscodeWS = ws;
+    // Listen for VS Code messages from main process
+    ipcRenderer.on('vscode-message', (event, data) => {
+        handleVSCodeMessage(data);
     });
+
+    window.vscodeIntegrationActive = true;
+    console.log('VS Code integration enabled via IPC');
 }
 
 function notifyVSCode(event, data) {
-    if (window.vscodeWS && window.vscodeWS.readyState === 1) {
-        window.vscodeWS.send(JSON.stringify({ event, data }));
+    if (window.vscodeIntegrationActive) {
+        ipcRenderer.send('vscode-notify', { event, data });
     }
 }
 

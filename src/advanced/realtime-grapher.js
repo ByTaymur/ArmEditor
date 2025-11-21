@@ -3,14 +3,45 @@
  * Live plotting without stopping execution
  */
 
+// Load Chart.js dynamically
+function loadChartJS() {
+    return new Promise((resolve, reject) => {
+        if (typeof Chart !== 'undefined') {
+            resolve();
+            return;
+        }
+
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error('Failed to load Chart.js'));
+        document.head.appendChild(script);
+    });
+}
+
 class RealtimeGrapher {
     constructor(containerId) {
         this.container = document.getElementById(containerId);
+        if (!this.container) {
+            console.warn(`Container '${containerId}' not found, creating one`);
+            this.container = document.createElement('div');
+            this.container.id = containerId;
+            document.body.appendChild(this.container);
+        }
         this.charts = new Map();
         this.dataBuffers = new Map();
         this.maxDataPoints = 1000;
         this.updateInterval = 100; // ms
         this.isRunning = false;
+        this.chartJSLoaded = false;
+
+        // Load Chart.js
+        loadChartJS().then(() => {
+            this.chartJSLoaded = true;
+            console.log('Chart.js loaded successfully');
+        }).catch(err => {
+            console.error('Failed to load Chart.js:', err.message);
+        });
     }
 
     /**
@@ -19,6 +50,12 @@ class RealtimeGrapher {
     addVariable(varName, color = null) {
         if (this.charts.has(varName)) {
             return; // Already exists
+        }
+
+        if (!this.chartJSLoaded || typeof Chart === 'undefined') {
+            console.error('Chart.js not loaded yet. Please wait...');
+            setTimeout(() => this.addVariable(varName, color), 500);
+            return;
         }
 
         // Create chart container
@@ -153,15 +190,25 @@ class RealtimeGrapher {
      * Start real-time updates
      */
     start(gdbInterface) {
+        if (!gdbInterface) {
+            console.error('GDB interface required');
+            return;
+        }
+
         this.isRunning = true;
         this.gdb = gdbInterface;
 
         this.updateLoop = setInterval(() => {
             // Read all variables from GDB without stopping
             this.charts.forEach((chart, varName) => {
-                this.gdb.readVariableAsync(varName).then(value => {
-                    this.updateValue(varName, value);
-                });
+                this.gdb.readVariableAsync(varName)
+                    .then(value => {
+                        this.updateValue(varName, value);
+                        this.checkTriggers();
+                    })
+                    .catch(err => {
+                        console.warn(`Failed to read ${varName}: ${err.message}`);
+                    });
             });
         }, this.updateInterval);
     }

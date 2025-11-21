@@ -6,7 +6,6 @@
 
 const fs = require('fs');
 const path = require('path');
-const xml2js = require('xml2js');
 
 class CubeMXImporter {
     constructor(projectPath) {
@@ -19,7 +18,13 @@ class CubeMXImporter {
      * Find .ioc file in project
      */
     findIOCFile() {
-        const files = fs.readdirSync(this.projectPath);
+        let files;
+        try {
+            files = fs.readdirSync(this.projectPath);
+        } catch (err) {
+            throw new Error(`Cannot read project directory: ${err.message}`);
+        }
+
         const iocFile = files.find(f => f.endsWith('.ioc'));
 
         if (!iocFile) {
@@ -34,7 +39,12 @@ class CubeMXImporter {
      * Parse .ioc file
      */
     async parseIOC() {
-        const content = fs.readFileSync(this.iocFile, 'utf-8');
+        let content;
+        try {
+            content = fs.readFileSync(this.iocFile, 'utf-8');
+        } catch (err) {
+            throw new Error(`Cannot read .ioc file: ${err.message}`);
+        }
         const lines = content.split('\n');
 
         const config = {};

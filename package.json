@@ -1,50 +1,55 @@
 {
-  "name": "armeditor",
-  "version": "1.0.0",
-  "description": "Professional ARM Development IDE with AI features - Better than Keil!",
+  "name": "hopeide",
+  "version": "2.0.0",
+  "description": "HopeIDE - Professional ARM Development IDE with Real-time Debugging",
   "main": "src/main/electron-main.js",
-  "homepage": "https://github.com/armeditor/armeditor",
-  "author": "ArmEditor Team",
+  "homepage": "https://github.com/hopeide/hopeide",
+  "author": "HopeIDE Team",
   "license": "MIT",
   "scripts": {
-    "start": "electron .",
-    "dev": "electron . --dev",
+    "start": "electron . --no-sandbox",
+    "dev": "electron . --dev --no-sandbox",
     "build": "electron-builder",
     "build:deb": "electron-builder --linux deb",
     "pack": "electron-builder --dir",
     "dist": "electron-builder"
   },
   "dependencies": {
-    "chokidar": "^3.5.3"
+    "chokidar": "^3.5.3",
+    "monaco-editor": "^0.44.0",
+    "xml2js": "^0.6.2"
   },
   "devDependencies": {
     "electron": "^27.0.0",
     "electron-builder": "^24.6.4"
   },
   "build": {
-    "appId": "com.armeditor.ide",
-    "productName": "ArmEditor",
+    "appId": "com.hopeide.ide",
+    "productName": "HopeIDE",
     "linux": {
       "target": [
         "deb"
       ],
       "category": "Development",
-      "maintainer": "ArmEditor Team",
-      "icon": "resources/icon.png"
+      "maintainer": "HopeIDE Team",
+      "icon": "resources/icon.png",
+      "executableName": "hopeide",
+      "desktop": {
+        "Name": "HopeIDE",
+        "Comment": "Professional ARM Development IDE - Umut IDE",
+        "Terminal": false,
+        "Type": "Application",
+        "Categories": "Development;IDE;"
+      }
     },
     "deb": {
-      "depends": [
-        "gconf2",
-        "gconf-service",
-        "libnotify4",
-        "libappindicator1",
-        "libxtst6",
-        "libnss3"
-      ]
+      "depends": [],
+      "afterInstall": "resources/postinstall.sh"
     },
     "files": [
       "src/**/*",
       "resources/**/*",
+      "node_modules/monaco-editor/**/*",
       "package.json"
     ],
     "extraResources": [
