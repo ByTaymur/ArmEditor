@@ -91,6 +91,127 @@
             flex-direction: column;
         }
 
+        /* Debug Panel - Sağ Sidebar */
+        .debug-panel {
+            width: 320px;
+            background: #252526;
+            border-left: 1px solid #3e3e42;
+            display: none;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .debug-panel.visible {
+            display: flex;
+        }
+
+        .debug-section {
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .debug-section-header {
+            padding: 8px 12px;
+            background: #2d2d30;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .debug-section-header:hover {
+            background: #37373d;
+        }
+
+        .debug-section-content {
+            padding: 8px;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .debug-section-content.collapsed {
+            display: none;
+        }
+
+        .register-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+        }
+
+        .register-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 4px;
+            background: #1e1e1e;
+            border-radius: 2px;
+            font-family: 'Consolas', monospace;
+            font-size: 11px;
+        }
+
+        .register-name {
+            color: #9cdcfe;
+        }
+
+        .register-value {
+            color: #ce9178;
+        }
+
+        .variable-item, .breakpoint-item {
+            padding: 4px 8px;
+            background: #1e1e1e;
+            margin-bottom: 4px;
+            border-radius: 2px;
+            font-size: 11px;
+        }
+
+        .debug-toolbar {
+            padding: 8px;
+            background: #2d2d30;
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .debug-btn {
+            background: #0e639c;
+            border: none;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .debug-btn:hover {
+            background: #1177bb;
+        }
+
+        .debug-btn.success {
+            background: #107c10;
+        }
+
+        .debug-btn.danger {
+            background: #c5000b;
+        }
+
+        .debug-status {
+            padding: 8px 12px;
+            background: #1e1e1e;
+            font-size: 11px;
+            color: #888;
+        }
+
+        .debug-status.running {
+            color: #4ec9b0;
+        }
+
+        .debug-status.stopped {
+            color: #f48771;
+        }
+
         .sidebar-header {
             padding: 12px;
             background: #2d2d30;
@@ -256,6 +377,10 @@
             <div class="separator"></div>
             <button class="btn success" onclick="flashDevice()">⚡ Flash</button>
             <div class="separator"></div>
+            <button class="btn success" onclick="startDebug()">▶️ Debug (F5)</button>
+            <button class="btn danger" onclick="stopDebug()">⏹️ Stop</button>
+            <div class="separator"></div>
+            <button class="btn" onclick="toggleDebugPanel()">🔧 Debug Panel</button>
             <button class="btn" onclick="analyzeCode()">🤖 AI Analyze</button>
         </div>
 
@@ -283,6 +408,109 @@
                         </div>
                     </div>
                     <div id="editor" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Debug Panel - Sağ Sidebar -->
+            <div class="debug-panel" id="debug-panel">
+                <!-- Debug Toolbar -->
+                <div class="debug-toolbar">
+                    <button class="debug-btn success" onclick="debugContinue()">▶️ Continue</button>
+                    <button class="debug-btn" onclick="debugPause()">⏸️ Pause</button>
+                    <button class="debug-btn" onclick="debugStepOver()">⏭️ Step Over</button>
+                    <button class="debug-btn" onclick="debugStepInto()">⤵️ Step Into</button>
+                    <button class="debug-btn" onclick="debugStepOut()">⤴️ Step Out</button>
+                    <button class="debug-btn" onclick="debugReset()">🔄 Reset</button>
+                </div>
+
+                <!-- Debug Status -->
+                <div class="debug-status" id="debug-status">Status: Stopped</div>
+
+                <!-- Registers -->
+                <div class="debug-section">
+                    <div class="debug-section-header" onclick="toggleSection('registers')">
+                        <span>🎚️ Registers</span>
+                        <span id="registers-toggle">▼</span>
+                    </div>
+                    <div class="debug-section-content" id="registers-content">
+                        <div class="register-grid" id="register-grid">
+                            <div class="register-item"><span class="register-name">R0</span><span class="register-value">0x00000000</span></div>
+                            <div class="register-item"><span class="register-name">R1</span><span class="register-value">0x00000000</span></div>
+                            <div class="register-item"><span class="register-name">R2</span><span class="register-value">0x00000000</span></div>
+                            <div class="register-item"><span class="register-name">R3</span><span class="register-value">0x00000000</span></div>
+                            <div class="register-item"><span class="register-name">R4</span><span class="register-value">0x00000000</span></div>
+                            <div class="register-item"><span class="register-name">R5</span><span class="register-value">0x00000000</span></div>
+                            <div class="register-item"><span class="register-name">R6</span><span class="register-value">0x00000000</span></div>
+                            <div class="register-item"><span class="register-name">R7</span><span class="register-value">0x00000000</span></div>
+                            <div class="register-item"><span class="register-name">R8</span><span class="register-value">0x00000000</span></div>
+                            <div class="register-item"><span class="register-name">R9</span><span class="register-value">0x00000000</span></div>
+                            <div class="register-item"><span class="register-name">R10</span><span class="register-value">0x00000000</span></div>
+                            <div class="register-item"><span class="register-name">R11</span><span class="register-value">0x00000000</span></div>
+                            <div class="register-item"><span class="register-name">R12</span><span class="register-value">0x00000000</span></div>
+                            <div class="register-item"><span class="register-name">SP</span><span class="register-value">0x20020000</span></div>
+                            <div class="register-item"><span class="register-name">LR</span><span class="register-value">0x00000000</span></div>
+                            <div class="register-item"><span class="register-name">PC</span><span class="register-value">0x08000000</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Variables -->
+                <div class="debug-section">
+                    <div class="debug-section-header" onclick="toggleSection('variables')">
+                        <span>📊 Variables</span>
+                        <span id="variables-toggle">▼</span>
+                    </div>
+                    <div class="debug-section-content" id="variables-content">
+                        <div id="variables-list">
+                            <div style="color: #888; font-size: 11px;">Start debugging to view variables</div>
+                        </div>
+                        <button class="debug-btn" onclick="addVariable()" style="margin-top: 8px; width: 100%;">+ Add Variable</button>
+                    </div>
+                </div>
+
+                <!-- Breakpoints -->
+                <div class="debug-section">
+                    <div class="debug-section-header" onclick="toggleSection('breakpoints')">
+                        <span>🔴 Breakpoints</span>
+                        <span id="breakpoints-toggle">▼</span>
+                    </div>
+                    <div class="debug-section-content" id="breakpoints-content">
+                        <div id="breakpoints-list">
+                            <div style="color: #888; font-size: 11px;">No breakpoints set</div>
+                        </div>
+                        <button class="debug-btn" onclick="addBreakpoint()" style="margin-top: 8px; width: 100%;">+ Add Breakpoint</button>
+                    </div>
+                </div>
+
+                <!-- Call Stack -->
+                <div class="debug-section">
+                    <div class="debug-section-header" onclick="toggleSection('callstack')">
+                        <span>📚 Call Stack</span>
+                        <span id="callstack-toggle">▼</span>
+                    </div>
+                    <div class="debug-section-content" id="callstack-content">
+                        <div id="callstack-list">
+                            <div style="color: #888; font-size: 11px;">Start debugging to view call stack</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Memory View -->
+                <div class="debug-section">
+                    <div class="debug-section-header" onclick="toggleSection('memory')">
+                        <span>🧠 Memory</span>
+                        <span id="memory-toggle">▼</span>
+                    </div>
+                    <div class="debug-section-content" id="memory-content">
+                        <div style="display: flex; gap: 4px; margin-bottom: 8px;">
+                            <input type="text" id="memory-address" placeholder="0x20000000"
+                                   style="flex: 1; background: #1e1e1e; border: 1px solid #3e3e42; color: #d4d4d4; padding: 4px; font-size: 11px;">
+                            <button class="debug-btn" onclick="readMemory()">Read</button>
+                        </div>
+                        <div id="memory-view" style="font-family: 'Consolas', monospace; font-size: 10px; color: #ce9178;">
+                            --
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -404,11 +632,156 @@
 
         function flashDevice() {
             outputAppend('⚡ Flashing...\n');
+            ipcRenderer.send('flash-device');
         }
 
         function analyzeCode() {
             outputAppend('\n🤖 Running AI analysis...\n');
         }
+
+        // Debug Functions
+        let debugActive = false;
+
+        function startDebug() {
+            outputAppend('\n▶️ Starting debug session...\n');
+            debugActive = true;
+            updateDebugStatus('Running');
+            showDebugPanel();
+            ipcRenderer.send('debug-start');
+        }
+
+        function stopDebug() {
+            outputAppend('⏹️ Stopping debug session...\n');
+            debugActive = false;
+            updateDebugStatus('Stopped');
+            ipcRenderer.send('debug-stop');
+        }
+
+        function debugContinue() {
+            if (!debugActive) return;
+            outputAppend('▶️ Continue...\n');
+            ipcRenderer.send('debug-continue');
+        }
+
+        function debugPause() {
+            if (!debugActive) return;
+            outputAppend('⏸️ Pause...\n');
+            ipcRenderer.send('debug-pause');
+        }
+
+        function debugStepOver() {
+            if (!debugActive) return;
+            outputAppend('⏭️ Step Over...\n');
+            ipcRenderer.send('debug-step-over');
+        }
+
+        function debugStepInto() {
+            if (!debugActive) return;
+            outputAppend('⤵️ Step Into...\n');
+            ipcRenderer.send('debug-step-into');
+        }
+
+        function debugStepOut() {
+            if (!debugActive) return;
+            outputAppend('⤴️ Step Out...\n');
+            ipcRenderer.send('debug-step-out');
+        }
+
+        function debugReset() {
+            outputAppend('🔄 Reset...\n');
+            ipcRenderer.send('debug-reset');
+        }
+
+        function toggleDebugPanel() {
+            const panel = document.getElementById('debug-panel');
+            panel.classList.toggle('visible');
+        }
+
+        function showDebugPanel() {
+            const panel = document.getElementById('debug-panel');
+            panel.classList.add('visible');
+        }
+
+        function toggleSection(section) {
+            const content = document.getElementById(section + '-content');
+            const toggle = document.getElementById(section + '-toggle');
+            content.classList.toggle('collapsed');
+            toggle.textContent = content.classList.contains('collapsed') ? '▶' : '▼';
+        }
+
+        function updateDebugStatus(status) {
+            const statusEl = document.getElementById('debug-status');
+            statusEl.textContent = 'Status: ' + status;
+            statusEl.className = 'debug-status ' + status.toLowerCase();
+        }
+
+        function updateRegisters(registers) {
+            const grid = document.getElementById('register-grid');
+            const items = grid.querySelectorAll('.register-item');
+            const regNames = ['R0', 'R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8', 'R9', 'R10', 'R11', 'R12', 'SP', 'LR', 'PC'];
+
+            items.forEach((item, i) => {
+                const name = regNames[i].toLowerCase();
+                if (registers[name]) {
+                    item.querySelector('.register-value').textContent = registers[name];
+                }
+            });
+        }
+
+        function addVariable() {
+            const name = prompt('Variable name:');
+            if (name) {
+                ipcRenderer.send('debug-add-variable', name);
+            }
+        }
+
+        function addBreakpoint() {
+            const location = prompt('Breakpoint location (file:line):');
+            if (location) {
+                ipcRenderer.send('debug-add-breakpoint', location);
+            }
+        }
+
+        function readMemory() {
+            const address = document.getElementById('memory-address').value || '0x20000000';
+            ipcRenderer.send('debug-read-memory', address);
+        }
+
+        // IPC Listeners for Debug
+        ipcRenderer.on('debug-registers', (event, registers) => {
+            updateRegisters(registers);
+        });
+
+        ipcRenderer.on('debug-status-update', (event, status) => {
+            updateDebugStatus(status);
+        });
+
+        ipcRenderer.on('debug-memory', (event, data) => {
+            const view = document.getElementById('memory-view');
+            view.textContent = data;
+        });
+
+        ipcRenderer.on('debug-variables', (event, variables) => {
+            const list = document.getElementById('variables-list');
+            if (variables.length === 0) {
+                list.innerHTML = '<div style="color: #888; font-size: 11px;">No variables</div>';
+            } else {
+                list.innerHTML = variables.map(v =>
+                    `<div class="variable-item"><span>${v.name}</span>: <span style="color: #ce9178;">${v.value}</span></div>`
+                ).join('');
+            }
+        });
+
+        ipcRenderer.on('debug-breakpoints', (event, breakpoints) => {
+            const list = document.getElementById('breakpoints-list');
+            if (breakpoints.length === 0) {
+                list.innerHTML = '<div style="color: #888; font-size: 11px;">No breakpoints</div>';
+            } else {
+                list.innerHTML = breakpoints.map(bp =>
+                    `<div class="breakpoint-item">🔴 ${bp.file}:${bp.line}</div>`
+                ).join('');
+            }
+        });
 
         function outputAppend(text) {
             const output = document.getElementById('output');

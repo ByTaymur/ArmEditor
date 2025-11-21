@@ -1,6 +1,7 @@
-const { spawn } = require('child_process');
+const { spawn, execSync } = require('child_process');
 const EventEmitter = require('events');
 const readline = require('readline');
+const net = require('net');
 
 class GDBInterface extends EventEmitter {
     constructor(options = {}) {
@@ -10,6 +11,7 @@ class GDBInterface extends EventEmitter {
         this.elfFile = options.elfFile;
         this.port = options.port || 3333;
         this.host = options.host || 'localhost';
+        this.commandTimeout = options.commandTimeout || 10000; // 10 saniye default timeout
 
         this.process = null;
         this.isRunning = false;
@@ -17,15 +19,71 @@ class GDBInterface extends EventEmitter {
         this.variables = new Map();
         this.currentLine = null;
         this.currentFile = null;
+        this.pendingCommands = new Map();
+        this.commandId = 0;
+    }
+
+    // Timeout ile komut çalıştırma helper
+    withTimeout(promise, ms, errorMsg = 'Command timeout') {
+        return Promise.race([
+            promise,
+            new Promise((_, reject) =>
+                setTimeout(() => reject(new Error(`${errorMsg} after ${ms}ms`)), ms)
+            )
+        ]);
+    }
+
+    // Port kullanımda mı kontrol et
+    async isPortInUse(port) {
+        return new Promise((resolve) => {
+            const server = net.createServer();
+            server.once('error', () => resolve(true));
+            server.once('listening', () => {
+                server.close();
+                resolve(false);
+            });
+            server.listen(port);
+        });
+    }
+
+    // Eski OpenOCD process'lerini temizle
+    async killExistingOpenOCD() {
+        try {
+            if (process.platform === 'linux' || process.platform === 'darwin') {
+                execSync('pkill -f openocd 2>/dev/null || true', { stdio: 'ignore' });
+            } else if (process.platform === 'win32') {
+                execSync('taskkill /F /IM openocd.exe 2>nul || exit 0', { stdio: 'ignore' });
+            }
+            // Port'un serbest kalması için bekle
+            await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (e) {
+            // Ignore errors
+        }
     }
 
     async start() {
+        // Önce eski OpenOCD process'lerini temizle
+        await this.killExistingOpenOCD();
+
+        // Port kontrolü
+        const gdbPortInUse = await this.isPortInUse(this.port);
+        if (gdbPortInUse) {
+            this.emit('warning', `Port ${this.port} zaten kullanımda, temizleniyor...`);
+            await this.killExistingOpenOCD();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
         return new Promise((resolve, reject) => {
             const args = [
                 '--interpreter=mi',
                 '--quiet',
                 this.elfFile
             ];
+
+            const startTimeout = setTimeout(() => {
+                reject(new Error('GDB başlatma timeout (15 saniye)'));
+                this.stop();
+            }, 15000);
 
             this.process = spawn(this.gdbPath, args);
             this.isRunning = true;
@@ -48,12 +106,31 @@ class GDBInterface extends EventEmitter {
                 this.emit('exit', code);
             });
 
-            // Connect to OpenOCD
-            this.sendCommand(`target extended-remote ${this.host}:${this.port}`);
-            this.sendCommand('monitor reset halt');
-            this.sendCommand('load');
+            this.process.on('error', (err) => {
+                clearTimeout(startTimeout);
+                reject(new Error(`GDB başlatılamadı: ${err.message}`));
+            });
 
-            setTimeout(() => resolve(), 1000);
+            // Connect to OpenOCD with timeout
+            setTimeout(async () => {
+                try {
+                    this.sendCommand(`target extended-remote ${this.host}:${this.port}`);
+
+                    // Bağlantı için bekle
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+
+                    this.sendCommand('monitor reset halt');
+                    await new Promise(resolve => setTimeout(resolve, 500));
+
+                    this.sendCommand('load');
+
+                    clearTimeout(startTimeout);
+                    resolve();
+                } catch (err) {
+                    clearTimeout(startTimeout);
+                    reject(err);
+                }
+            }, 500);
         });
     }
 
@@ -144,19 +221,27 @@ class GDBInterface extends EventEmitter {
     }
 
     // Variables and expressions
-    async evaluateExpression(expression) {
-        return new Promise((resolve) => {
-            const handler = (line) => {
-                if (line.includes('^done')) {
-                    const value = this.extractValue(line, 'value');
-                    this.removeListener('output', handler);
-                    resolve(value);
-                }
-            };
+    async evaluateExpression(expression, timeout = null) {
+        const ms = timeout || this.commandTimeout;
+        return this.withTimeout(
+            new Promise((resolve, reject) => {
+                const handler = (line) => {
+                    if (line.includes('^done')) {
+                        const value = this.extractValue(line, 'value');
+                        this.removeListener('output', handler);
+                        resolve(value);
+                    } else if (line.includes('^error')) {
+                        this.removeListener('output', handler);
+                        reject(new Error(this.extractValue(line, 'msg') || 'Expression evaluation failed'));
+                    }
+                };
 
-            this.on('output', handler);
-            this.sendCommand(`-data-evaluate-expression ${expression}`);
-        });
+                this.on('output', handler);
+                this.sendCommand(`-data-evaluate-expression ${expression}`);
+            }),
+            ms,
+            `evaluateExpression(${expression}) timeout`
+        );
     }
 
     async listVariables() {
@@ -167,19 +252,27 @@ class GDBInterface extends EventEmitter {
         this.sendCommand(`-break-watch ${variable}`);
     }
 
-    async readMemory(address, count) {
-        return new Promise((resolve) => {
-            const handler = (line) => {
-                if (line.includes('^done')) {
-                    const memory = this.extractMemory(line);
-                    this.removeListener('output', handler);
-                    resolve(memory);
-                }
-            };
+    async readMemory(address, count, timeout = null) {
+        const ms = timeout || this.commandTimeout;
+        return this.withTimeout(
+            new Promise((resolve, reject) => {
+                const handler = (line) => {
+                    if (line.includes('^done')) {
+                        const memory = this.extractMemory(line);
+                        this.removeListener('output', handler);
+                        resolve(memory);
+                    } else if (line.includes('^error')) {
+                        this.removeListener('output', handler);
+                        reject(new Error(this.extractValue(line, 'msg') || 'Memory read failed'));
+                    }
+                };
 
-            this.on('output', handler);
-            this.sendCommand(`-data-read-memory-bytes ${address} ${count}`);
-        });
+                this.on('output', handler);
+                this.sendCommand(`-data-read-memory-bytes ${address} ${count}`);
+            }),
+            ms,
+            `readMemory(${address}, ${count}) timeout`
+        );
     }
 
     async writeMemory(address, value) {
@@ -204,19 +297,27 @@ class GDBInterface extends EventEmitter {
         this.sendCommand('-data-list-register-names');
     }
 
-    async readRegister(register) {
-        return new Promise((resolve) => {
-            const handler = (line) => {
-                if (line.includes('^done')) {
-                    const value = this.extractValue(line, 'value');
-                    this.removeListener('output', handler);
-                    resolve(value);
-                }
-            };
+    async readRegister(register, timeout = null) {
+        const ms = timeout || this.commandTimeout;
+        return this.withTimeout(
+            new Promise((resolve, reject) => {
+                const handler = (line) => {
+                    if (line.includes('^done')) {
+                        const value = this.extractValue(line, 'value');
+                        this.removeListener('output', handler);
+                        resolve(value);
+                    } else if (line.includes('^error')) {
+                        this.removeListener('output', handler);
+                        reject(new Error(this.extractValue(line, 'msg') || 'Register read failed'));
+                    }
+                };
 
-            this.on('output', handler);
-            this.sendCommand(`-data-evaluate-expression $${register}`);
-        });
+                this.on('output', handler);
+                this.sendCommand(`-data-evaluate-expression $${register}`);
+            }),
+            ms,
+            `readRegister(${register}) timeout`
+        );
     }
 
     async writeRegister(register, value) {
@@ -265,10 +366,36 @@ class GDBInterface extends EventEmitter {
 
     async stop() {
         if (this.process && this.isRunning) {
-            this.sendCommand('-gdb-exit');
+            try {
+                this.sendCommand('-gdb-exit');
+            } catch (e) {
+                // Ignore
+            }
             this.process.kill();
             this.isRunning = false;
         }
+
+        // OpenOCD process'lerini de temizle
+        await this.killExistingOpenOCD();
+
+        this.emit('stopped');
+    }
+
+    // Tüm register'ları oku (batch)
+    async readAllRegisters(timeout = null) {
+        const registers = ['r0', 'r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7',
+                          'r8', 'r9', 'r10', 'r11', 'r12', 'sp', 'lr', 'pc'];
+        const results = {};
+
+        for (const reg of registers) {
+            try {
+                results[reg] = await this.readRegister(reg, timeout);
+            } catch (e) {
+                results[reg] = 'ERROR';
+            }
+        }
+
+        return results;
     }
 }
 

@@ -6,11 +6,21 @@
 const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const { spawn } = require('child_process');
+const { spawn, execSync } = require('child_process');
+
+// Debug modules
+const GDBInterface = require('../debugger/gdb-interface');
+const { OpenOCDFlasher } = require('../compiler/arm-toolchain');
 
 let mainWindow;
 let currentProjectPath = null;
 let currentFilePath = null;
+
+// Debug state
+let gdbInterface = null;
+let openocdFlasher = null;
+let openocdProcess = null;
+let debugActive = false;
 
 /**
  * Create main window
@@ -411,13 +421,128 @@ function flashDevice() {
 /**
  * Debug operations
  */
-function startDebug() {
+async function startDebug() {
+    if (debugActive) {
+        mainWindow.webContents.send('output-append', '⚠️ Debug already running\n');
+        return;
+    }
+
+    if (!currentProjectPath) {
+        dialog.showErrorBox('Error', 'No project opened');
+        return;
+    }
+
     mainWindow.webContents.send('output-append', '\n🔍 Starting debugger...\n');
-    // Implement GDB launch
+
+    // Find .elf file
+    const elfFiles = findFiles(currentProjectPath, '.elf');
+    if (elfFiles.length === 0) {
+        mainWindow.webContents.send('output-append', '❌ No .elf file found. Build first!\n');
+        return;
+    }
+
+    const elfFile = elfFiles[0];
+    mainWindow.webContents.send('output-append', `📁 Using: ${path.basename(elfFile)}\n`);
+
+    try {
+        // Initialize OpenOCD flasher
+        openocdFlasher = new OpenOCDFlasher({
+            interface: 'stlink-v2',
+            target: 'stm32f4x'
+        });
+
+        // Start OpenOCD server
+        mainWindow.webContents.send('output-append', '🔌 Starting OpenOCD server...\n');
+        const serverResult = await openocdFlasher.startDebugServer((type, text) => {
+            mainWindow.webContents.send('output-append', text);
+        });
+        openocdProcess = serverResult.process;
+
+        mainWindow.webContents.send('output-append', '✅ OpenOCD server started\n');
+
+        // Initialize GDB interface
+        gdbInterface = new GDBInterface({
+            elfFile: elfFile,
+            port: 3333,
+            commandTimeout: 10000
+        });
+
+        gdbInterface.on('output', (line) => {
+            if (line.includes('^error')) {
+                mainWindow.webContents.send('output-append', `❌ GDB Error: ${line}\n`);
+            }
+        });
+
+        gdbInterface.on('stopped', (info) => {
+            mainWindow.webContents.send('debug-status-update', 'Stopped');
+            refreshDebugInfo();
+        });
+
+        gdbInterface.on('error', (err) => {
+            mainWindow.webContents.send('output-append', `❌ Error: ${err}\n`);
+        });
+
+        // Start GDB
+        mainWindow.webContents.send('output-append', '🔗 Connecting GDB...\n');
+        await gdbInterface.start();
+
+        debugActive = true;
+        mainWindow.webContents.send('output-append', '✅ Debug session started!\n');
+        mainWindow.webContents.send('debug-status-update', 'Running');
+
+        // Initial register read
+        refreshDebugInfo();
+
+    } catch (error) {
+        mainWindow.webContents.send('output-append', `❌ Debug start failed: ${error.message}\n`);
+        await stopDebug();
+    }
 }
 
-function stopDebug() {
-    mainWindow.webContents.send('output-append', '\n⏹️ Debugger stopped\n');
+async function stopDebug() {
+    mainWindow.webContents.send('output-append', '\n⏹️ Stopping debugger...\n');
+
+    try {
+        if (gdbInterface) {
+            await gdbInterface.stop();
+            gdbInterface = null;
+        }
+    } catch (e) {
+        // Ignore
+    }
+
+    try {
+        if (openocdProcess) {
+            openocdProcess.kill();
+            openocdProcess = null;
+        }
+    } catch (e) {
+        // Ignore
+    }
+
+    // Kill any remaining OpenOCD processes
+    try {
+        if (process.platform === 'linux' || process.platform === 'darwin') {
+            execSync('pkill -9 -f openocd 2>/dev/null || true', { stdio: 'ignore' });
+        }
+    } catch (e) {
+        // Ignore
+    }
+
+    debugActive = false;
+    mainWindow.webContents.send('output-append', '✅ Debugger stopped\n');
+    mainWindow.webContents.send('debug-status-update', 'Stopped');
+}
+
+async function refreshDebugInfo() {
+    if (!gdbInterface || !debugActive) return;
+
+    try {
+        const registers = await gdbInterface.readAllRegisters(5000);
+        mainWindow.webContents.send('debug-registers', registers);
+    } catch (e) {
+        mainWindow.webContents.send('output-append', `⚠️ Register read error: ${e.message}\n`);
+    }
 }
 
 /**
@@ -566,6 +691,135 @@ ipcMain.on('save-file-as-content', (event, content) => {
     if (currentFilePath) {
         fs.writeFileSync(currentFilePath, content, 'utf-8');
         mainWindow.webContents.send('file-saved', currentFilePath);
+    }
+});
+
+// Debug IPC Handlers
+ipcMain.on('debug-start', () => startDebug());
+ipcMain.on('debug-stop', () => stopDebug());
+
+ipcMain.on('debug-continue', async () => {
+    if (gdbInterface && debugActive) {
+        try {
+            await gdbInterface.continue();
+            mainWindow.webContents.send('debug-status-update', 'Running');
+        } catch (e) {
+            mainWindow.webContents.send('output-append', `❌ Continue failed: ${e.message}\n`);
+        }
+    }
+});
+
+ipcMain.on('debug-pause', async () => {
+    if (gdbInterface && debugActive) {
+        try {
+            await gdbInterface.pause();
+            mainWindow.webContents.send('debug-status-update', 'Paused');
+            refreshDebugInfo();
+        } catch (e) {
+            mainWindow.webContents.send('output-append', `❌ Pause failed: ${e.message}\n`);
+        }
+    }
+});
+
+ipcMain.on('debug-step-over', async () => {
+    if (gdbInterface && debugActive) {
+        try {
+            await gdbInterface.stepOver();
+            refreshDebugInfo();
+        } catch (e) {
+            mainWindow.webContents.send('output-append', `❌ Step over failed: ${e.message}\n`);
+        }
+    }
+});
+
+ipcMain.on('debug-step-into', async () => {
+    if (gdbInterface && debugActive) {
+        try {
+            await gdbInterface.stepInto();
+            refreshDebugInfo();
+        } catch (e) {
+            mainWindow.webContents.send('output-append', `❌ Step into failed: ${e.message}\n`);
+        }
+    }
+});
+
+ipcMain.on('debug-step-out', async () => {
+    if (gdbInterface && debugActive) {
+        try {
+            await gdbInterface.stepOut();
+            refreshDebugInfo();
+        } catch (e) {
+            mainWindow.webContents.send('output-append', `❌ Step out failed: ${e.message}\n`);
+        }
+    }
+});
+
+ipcMain.on('debug-reset', async () => {
+    mainWindow.webContents.send('output-append', '🔄 Resetting target...\n');
+    if (gdbInterface && debugActive) {
+        try {
+            gdbInterface.sendCommand('monitor reset halt');
+            await new Promise(resolve => setTimeout(resolve, 500));
+            refreshDebugInfo();
+            mainWindow.webContents.send('output-append', '✅ Reset complete\n');
+        } catch (e) {
+            mainWindow.webContents.send('output-append', `❌ Reset failed: ${e.message}\n`);
+        }
+    }
+});
+
+ipcMain.on('debug-read-memory', async (event, address) => {
+    if (gdbInterface && debugActive) {
+        try {
+            const memory = await gdbInterface.readMemory(address, 64);
+            const hexStr = memory.map(b => b.toString(16).padStart(2, '0')).join(' ');
+            mainWindow.webContents.send('debug-memory', hexStr);
+        } catch (e) {
+            mainWindow.webContents.send('debug-memory', `Error: ${e.message}`);
+        }
+    }
+});
+
+ipcMain.on('debug-add-breakpoint', async (event, location) => {
+    if (gdbInterface && debugActive) {
+        try {
+            const [file, line] = location.split(':');
+            await gdbInterface.setBreakpoint(file, parseInt(line));
+            mainWindow.webContents.send('output-append', `🔴 Breakpoint set: ${location}\n`);
+        } catch (e) {
+            mainWindow.webContents.send('output-append', `❌ Breakpoint failed: ${e.message}\n`);
+        }
+    }
+});
+
+ipcMain.on('flash-device', async () => {
+    if (!currentProjectPath) {
+        dialog.showErrorBox('Error', 'No project opened');
+        return;
+    }
+
+    const elfFiles = findFiles(currentProjectPath, '.elf');
+    if (elfFiles.length === 0) {
+        mainWindow.webContents.send('output-append', '❌ No .elf file found. Build first!\n');
+        return;
+    }
+
+    mainWindow.webContents.send('output-append', '\n⚡ Flashing firmware...\n');
+
+    try {
+        const flasher = new OpenOCDFlasher({
+            interface: 'stlink-v2',
+            target: 'stm32f4x',
+            timeout: 60000
+        });
+
+        await flasher.flash(elfFiles[0], (type, text) => {
+            mainWindow.webContents.send('output-append', text);
+        });
+
+        mainWindow.webContents.send('output-append', '✅ Flash successful!\n');
+    } catch (e) {
+        mainWindow.webContents.send('output-append', `❌ Flash failed: ${e.error || e.message}\n`);
     }
 });
 
