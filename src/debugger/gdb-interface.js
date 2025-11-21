@@ -219,6 +219,34 @@ class GDBInterface extends EventEmitter {
         });
     }
 
+    /**
+     * Read variable asynchronously (for real-time graphing)
+     */
+    async readVariableAsync(varName) {
+        return new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                this.removeListener('output', handler);
+                reject(new Error('Timeout reading variable'));
+            }, 1000);
+
+            const handler = (line) => {
+                if (line.includes('^done')) {
+                    clearTimeout(timeout);
+                    const value = this.extractValue(line, 'value');
+                    this.removeListener('output', handler);
+                    resolve(parseFloat(value) || 0);
+                } else if (line.includes('^error')) {
+                    clearTimeout(timeout);
+                    this.removeListener('output', handler);
+                    resolve(0); // Return 0 on error
+                }
+            };
+
+            this.on('output', handler);
+            this.sendCommand(`-data-evaluate-expression ${varName}`);
+        });
+    }
+
     async writeRegister(register, value) {
         this.sendCommand(`-gdb-set $${register}=${value}`);
     }

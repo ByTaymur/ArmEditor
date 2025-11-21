@@ -274,15 +274,20 @@ function openFile() {
     }).then(result => {
         if (!result.canceled && result.filePaths.length > 0) {
             const filePath = result.filePaths[0];
-            const content = fs.readFileSync(filePath, 'utf-8');
-
-            currentFilePath = filePath;
-            mainWindow.webContents.send('open-file', {
-                path: filePath,
-                content: content,
-                name: path.basename(filePath)
-            });
+            try {
+                const content = fs.readFileSync(filePath, 'utf-8');
+                currentFilePath = filePath;
+                mainWindow.webContents.send('open-file', {
+                    path: filePath,
+                    content: content,
+                    name: path.basename(filePath)
+                });
+            } catch (err) {
+                dialog.showErrorBox('Error', `Failed to read file: ${err.message}`);
+            }
         }
+    }).catch(err => {
+        dialog.showErrorBox('Error', `Failed to open dialog: ${err.message}`);
     });
 }
 
@@ -296,6 +301,8 @@ function openProject() {
                 path: currentProjectPath
             });
         }
+    }).catch(err => {
+        dialog.showErrorBox('Error', `Failed to open project: ${err.message}`);
     });
 }
 
@@ -320,6 +327,8 @@ function saveFileAs() {
             currentFilePath = result.filePath;
             mainWindow.webContents.send('get-editor-content', 'save-as');
         }
+    }).catch(err => {
+        dialog.showErrorBox('Error', `Failed to save file: ${err.message}`);
     });
 }
 
@@ -411,13 +420,77 @@ function flashDevice() {
 /**
  * Debug operations
  */
+let debugProcess = null;
+let openocdProcess = null;
+
 function startDebug() {
+    if (!currentProjectPath) {
+        dialog.showErrorBox('Error', 'No project opened');
+        return;
+    }
+
+    const elfFiles = findFiles(currentProjectPath, '.elf');
+    if (elfFiles.length === 0) {
+        dialog.showErrorBox('Error', 'No .elf file found. Build first!');
+        return;
+    }
+
     mainWindow.webContents.send('output-append', '\n🔍 Starting debugger...\n');
-    // Implement GDB launch
+
+    // Start OpenOCD first
+    openocdProcess = spawn('openocd', [
+        '-f', 'interface/stlink.cfg',
+        '-f', 'target/stm32f4x.cfg'
+    ], { cwd: currentProjectPath, shell: true });
+
+    openocdProcess.on('error', (err) => {
+        mainWindow.webContents.send('output-append', `\n❌ OpenOCD error: ${err.message}\n`);
+    });
+
+    openocdProcess.stderr.on('data', (data) => {
+        mainWindow.webContents.send('output-append', data.toString());
+    });
+
+    // Start GDB after a delay
+    setTimeout(() => {
+        debugProcess = spawn('arm-none-eabi-gdb', [
+            '-ex', 'target remote localhost:3333',
+            '-ex', 'monitor reset halt',
+            elfFiles[0]
+        ], { cwd: currentProjectPath, shell: true });
+
+        debugProcess.stdout.on('data', (data) => {
+            mainWindow.webContents.send('output-append', data.toString());
+        });
+
+        debugProcess.stderr.on('data', (data) => {
+            mainWindow.webContents.send('output-append', data.toString());
+        });
+
+        debugProcess.on('error', (err) => {
+            mainWindow.webContents.send('output-append', `\n❌ GDB error: ${err.message}\n`);
+        });
+
+        debugProcess.on('close', () => {
+            mainWindow.webContents.send('output-append', '\n⏹️ Debug session ended\n');
+            debugProcess = null;
+        });
+
+        mainWindow.webContents.send('debug-started');
+    }, 2000);
 }
 
 function stopDebug() {
+    if (debugProcess) {
+        debugProcess.kill();
+        debugProcess = null;
+    }
+    if (openocdProcess) {
+        openocdProcess.kill();
+        openocdProcess = null;
+    }
     mainWindow.webContents.send('output-append', '\n⏹️ Debugger stopped\n');
+    mainWindow.webContents.send('debug-stopped');
 }
 
 /**
@@ -517,19 +590,31 @@ function importCubeMX() {
 /**
  * Utility functions
  */
-function findFiles(dir, ext, fileList = []) {
-    const files = fs.readdirSync(dir);
+function findFiles(dir, ext, fileList = [], depth = 0) {
+    if (depth > 10) return fileList; // Prevent infinite recursion
 
-    files.forEach(file => {
-        const filePath = path.join(dir, file);
-        const stat = fs.statSync(filePath);
+    try {
+        if (!fs.existsSync(dir)) return fileList;
 
-        if (stat.isDirectory()) {
-            findFiles(filePath, ext, fileList);
-        } else if (file.endsWith(ext)) {
-            fileList.push(filePath);
-        }
-    });
+        const files = fs.readdirSync(dir);
+
+        files.forEach(file => {
+            try {
+                const filePath = path.join(dir, file);
+                const stat = fs.statSync(filePath);
+
+                if (stat.isDirectory() && !file.startsWith('.')) {
+                    findFiles(filePath, ext, fileList, depth + 1);
+                } else if (file.endsWith(ext)) {
+                    fileList.push(filePath);
+                }
+            } catch (err) {
+                // Skip files we can't access
+            }
+        });
+    } catch (err) {
+        console.error(`Error reading directory ${dir}: ${err.message}`);
+    }
 
     return fileList;
 }
