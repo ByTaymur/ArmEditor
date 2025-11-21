@@ -24,53 +24,35 @@
             background: #252526;
             border-radius: 8px;
             padding: 30px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         }
 
         h1 {
             color: #fff;
-            margin-bottom: 10px;
-            font-size: 24px;
-        }
-
-        .subtitle {
-            color: #969696;
-            margin-bottom: 30px;
-            font-size: 14px;
+            margin-bottom: 20px;
         }
 
         .form-group {
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
 
         label {
             display: block;
             margin-bottom: 8px;
-            font-size: 13px;
             font-weight: 500;
-            color: #cccccc;
         }
 
-        input[type="text"],
-        select {
+        input {
             width: 100%;
             padding: 10px;
             background: #3c3c3c;
             border: 1px solid #5a5a5a;
             border-radius: 4px;
             color: #d4d4d4;
-            font-size: 14px;
-        }
-
-        input[type="text"]:focus,
-        select:focus {
-            outline: none;
-            border-color: #0078d4;
         }
 
         .template-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 16px;
             margin-top: 12px;
         }
@@ -86,7 +68,6 @@
 
         .template-card:hover {
             border-color: #0078d4;
-            transform: translateY(-2px);
         }
 
         .template-card.selected {
@@ -95,7 +76,7 @@
         }
 
         .template-card h3 {
-            font-size: 15px;
+            font-size: 14px;
             margin-bottom: 8px;
             color: #fff;
         }
@@ -103,17 +84,6 @@
         .template-card p {
             font-size: 12px;
             color: #969696;
-            line-height: 1.5;
-        }
-
-        .template-card .badge {
-            display: inline-block;
-            background: #0e639c;
-            color: white;
-            padding: 3px 8px;
-            border-radius: 3px;
-            font-size: 11px;
-            margin-top: 8px;
         }
 
         .footer {
@@ -129,7 +99,6 @@
             border-radius: 4px;
             cursor: pointer;
             font-size: 14px;
-            font-weight: 500;
         }
 
         .btn-primary {
@@ -137,44 +106,14 @@
             color: white;
         }
 
-        .btn-primary:hover {
-            background: #1177bb;
-        }
-
-        .btn-primary:disabled {
-            background: #555;
-            cursor: not-allowed;
-        }
-
         .btn-secondary {
             background: #3c3c3c;
             color: #cccccc;
         }
 
-        .btn-secondary:hover {
-            background: #505050;
-        }
-
-        .path-selector {
-            display: flex;
-            gap: 8px;
-        }
-
-        .path-selector input {
-            flex: 1;
-        }
-
-        .path-selector button {
-            padding: 10px 16px;
-            background: #0e639c;
-            border: none;
-            color: white;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .path-selector button:hover {
-            background: #1177bb;
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
     </style>
 </head>
@@ -182,33 +121,20 @@
 <body>
     <div class="container">
         <h1>🆕 New Project</h1>
-        <p class="subtitle">Create a new STM32 project from template</p>
 
         <div class="form-group">
             <label>Project Name</label>
-            <input type="text" id="projectName" placeholder="MyProject" value="MyProject">
-        </div>
-
-        <div class="form-group">
-            <label>Project Location</label>
-            <div class="path-selector">
-                <input type="text" id="projectPath" readonly>
-                <button onclick="selectPath()">📁 Browse</button>
-            </div>
+            <input type="text" id="projectName" placeholder="MyProject">
         </div>
 
         <div class="form-group">
             <label>Select Template</label>
-            <div class="template-grid" id="templateGrid">
-                <!-- Populated by JS -->
-            </div>
+            <div class="template-grid" id="templateGrid"></div>
         </div>
 
         <div class="footer">
             <button class="btn btn-secondary" onclick="window.close()">Cancel</button>
-            <button class="btn btn-primary" id="createBtn" onclick="createProject()" disabled>
-                Create Project
-            </button>
+            <button class="btn btn-primary" id="createBtn" onclick="createProject()" disabled>Create</button>
         </div>
     </div>
 
@@ -220,16 +146,11 @@
         let selectedTemplate = null;
         let templates = [];
 
-        // Initialize
-        document.getElementById('projectPath').value = path.join(os.homedir(), 'MyProject');
-
-        // Load templates
         ipcRenderer.on('templates-list', (event, templateList) => {
             templates = templateList;
             renderTemplates();
         });
 
-        // Request template list
         ipcRenderer.send('get-templates-list');
 
         function renderTemplates() {
@@ -239,11 +160,7 @@
             templates.forEach(template => {
                 const card = document.createElement('div');
                 card.className = 'template-card';
-                card.innerHTML = `
-                    <h3>${template.name}</h3>
-                    <p>${template.description || 'No description'}</p>
-                    <span class="badge">${template.family}</span>
-                `;
+                card.innerHTML = `<h3>${template.name}</h3><p>${template.description || 'No description'}</p>`;
                 card.onclick = () => selectTemplate(template, card);
                 grid.appendChild(card);
             });
@@ -253,51 +170,14 @@
             document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
             card.classList.add('selected');
             selectedTemplate = template;
-
-            // Update project name suggestion
-            if (document.getElementById('projectName').value === 'MyProject') {
-                document.getElementById('projectName').value = template.name.replace('_', '');
-            }
-
-            updateCreateButton();
-        }
-
-        function selectPath() {
-            ipcRenderer.send('select-project-path');
-        }
-
-        ipcRenderer.on('project-path-selected', (event, selectedPath) => {
-            if (selectedPath) {
-                const projectName = document.getElementById('projectName').value;
-                document.getElementById('projectPath').value = path.join(selectedPath, projectName);
-                updateCreateButton();
-            }
-        });
-
-        // Update project name
-        document.getElementById('projectName').addEventListener('input', (e) => {
-            const projectName = e.target.value;
-            const basePath = path.dirname(document.getElementById('projectPath').value);
-            document.getElementById('projectPath').value = path.join(basePath, projectName);
-            updateCreateButton();
-        });
-
-        function updateCreateButton() {
-            const btn = document.getElementById('createBtn');
-            const projectName = document.getElementById('projectName').value.trim();
-            const projectPath = document.getElementById('projectPath').value.trim();
-
-            btn.disabled = !(selectedTemplate && projectName && projectPath);
+            document.getElementById('createBtn').disabled = false;
         }
 
         function createProject() {
-            const projectName = document.getElementById('projectName').value.trim();
-            const projectPath = document.getElementById('projectPath').value.trim();
+            const projectName = document.getElementById('projectName').value.trim() || 'MyProject';
+            const projectPath = path.join(os.homedir(), 'Desktop', projectName);
 
-            if (!selectedTemplate || !projectName || !projectPath) {
-                alert('Please fill all fields and select a template');
-                return;
-            }
+            if (!selectedTemplate) return;
 
             ipcRenderer.send('create-project-from-template', {
                 templateId: selectedTemplate.id,
@@ -305,22 +185,14 @@
                 projectPath: projectPath
             });
 
-            // Show creating message
-            document.querySelector('.container').innerHTML = `
-                <div style="text-align: center; padding: 60px 20px;">
-                    <h1 style="margin-bottom: 20px;">🚀 Creating Project...</h1>
-                    <p style="color: #969696; font-size: 14px;">
-                        This may take a moment while downloading HAL drivers
-                    </p>
-                </div>
-            `;
+            document.querySelector('.container').innerHTML = '<h1 style="text-align:center;">🚀 Creating...</h1>';
         }
 
         ipcRenderer.on('project-created', (event, result) => {
             if (result.success) {
                 window.close();
             } else {
-                alert('Failed to create project: ' + result.error);
+                alert('Error: ' + result.error);
             }
         });
     </script>

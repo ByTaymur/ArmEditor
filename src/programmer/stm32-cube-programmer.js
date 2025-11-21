@@ -1,133 +1,66 @@
-// STM32CubeProgrammer CLI Wrapper
-// Robust flash programming that works even at low voltages (2.8V+)
+/**
+ * STM32CubeProgrammer CLI Wrapper
+ * Provides robust flash programming with better low-voltage support
+ */
 
-const { spawn, execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
+const { spawn } = require('child_process');
 const EventEmitter = require('events');
+const fs = require('fs');
 
 class STM32CubeProgrammer extends EventEmitter {
     constructor() {
         super();
-        this.cliPath = this.findCLI();
-        this.running = false;
+        this.cliPath = 'STM32_Programmer_CLI';
     }
 
     /**
-     * Find STM32_Programmer_CLI executable
+     * Check if STM32CubeProgrammer is installed
      */
-    findCLI() {
-        // Try common locations
-        const paths = [
-            '/opt/STM32CubeProgrammer/bin/STM32_Programmer_CLI',
-            '/usr/local/STM32CubeProgrammer/bin/STM32_Programmer_CLI',
-            process.env.HOME + '/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI'
-        ];
+    async isInstalled() {
+        return new Promise((resolve) => {
+            const proc = spawn(this.cliPath, ['--version'], { shell: true });
 
-        for (const p of paths) {
-            if (fs.existsSync(p)) {
-                return p;
-            }
-        }
+            proc.on('error', () => resolve(false));
+            proc.on('exit', (code) => resolve(code === 0));
 
-        // Try PATH
-        try {
-            const result = execSync('which STM32_Programmer_CLI', { encoding: 'utf8' }).trim();
-            if (result) return result;
-        } catch (e) {
-            // Not in PATH
-        }
-
-        return null;
+            setTimeout(() => {
+                proc.kill();
+                resolve(false);
+            }, 2000);
+        });
     }
 
     /**
-     * Check if CubeProgrammer is installed
+     * Get version info
      */
-    isInstalled() {
-        return this.cliPath !== null;
-    }
-
-    /**
-     * Get version
-     */
-    getVersion() {
-        if (!this.isInstalled()) {
-            throw new Error('STM32CubeProgrammer not installed');
-        }
-
-        try {
-            const output = execSync(`"${this.cliPath}" --version`, { encoding: 'utf8' });
-            const match = output.match(/STM32CubeProgrammer\s+v([\d.]+)/);
-            return match ? match[1] : 'Unknown';
-        } catch (e) {
-            return 'Unknown';
-        }
-    }
-
-    /**
-     * List connected ST-Link devices
-     * Returns: Array of {index, serialNumber, deviceID}
-     */
-    async listDevices() {
-        if (!this.isInstalled()) {
-            throw new Error('STM32CubeProgrammer not installed');
-        }
-
+    async getVersion() {
         return new Promise((resolve, reject) => {
-            const proc = spawn(this.cliPath, ['-l']);
+            const proc = spawn(this.cliPath, ['--version'], { shell: true });
             let output = '';
 
             proc.stdout.on('data', (data) => {
                 output += data.toString();
             });
 
-            proc.stderr.on('data', (data) => {
-                output += data.toString();
-            });
-
-            proc.on('close', (code) => {
-                const devices = [];
-
-                // Parse output
-                // Example: ST-Link SN  : 0670FF484849897267161951
-                //          Voltage     : 3.30V
-                const lines = output.split('\n');
-                let currentDevice = null;
-
-                for (const line of lines) {
-                    if (line.includes('ST-Link SN')) {
-                        const match = line.match(/:\s*([A-F0-9]+)/);
-                        if (match) {
-                            currentDevice = { serialNumber: match[1] };
-                        }
-                    } else if (currentDevice && line.includes('Voltage')) {
-                        const match = line.match(/([\d.]+)V/);
-                        if (match) {
-                            currentDevice.voltage = parseFloat(match[1]);
-                            devices.push(currentDevice);
-                            currentDevice = null;
-                        }
-                    }
+            proc.on('exit', (code) => {
+                if (code === 0) {
+                    const match = output.match(/Version\s+:\s+([\d.]+)/);
+                    resolve(match ? match[1] : 'Unknown');
+                } else {
+                    reject(new Error('Failed to get version'));
                 }
-
-                resolve(devices);
             });
+
+            proc.on('error', reject);
         });
     }
 
     /**
-     * Connect to device and get info
-     * @param {number} index - Device index (0 for first device)
+     * List connected ST-Link devices
      */
-    async getDeviceInfo(index = 0) {
-        if (!this.isInstalled()) {
-            throw new Error('STM32CubeProgrammer not installed');
-        }
-
+    async listDevices() {
         return new Promise((resolve, reject) => {
-            const args = ['-c', `port=SWD`, 'index=' + index, '-q'];
-            const proc = spawn(this.cliPath, args);
+            const proc = spawn(this.cliPath, ['-l'], { shell: true });
             let output = '';
 
             proc.stdout.on('data', (data) => {
@@ -139,75 +72,126 @@ class STM32CubeProgrammer extends EventEmitter {
                 output += data.toString();
             });
 
-            proc.on('close', (code) => {
-                if (code !== 0) {
-                    reject(new Error('Connection failed: ' + output));
-                    return;
+            proc.on('exit', (code) => {
+                if (code === 0 || output.includes('ST-LINK')) {
+                    const devices = this.parseDeviceList(output);
+                    resolve(devices);
+                } else {
+                    reject(new Error('No devices found'));
                 }
-
-                // Parse device info
-                const info = {};
-
-                const deviceMatch = output.match(/Device ID\s*:\s*(0x[0-9A-F]+)/i);
-                if (deviceMatch) info.deviceID = deviceMatch[1];
-
-                const flashMatch = output.match(/Flash size\s*:\s*(\d+)\s*KBytes/i);
-                if (flashMatch) info.flashSize = parseInt(flashMatch[1]) * 1024;
-
-                const voltageMatch = output.match(/Voltage\s*:\s*([\d.]+)V/i);
-                if (voltageMatch) info.voltage = parseFloat(voltageMatch[1]);
-
-                resolve(info);
             });
+
+            proc.on('error', reject);
         });
     }
 
-    /**
-     * Flash binary file to device
-     * @param {string} binPath - Path to .bin or .hex file
-     * @param {number} address - Flash address (default: 0x08000000)
-     * @param {number} index - Device index
-     */
-    async flashBinary(binPath, address = 0x08000000, index = 0) {
-        if (!this.isInstalled()) {
-            throw new Error('STM32CubeProgrammer not installed');
+    parseDeviceList(output) {
+        const devices = [];
+        const lines = output.split('\n');
+
+        for (const line of lines) {
+            if (line.includes('ST-LINK')) {
+                const serialMatch = line.match(/SN:\s*([A-F0-9]+)/i);
+                devices.push({
+                    type: 'ST-LINK',
+                    serial: serialMatch ? serialMatch[1] : 'Unknown'
+                });
+            }
         }
 
+        return devices;
+    }
+
+    /**
+     * Get device information
+     */
+    async getDeviceInfo(index = 0) {
+        return new Promise((resolve, reject) => {
+            const proc = spawn(this.cliPath, [
+                '-c', `port=SWD`, `index=${index}`,
+                '-r'
+            ], { shell: true });
+
+            let output = '';
+
+            proc.stdout.on('data', (data) => {
+                output += data.toString();
+                this.emit('output', data.toString());
+            });
+
+            proc.stderr.on('data', (data) => {
+                output += data.toString();
+            });
+
+            proc.on('exit', (code) => {
+                const info = this.parseDeviceInfo(output);
+                if (info.name) {
+                    resolve(info);
+                } else {
+                    reject(new Error('Failed to read device info'));
+                }
+            });
+
+            proc.on('error', reject);
+        });
+    }
+
+    parseDeviceInfo(output) {
+        const info = {};
+
+        const nameMatch = output.match(/Device name\s*:\s*(.+)/i);
+        const idMatch = output.match(/Device ID\s*:\s*(0x[0-9A-F]+)/i);
+        const flashMatch = output.match(/Flash size\s*:\s*(\d+)\s*KB/i);
+
+        if (nameMatch) info.name = nameMatch[1].trim();
+        if (idMatch) info.id = idMatch[1];
+        if (flashMatch) info.flash = parseInt(flashMatch[1]) * 1024;
+
+        return info;
+    }
+
+    /**
+     * Flash binary file
+     */
+    async flashBinary(binPath, address = '0x08000000', index = 0) {
         if (!fs.existsSync(binPath)) {
             throw new Error(`File not found: ${binPath}`);
         }
 
         return new Promise((resolve, reject) => {
             const args = [
-                '-c', `port=SWD`, `index=${index}`,
-                '-w', binPath, address.toString(16),
-                '-v',  // Verify after programming
-                '-rst' // Reset after programming
+                '-c', `port=SWD`, `index=${index}`, 'mode=UR', 'reset=HWrst',
+                '-w', binPath, address,
+                '-v',
+                '-rst'
             ];
 
-            this.emit('output', `📝 Flashing: ${binPath}\n`);
-            this.emit('output', `📍 Address: 0x${address.toString(16)}\n`);
+            this.emit('output', `[CubeProgrammer] Flashing ${binPath} to ${address}\n`);
 
-            const proc = spawn(this.cliPath, args);
-            this.running = true;
+            const proc = spawn(this.cliPath, args, { shell: true });
+            let output = '';
 
             proc.stdout.on('data', (data) => {
-                this.emit('output', data.toString());
+                const text = data.toString();
+                output += text;
+                this.emit('output', text);
             });
 
             proc.stderr.on('data', (data) => {
-                this.emit('output', data.toString());
+                output += data.toString();
             });
 
-            proc.on('close', (code) => {
-                this.running = false;
-
-                if (code === 0) {
-                    this.emit('output', '✅ Flash successful!\n');
-                    resolve();
+            proc.on('exit', (code) => {
+                if (code === 0 || output.includes('Download verified successfully')) {
+                    this.emit('output', '[CubeProgrammer] ✅ Flash successful\n');
+                    resolve({ success: true, output });
                 } else {
-                    reject(new Error('Flash failed with code ' + code));
+                    reject(new Error(`Flash failed: ${output}`));
                 }
+            });
+
+            proc.on('error', (err) => {
+                reject(new Error(`Failed to start CubeProgrammer: ${err.message}`));
             });
         });
     }
@@ -216,63 +200,50 @@ class STM32CubeProgrammer extends EventEmitter {
      * Erase chip
      */
     async eraseChip(index = 0) {
-        if (!this.isInstalled()) {
-            throw new Error('STM32CubeProgrammer not installed');
-        }
-
         return new Promise((resolve, reject) => {
-            const args = [
+            const proc = spawn(this.cliPath, [
                 '-c', `port=SWD`, `index=${index}`,
                 '-e', 'all'
-            ];
+            ], { shell: true });
 
-            const proc = spawn(this.cliPath, args);
+            let output = '';
 
             proc.stdout.on('data', (data) => {
+                output += data.toString();
                 this.emit('output', data.toString());
             });
 
-            proc.stderr.on('data', (data) => {
-                this.emit('output', data.toString());
-            });
-
-            proc.on('close', (code) => {
+            proc.on('exit', (code) => {
                 if (code === 0) {
-                    resolve();
+                    resolve({ success: true });
                 } else {
                     reject(new Error('Erase failed'));
                 }
             });
+
+            proc.on('error', reject);
         });
     }
 
     /**
      * Read memory
-     * @param {number} address - Memory address
-     * @param {number} size - Number of bytes
-     * @param {string} outputFile - Output file path
      */
-    async readMemory(address, size, outputFile) {
-        if (!this.isInstalled()) {
-            throw new Error('STM32CubeProgrammer not installed');
-        }
-
+    async readMemory(address, size, outputFile, index = 0) {
         return new Promise((resolve, reject) => {
-            const args = [
-                '-c', 'port=SWD',
-                '-r', outputFile, address.toString(16), size.toString()
-            ];
+            const proc = spawn(this.cliPath, [
+                '-c', `port=SWD`, `index=${index}`,
+                '-r', address, size, outputFile
+            ], { shell: true });
 
-            const proc = spawn(this.cliPath, args);
-
-            proc.on('close', (code) => {
-                if (code === 0 && fs.existsSync(outputFile)) {
-                    const data = fs.readFileSync(outputFile);
-                    resolve(data);
+            proc.on('exit', (code) => {
+                if (code === 0) {
+                    resolve({ success: true, file: outputFile });
                 } else {
-                    reject(new Error('Memory read failed'));
+                    reject(new Error('Read failed'));
                 }
             });
+
+            proc.on('error', reject);
         });
     }
 }

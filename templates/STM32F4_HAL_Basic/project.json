@@ -1,11 +1,10 @@
 {
     "name": "STM32F4_HAL_Basic",
     "version": "1.0.0",
-    "description": "Basic STM32F4 HAL project with GPIO blink example",
+    "description": "Basic STM32F4 HAL project with GPIO LED blink",
     "target": {
         "mcu": "STM32F407VGT6",
         "family": "STM32F4",
-        "series": "STM32F4xx",
         "clock": 168000000,
         "flash": 1048576,
         "ram": 196608
@@ -18,16 +17,11 @@
         ],
         "cflags": [
             "-Wall",
-            "-g",
-            "-fdata-sections",
-            "-ffunction-sections"
+            "-g"
         ],
         "includes": [
             "Inc",
-            "Drivers/STM32F4xx_HAL_Driver/Inc",
-            "Drivers/STM32F4xx_HAL_Driver/Inc/Legacy",
-            "Drivers/CMSIS/Device/ST/STM32F4xx/Include",
-            "Drivers/CMSIS/Include"
+            "Drivers/STM32F4xx_HAL_Driver/Inc"
         ]
     },
     "linker": {
@@ -39,15 +33,6 @@
         ],
         "ldflags": [
             "-Wl,--gc-sections"
-        ]
-    },
-    "sources": {
-        "dirs": [
-            "Src",
-            "Drivers/STM32F4xx_HAL_Driver/Src"
-        ],
-        "exclude": [
-            "*_template.c"
         ]
     }
 }

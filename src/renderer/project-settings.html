@@ -1,382 +1,46 @@
 <!DOCTYPE html>
 <html>
-
 <head>
     <meta charset="UTF-8">
     <title>Project Settings</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #1e1e1e;
-            color: #d4d4d4;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: #252526;
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        }
-
-        .header {
-            padding: 20px;
-            background: #2d2d30;
-            border-bottom: 1px solid #3e3e42;
-            border-radius: 8px 8px 0 0;
-        }
-
-        .header h1 {
-            font-size: 20px;
-            color: #fff;
-        }
-
-        .tabs {
-            display: flex;
-            padding: 0 20px;
-            background: #2d2d30;
-            border-bottom: 1px solid #3e3e42;
-        }
-
-        .tab {
-            padding: 12px 24px;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s;
-            color: #969696;
-        }
-
-        .tab:hover {
-            color: #fff;
-        }
-
-        .tab.active {
-            color: #fff;
-            border-bottom-color: #0078d4;
-        }
-
-        .tab-content {
-            padding: 30px;
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .form-group {
-            margin-bottom: 24px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 13px;
-            font-weight: 500;
-            color: #cccccc;
-        }
-
-        .form-group input[type="text"],
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 10px;
-            background: #3c3c3c;
-            border: 1px solid #5a5a5a;
-            border-radius: 4px;
-            color: #d4d4d4;
-            font-size: 14px;
-            font-family: 'Consolas', 'Courier New', monospace;
-        }
-
-        .form-group input[type="text"]:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #0078d4;
-        }
-
-        .form-group textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-        }
-
-        .list-manager {
-            background: #3c3c3c;
-            border: 1px solid #5a5a5a;
-            border-radius: 4px;
-            padding: 12px;
-            min-height: 150px;
-        }
-
-        .list-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px;
-            margin-bottom: 6px;
-            background: #252526;
-            border-radius: 3px;
-        }
-
-        .list-item span {
-            font-family: 'Consolas', 'Courier New', monospace;
-            font-size: 13px;
-        }
-
-        .btn-remove {
-            background: #c72e2e;
-            border: none;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-
-        .btn-remove:hover {
-            background: #e04343;
-        }
-
-        .add-row {
-            display: flex;
-            gap: 8px;
-            margin-top: 8px;
-        }
-
-        .add-row input {
-            flex: 1;
-        }
-
-        .btn-add {
-            background: #0e639c;
-            border: none;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 13px;
-        }
-
-        .btn-add:hover {
-            background: #1177bb;
-        }
-
-        .footer {
-            padding: 20px;
-            background: #2d2d30;
-            border-top: 1px solid #3e3e42;
-            border-radius: 0 0 8px 8px;
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-        }
-
-        .btn {
-            padding: 10px 24px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .btn-primary {
-            background: #0e639c;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #1177bb;
-        }
-
-        .btn-secondary {
-            background: #3c3c3c;
-            color: #cccccc;
-        }
-
-        .btn-secondary:hover {
-            background: #505050;
-        }
-
-        .info-box {
-            background: #1a1a1a;
-            border-left: 3px solid #0078d4;
-            padding: 12px;
-            margin-bottom: 20px;
-            border-radius: 3px;
-            font-size: 13px;
-            line-height: 1.6;
-        }
-
-        .mcu-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 12px;
-            margin-top: 12px;
-        }
-
-        .mcu-card {
-            background: #3c3c3c;
-            border: 2px solid #5a5a5a;
-            border-radius: 4px;
-            padding: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .mcu-card:hover {
-            border-color: #0078d4;
-        }
-
-        .mcu-card.selected {
-            border-color: #0078d4;
-            background: #2a4a5e;
-        }
-
-        .mcu-card h4 {
-            font-size: 14px;
-            margin-bottom: 6px;
-            color: #fff;
-        }
-
-        .mcu-card p {
-            font-size: 12px;
-            color: #969696;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #1e1e1e; color: #d4d4d4; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: #252526; border-radius: 8px; padding: 30px; }
+        h1 { color: #fff; margin-bottom: 20px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 500; }
+        input, select { width: 100%; padding: 10px; background: #3c3c3c; border: 1px solid #5a5a5a; border-radius: 4px; color: #d4d4d4; }
+        input:focus, select:focus { outline: none; border-color: #0078d4; }
+        .footer { margin-top: 30px; display: flex; justify-content: flex-end; gap: 12px; }
+        .btn { padding: 10px 24px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .btn-primary { background: #0e639c; color: white; }
+        .btn-secondary { background: #3c3c3c; color: #cccccc; }
     </style>
 </head>
-
 <body>
     <div class="container">
-        <div class="header">
-            <h1>⚙️ Project Settings</h1>
+        <h1>⚙️ Project Settings</h1>
+        
+        <div class="form-group">
+            <label>Project Name</label>
+            <input type="text" id="projectName" placeholder="MyProject">
         </div>
 
-        <div class="tabs">
-            <div class="tab active" data-tab="target">Target</div>
-            <div class="tab" data-tab="build">Build</div>
-            <div class="tab" data-tab="includes">Includes</div>
-            <div class="tab" data-tab="linker">Linker</div>
+        <div class="form-group">
+            <label>MCU Family</label>
+            <select id="mcuFamily">
+                <option value="STM32F4">STM32F4</option>
+            </select>
         </div>
 
-        <!-- Target Tab -->
-        <div class="tab-content active" id="target">
-            <div class="info-box">
-                📌 Select your target microcontroller and configure basic settings
-            </div>
-
-            <div class="form-group">
-                <label>Project Name</label>
-                <input type="text" id="projectName" placeholder="MyProject">
-            </div>
-
-            <div class="form-group">
-                <label>MCU Family</label>
-                <select id="mcuFamily">
-                    <option value="STM32F4">STM32F4 Series</option>
-                    <option value="STM32F7">STM32F7 Series</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Select MCU</label>
-                <div id="mcuGrid" class="mcu-grid">
-                    <!-- Populated by JS -->
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Clock Speed (MHz)</label>
-                    <input type="text" id="clockSpeed" placeholder="168">
-                </div>
-                <div class="form-group">
-                    <label>Flash Size (KB)</label>
-                    <input type="text" id="flashSize" placeholder="1024" readonly>
-                </div>
-            </div>
-        </div>
-
-        <!-- Build Tab -->
-        <div class="tab-content" id="build">
-            <div class="info-box">
-                🔨 Configure compiler settings and optimization levels
-            </div>
-
-            <div class="form-group">
-                <label>Optimization Level</label>
-                <select id="optimization">
-                    <option value="-O0">-O0 (No optimization, best for debugging)</option>
-                    <option value="-O1">-O1 (Moderate optimization)</option>
-                    <option value="-O2" selected>-O2 (Full optimization)</option>
-                    <option value="-O3">-O3 (Aggressive optimization)</option>
-                    <option value="-Os">-Os (Optimize for size)</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>C Defines (comma-separated)</label>
-                <textarea id="defines" placeholder="USE_HAL_DRIVER, STM32F407xx"></textarea>
-            </div>
-
-            <div class="form-group">
-                <label>Compiler Flags (comma-separated)</label>
-                <textarea id="cflags" placeholder="-Wall, -g, -fdata-sections, -ffunction-sections"></textarea>
-            </div>
-        </div>
-
-        <!-- Includes Tab -->
-        <div class="tab-content" id="includes">
-            <div class="info-box">
-                📁 Manage include directories for header files
-            </div>
-
-            <div class="form-group">
-                <label>Include Paths</label>
-                <div class="list-manager" id="includesList">
-                    <!-- Populated by JS -->
-                </div>
-                <div class="add-row">
-                    <input type="text" id="newInclude" placeholder="Inc">
-                    <button class="btn-add" onclick="addInclude()">➕ Add</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Linker Tab -->
-        <div class="tab-content" id="linker">
-            <div class="info-box">
-                🔗 Configure linker script and memory layout
-            </div>
-
-            <div class="form-group">
-                <label>Linker Script</label>
-                <input type="text" id="linkerScript" placeholder="STM32F407VGTx_FLASH.ld">
-            </div>
-
-            <div class="form-group">
-                <label>Libraries (comma-separated)</label>
-                <textarea id="libraries" placeholder="-lc, -lm, -lnosys"></textarea>
-            </div>
-
-            <div class="form-group">
-                <label>Linker Flags (comma-separated)</label>
-                <textarea id="ldflags" placeholder="-Wl,--gc-sections"></textarea>
-            </div>
+        <div class="form-group">
+            <label>Optimization</label>
+            <select id="optimization">
+                <option value="-O0">-O0 (Debug)</option>
+                <option value="-O2" selected>-O2 (Release)</option>
+                <option value="-Os">-Os (Size)</option>
+            </select>
         </div>
 
         <div class="footer">
@@ -388,95 +52,9 @@
 
     <script>
         const { ipcRenderer } = require('electron');
+        
+        let currentConfig = {};
 
-        let currentConfig = null;
-        const mcuDatabase = {
-            'STM32F4': [
-                { name: 'STM32F407VGT6', flash: 1024, ram: 192 },
-                { name: 'STM32F401RET6', flash: 512, ram: 96 },
-                { name: 'STM32F411RET6', flash: 512, ram: 128 },
-                { name: 'STM32F429ZIT6', flash: 2048, ram: 256 }
-            ],
-            'STM32F7': [
-                { name: 'STM32F730V8T6', flash: 64, ram: 256 },
-                { name: 'STM32F746ZGT6', flash: 1024, ram: 320 },
-                { name: 'STM32F767ZIT6', flash: 2048, ram: 512 }
-            ]
-        };
-
-        // Tab switching
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-
-                tab.classList.add('active');
-                document.getElementById(tab.dataset.tab).classList.add('active');
-            });
-        });
-
-        // MCU family change
-        document.getElementById('mcuFamily').addEventListener('change', (e) => {
-            populateMCUGrid(e.target.value);
-        });
-
-        // Populate MCU grid
-        function populateMCUGrid(family) {
-            const grid = document.getElementById('mcuGrid');
-            grid.innerHTML = '';
-
-            const mcus = mcuDatabase[family] || [];
-            mcus.forEach(mcu => {
-                const card = document.createElement('div');
-                card.className = 'mcu-card';
-                card.innerHTML = `
-                    <h4>${mcu.name}</h4>
-                    <p>Flash: ${mcu.flash}KB</p>
-                    <p>RAM: ${mcu.ram}KB</p>
-                `;
-                card.onclick = () => selectMCU(mcu, card);
-                grid.appendChild(card);
-            });
-        }
-
-        function selectMCU(mcu, card) {
-            document.querySelectorAll('.mcu-card').forEach(c => c.classList.remove('selected'));
-            card.classList.add('selected');
-            document.getElementById('flashSize').value = mcu.flash;
-        }
-
-        // Include path management
-        function renderIncludes() {
-            const list = document.getElementById('includesList');
-            const includes = currentConfig?.build?.includes || [];
-
-            list.innerHTML = includes.map((inc, idx) => `
-                <div class="list-item">
-                    <span>${inc}</span>
-                    <button class="btn-remove" onclick="removeInclude(${idx})">✕</button>
-                </div>
-            `).join('');
-        }
-
-        function addInclude() {
-            const input = document.getElementById('newInclude');
-            const path = input.value.trim();
-
-            if (path && currentConfig) {
-                currentConfig.build.includes.push(path);
-                renderIncludes();
-                input.value = '';
-            }
-        }
-
-        function removeInclude(index) {
-            if (currentConfig) {
-                currentConfig.build.includes.splice(index, 1);
-                renderIncludes();
-            }
-        }
-
-        // Load configuration
         ipcRenderer.on('load-config', (event, config) => {
             currentConfig = config;
             loadUIFromConfig(config);
@@ -484,39 +62,17 @@
 
         function loadUIFromConfig(config) {
             document.getElementById('projectName').value = config.name || '';
-            document.getElementById('mcuFamily').value = config.target.family || 'STM32F4';
-            document.getElementById('clockSpeed').value = (config.target.clock / 1000000) || 168;
-            document.getElementById('flashSize').value = (config.target.flash / 1024) || 1024;
-
-            document.getElementById('optimization').value = config.build.optimization || '-O2';
-            document.getElementById('defines').value = config.build.defines.join(', ');
-            document.getElementById('cflags').value = config.build.cflags.join(', ');
-
-            document.getElementById('linkerScript').value = config.linker.script || '';
-            document.getElementById('libraries').value = config.linker.libraries.join(', ');
-            document.getElementById('ldflags').value = config.linker.ldflags.join(', ');
-
-            populateMCUGrid(config.target.family);
-            renderIncludes();
+            document.getElementById('mcuFamily').value = config.target?.family || 'STM32F4';
+            document.getElementById('optimization').value = config.build?.optimization || '-O2';
         }
 
         function getConfigFromUI() {
-            const config = JSON.parse(JSON.stringify(currentConfig)); // Deep clone
-
-            config.name = document.getElementById('projectName').value;
-            config.target.family = document.getElementById('mcuFamily').value;
-            config.target.clock = parseInt(document.getElementById('clockSpeed').value) * 1000000;
-            config.target.flash = parseInt(document.getElementById('flashSize').value) * 1024;
-
-            config.build.optimization = document.getElementById('optimization').value;
-            config.build.defines = document.getElementById('defines').value.split(',').map(s => s.trim());
-            config.build.cflags = document.getElementById('cflags').value.split(',').map(s => s.trim());
-
-            config.linker.script = document.getElementById('linkerScript').value;
-            config.linker.libraries = document.getElementById('libraries').value.split(',').map(s => s.trim());
-            config.linker.ldflags = document.getElementById('ldflags').value.split(',').map(s => s.trim());
-
-            return config;
+            currentConfig.name = document.getElementById('projectName').value;
+            currentConfig.target = currentConfig.target || {};
+            currentConfig.target.family = document.getElementById('mcuFamily').value;
+            currentConfig.build = currentConfig.build || {};
+            currentConfig.build.optimization = document.getElementById('optimization').value;
+            return currentConfig;
         }
 
         function applySettings() {
@@ -531,5 +87,4 @@
         }
     </script>
 </body>
-
 </html>

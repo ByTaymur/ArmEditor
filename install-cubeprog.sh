@@ -1,71 +1,44 @@
 #!/bin/bash
 # STM32CubeProgrammer Installation Script
-# Auto-downloads and installs STM32CubeProgrammer CLI
 
-set -e
-
-echo "🔧 Installing STM32CubeProgrammer CLI..."
+echo "🔧 STM32CubeProgrammer Installation Script"
+echo "=========================================="
+echo ""
 
 # Check if already installed
 if command -v STM32_Programmer_CLI &> /dev/null; then
-    echo "✅ STM32CubeProgrammer already installed!"
+    echo "✅ STM32CubeProgrammer is already installed"
     STM32_Programmer_CLI --version
     exit 0
 fi
 
-# Create temp directory
-TEMP_DIR=$(mktemp -d)
-cd "$TEMP_DIR"
+echo "📥 STM32CubeProgrammer needs to be installed manually"
+echo ""
+echo "Steps:"
+echo "1. Download from: https://www.st.com/en/development-tools/stm32cubeprog.html"
+echo "   (You need to create a free ST account)"
+echo ""
+echo "2. Extract the ZIP file"
+echo "   unzip ~/Downloads/en.stm32cubeprog-lin*.zip"
+echo ""
+echo "3. Run the installer:"
+echo "   cd SetupSTM32CubeProgrammer-*/"
+echo "   sudo ./SetupSTM32CubeProgrammer-*.linux"
+echo ""
+echo "4. Add to PATH (add to ~/.bashrc):"
+echo "   export PATH=\"/usr/local/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin:\$PATH\""
+echo ""
+echo "5. Reload shell:"
+echo "   source ~/.bashrc"
+echo ""
+echo "6. Verify installation:"
+echo "   STM32_Programmer_CLI --version"
+echo ""
 
-echo "📥 Downloading STM32CubeProgrammer..."
-# Note: User must download from ST website due to login requirement
-echo ""
-echo "⚠️  Please download STM32CubeProgrammer from:"
-echo "   https://www.st.com/en/development-tools/stm32cubeprog.html"
-echo ""
-echo "   Select: Linux version (ZIP)"
-echo "   Copy the downloaded file to: /tmp/stm32cubeprog.zip"
-echo ""
-read -p "Press Enter after downloading to /tmp/stm32cubeprog.zip..."
-
-if [ ! -f "/tmp/stm32cubeprog.zip" ]; then
-    echo "❌ File not found: /tmp/stm32cubeprog.zip"
-    exit 1
+read -p "Do you want to open the download page? (y/n) " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    xdg-open "https://www.st.com/en/development-tools/stm32cubeprog.html" 2>/dev/null || \
+    open "https://www.st.com/en/development-tools/stm32cubeprog.html" 2>/dev/null || \
+    echo "Please visit: https://www.st.com/en/development-tools/stm32cubeprog.html"
 fi
-
-echo "📦 Extracting..."
-unzip -q /tmp/stm32cubeprog.zip -d "$TEMP_DIR"
-
-# Find the installer
-INSTALLER=$(find "$TEMP_DIR" -name "SetupSTM32CubeProgrammer*.linux" | head -1)
-
-if [ -z "$INSTALLER" ]; then
-    echo "❌ Installer not found in ZIP file"
-    exit 1
-fi
-
-echo "🚀 Running installer..."
-chmod +x "$INSTALLER"
-sudo "$INSTALLER" --mode silent --prefix /opt/STM32CubeProgrammer
-
-# Add to PATH
-if ! grep -q "STM32CubeProgrammer" ~/.bashrc; then
-    echo 'export PATH="/opt/STM32CubeProgrammer/bin:$PATH"' >> ~/.bashrc
-    echo "✅ Added to ~/.bashrc"
-fi
-
-# Source for current session
-export PATH="/opt/STM32CubeProgrammer/bin:$PATH"
-
-echo ""
-echo "✅ Installation complete!"
-echo ""
-echo "Version:"
-STM32_Programmer_CLI --version || echo "   (Restart terminal for PATH update)"
-
-echo ""
-echo "💡 Restart your terminal or run: source ~/.bashrc"
-
-# Cleanup
-rm -rf "$TEMP_DIR"
-rm -f /tmp/stm32cubeprog.zip

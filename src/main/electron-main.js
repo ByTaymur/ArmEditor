@@ -13,6 +13,10 @@ const GDBBackend = require('../debugger/gdb-backend');
 const OpenOCDInterface = require('../debugger/openocd-interface');
 const FlashManager = require('../debugger/flash-manager');
 const STM32Tools = require('../stm32/stm32-tools');
+// v2.1.0 Professional IDE Features
+const STM32CubeProgrammer = require('../programmer/stm32-cube-programmer');
+const ProjectManager = require('../project/project-manager');
+const TemplateManager = require('../project/template-manager');
 
 let mainWindow;
 let currentProjectPath = null;
@@ -593,8 +597,8 @@ async function buildProject(autoFlash = false) {
 
                         // Prefer .hex, then .bin, then .elf
                         firmwareFile = files.find(f => f.endsWith('.hex')) ||
-                                     files.find(f => f.endsWith('.bin')) ||
-                                     files.find(f => f.endsWith('.elf'));
+                            files.find(f => f.endsWith('.bin')) ||
+                            files.find(f => f.endsWith('.elf'));
 
                         if (firmwareFile) {
                             firmwareFile = path.join(buildDir, firmwareFile);
@@ -810,15 +814,15 @@ function showAbout() {
         title: 'About HopeIDE',
         message: 'HopeIDE (Umut IDE) v1.0.0',
         detail: 'Professional ARM Development IDE\n\n' +
-                'Features:\n' +
-                '• AI Code Assistant\n' +
-                '• Memory Analyzer\n' +
-                '• Performance Profiler\n' +
-                '• STM32CubeMX Import\n' +
-                '• Real-time Debugging\n\n' +
-                'Better than Keil/IAR, completely free!\n\n' +
-                'Built with Electron + Monaco Editor\n' +
-                'License: MIT'
+            'Features:\n' +
+            '• AI Code Assistant\n' +
+            '• Memory Analyzer\n' +
+            '• Performance Profiler\n' +
+            '• STM32CubeMX Import\n' +
+            '• Real-time Debugging\n\n' +
+            'Better than Keil/IAR, completely free!\n\n' +
+            'Built with Electron + Monaco Editor\n' +
+            'License: MIT'
     });
 }
 
@@ -1259,7 +1263,7 @@ flash: all
 });
 
 function getFileTemplate(ext) {
-    switch(ext) {
+    switch (ext) {
         case '.c':
             return `/**
  * File: ${path.basename(currentFilePath || 'main.c')}
@@ -1899,7 +1903,7 @@ ipcMain.on('swv-enable', async (event, config) => {
             return;
         }
 
-        mainWindow.webContents.send('output-append', `📡 Configuring SWV (CPU: ${config.cpuFreq/1000000} MHz)...\n`);
+        mainWindow.webContents.send('output-append', `📡 Configuring SWV (CPU: ${config.cpuFreq / 1000000} MHz)...\n`);
 
         const stm32Tools = new STM32Tools(connectedStLink.openocd);
         await stm32Tools.monitorStartSWO(0, config.cpuFreq, config.swoFreq);
@@ -1959,6 +1963,121 @@ ipcMain.on('swv-read', async (event) => {
     } catch (error) {
         // Ignore read errors during polling
         console.error('[SWV Read Error]', error.message);
+    }
+});
+
+// ============================================================================
+// v2.1.0: PROJECT SETTINGS & NEW PROJECT
+// ============================================================================
+
+let settingsWindow = null;
+let newProjectWindow = null;
+let projectManager = null;
+let templateManager = null;
+
+ipcMain.on('open-project-settings', () => {
+    if (settingsWindow) {
+        settingsWindow.focus();
+        return;
+    }
+
+    settingsWindow = new BrowserWindow({
+        width: 900,
+        height: 700,
+        parent: mainWindow,
+        modal: false,
+        webPreferences: { nodeIntegration: true, contextIsolation: false },
+        backgroundColor: '#1e1e1e',
+        title: 'Project Settings'
+    });
+
+    settingsWindow.loadFile(path.join(__dirname, '../renderer/project-settings.html'));
+    settingsWindow.on('closed', () => { settingsWindow = null; });
+
+    settingsWindow.webContents.on('did-finish-load', () => {
+        if (currentProjectPath) {
+            projectManager = projectManager || new ProjectManager(currentProjectPath);
+            settingsWindow.webContents.send('load-config', projectManager.config);
+        }
+    });
+});
+
+ipcMain.on('project-settings-apply', (event, config) => {
+    if (!currentProjectPath) return;
+
+    projectManager = projectManager || new ProjectManager(currentProjectPath);
+    const validation = projectManager.validateConfig(config);
+
+    if (validation.valid) {
+        projectManager.config = config;
+        projectManager.saveConfig();
+        projectManager.saveMakefile();
+        mainWindow.webContents.send('output-append', '✅ Settings applied\n');
+    }
+});
+
+ipcMain.on('project-settings-save', (event, config) => {
+    if (!currentProjectPath) return;
+
+    projectManager = projectManager || new ProjectManager(currentProjectPath);
+    projectManager.config = config;
+    projectManager.saveConfig();
+    projectManager.saveMakefile();
+    event.reply('project-settings-saved');
+});
+
+ipcMain.on('open-new-project', () => {
+    if (newProjectWindow) {
+        newProjectWindow.focus();
+        return;
+    }
+
+    newProjectWindow = new BrowserWindow({
+        width: 800,
+        height: 600,
+        parent: mainWindow,
+        modal: false,
+        webPreferences: { nodeIntegration: true, contextIsolation: false },
+        backgroundColor: '#1e1e1e',
+        title: 'New Project'
+    });
+
+    newProjectWindow.loadFile(path.join(__dirname, '../renderer/new-project.html'));
+    newProjectWindow.on('closed', () => { newProjectWindow = null; });
+
+    newProjectWindow.webContents.on('did-finish-load', () => {
+        templateManager = templateManager || new TemplateManager();
+        const templates = templateManager.listTemplates();
+        newProjectWindow.webContents.send('templates-list', templates);
+    });
+});
+
+ipcMain.on('get-templates-list', (event) => {
+    templateManager = templateManager || new TemplateManager();
+    event.reply('templates-list', templateManager.listTemplates());
+});
+
+ipcMain.on('create-project-from-template', async (event, options) => {
+    try {
+        templateManager = templateManager || new TemplateManager();
+
+        mainWindow.webContents.send('output-append', `🆕 Creating: ${options.projectName}\n`);
+
+        const result = await templateManager.createFromTemplate(
+            options.templateId,
+            options.projectPath,
+            options
+        );
+
+        if (result.success) {
+            currentProjectPath = result.projectPath;
+            projectManager = new ProjectManager(currentProjectPath);
+            mainWindow.webContents.send('output-append', '✅ Project created!\n');
+            event.reply('project-created', { success: true });
+        }
+    } catch (error) {
+        mainWindow.webContents.send('output-append', `❌ Error: ${error.message}\n`);
+        event.reply('project-created', { success: false, error: error.message });
     }
 });
 
