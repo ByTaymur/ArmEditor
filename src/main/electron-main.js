@@ -983,14 +983,45 @@ ipcMain.on('flash-program', async (event, filePath) => {
         console.log('[Flash] Starting flash:', filePath);
         mainWindow.webContents.send('output-append', `⚡ Flashing ${path.basename(filePath)}...\n`);
 
+        // Ensure OpenOCD is running
         if (!openocdInterface) {
+            mainWindow.webContents.send('output-append', '   Starting OpenOCD for flashing...\n');
             openocdInterface = new OpenOCDInterface();
-            await openocdInterface.start();
+
+            // Listen to output
+            openocdInterface.on('output', (data) => {
+                console.log('[OpenOCD Flash]', data);
+            });
+
+            // Try to detect or use default
+            try {
+                // Use st-info to get chip ID if possible
+                const { execSync } = require('child_process');
+                try {
+                    const output = execSync('st-info --probe', { stdio: 'pipe' }).toString();
+                    const chipIdMatch = output.match(/chipid:\s*(0x[0-9a-fA-F]+)/);
+                    if (chipIdMatch) {
+                        const mcuType = detectMCUType(chipIdMatch[1]) || 'stm32f4x';
+                        console.log('[Flash] Auto-detected MCU for flash:', mcuType);
+                        await openocdInterface.start(mcuType, 'stlink');
+                    } else {
+                        throw new Error('No chip ID');
+                    }
+                } catch (e) {
+                    console.log('[Flash] st-info failed, using default F4 config');
+                    await openocdInterface.start('stm32f4x', 'stlink');
+                }
+            } catch (err) {
+                console.error('[Flash] OpenOCD start error:', err);
+                await openocdInterface.start('stm32f4x', 'stlink');
+            }
+
             await openocdInterface.connectTCL();
         }
 
         flashManager = flashManager || new FlashManager(openocdInterface);
 
+        mainWindow.webContents.send('output-append', '   Programming flash memory...\n');
         const result = await flashManager.programAndRun(filePath, true, true);
 
         if (result.success) {
@@ -999,11 +1030,25 @@ ipcMain.on('flash-program', async (event, filePath) => {
                 mainWindow.webContents.send('output-append', `   ${step}\n`);
             }
         } else {
+            console.error('[Flash] Failed:', result.error);
             mainWindow.webContents.send('output-append', `❌ Flash failed: ${result.error}\n`);
+
+            // If failed, maybe connection was lost. Try to restart OpenOCD next time.
+            try {
+                await openocdInterface.stop();
+            } catch (e) { }
+            openocdInterface = null;
         }
 
     } catch (error) {
+        console.error('[Flash] Exception:', error);
         mainWindow.webContents.send('output-append', `❌ Flash error: ${error.message}\n`);
+
+        // Clean up
+        try {
+            if (openocdInterface) await openocdInterface.stop();
+        } catch (e) { }
+        openocdInterface = null;
     }
 });
 
@@ -1500,6 +1545,7 @@ ipcMain.on('connect-stlink', async (event, deviceId) => {
 
         let mcuType = await selectedMcuType;
         let detectedMcuType = null;
+        let detectedChipId = null;
         let openocd = null;
 
         try {
@@ -1525,12 +1571,14 @@ ipcMain.on('connect-stlink', async (event, deviceId) => {
                         mainWindow.webContents.send('output-append', `   Trying st-info probe...\n`);
                         const output = execSync('st-info --probe').toString();
                         console.log('[st-info] Output:', output);
+                        mainWindow.webContents.send('output-append', `   [st-info] ${output.trim()}\n`);
 
                         // Parse output
                         // Example: Found 1 stlink programmers... serial: ... openocd: ... flash: ... sram: ... chipid: 0x0413
                         const chipIdMatch = output.match(/chipid:\s*(0x[0-9a-fA-F]+)/);
                         if (chipIdMatch) {
                             const chipId = chipIdMatch[1];
+                            detectedChipId = chipId;
                             detectedMcuType = detectMCUType(chipId);
 
                             if (detectedMcuType) {
@@ -1652,6 +1700,14 @@ ipcMain.on('connect-stlink', async (event, deviceId) => {
         await openocd.connectTCL();
         mainWindow.webContents.send('output-append', '✅ TCL connected\n');
 
+        // Try to reset target to ensure it's in a good state
+        try {
+            await openocd.reset(true); // Reset halt
+            await new Promise(resolve => setTimeout(resolve, 100));
+        } catch (e) {
+            console.log('[Connect] Reset failed (non-fatal):', e.message);
+        }
+
         // Get device info using STM32Tools with timeout
         let deviceInfo = null;
         try {
@@ -1681,10 +1737,10 @@ ipcMain.on('connect-stlink', async (event, deviceId) => {
                 `   Connection is OK, but some details are unavailable.\n`
             );
 
-            // Create minimal device info
+            // Create minimal device info using st-info data if available
             deviceInfo = {
                 deviceName: getMCUName(mcuType),
-                deviceID: 'Unknown',
+                deviceID: detectedChipId || 'Unknown',
                 flash: { sizeKB: 0 },
                 ram: { sizeKB: 0 },
                 revisionID: 'Unknown'
@@ -1823,7 +1879,8 @@ ipcMain.on('read-memory', async (event, data) => {
 
         // Use OpenOCD to read memory
         const stm32Tools = new STM32Tools(connectedStLink.openocd);
-        const memoryData = await stm32Tools.readMemory(address, size);
+        // Use 2s timeout for UI reads to prevent hanging
+        const memoryData = await stm32Tools.readMemory(address, size, 2000);
 
         // Send memory data to renderer
         mainWindow.webContents.send('memory-data', { address, data: memoryData });

@@ -30,8 +30,16 @@ class OpenOCDInterface extends EventEmitter {
             let errorOutput = '';
 
             // Launch OpenOCD
+            // First, kill any existing openocd processes to prevent port conflicts
+            try {
+                const { execSync } = require('child_process');
+                execSync('pkill -9 openocd || true', { stdio: 'ignore' });
+            } catch (e) { /* ignore */ }
+
             this.process = spawn('openocd', [
                 ...configFiles.flatMap(f => ['-f', f]),
+                '-c', 'adapter speed 500', // Lower speed for stability (was 1800)
+                '-c', 'reset_config none separate', // Software reset only (safer for clones/bad wiring)
                 '-c', 'gdb_port 3333',
                 '-c', 'tcl_port 6666',
                 '-c', 'telnet_port 4444'
@@ -78,11 +86,11 @@ class OpenOCDInterface extends EventEmitter {
                         errMsg = 'USB permission denied. Run: sudo dpkg-reconfigure armeditor';
                     } else if (errorOutput.includes('read version failed')) {
                         errMsg = 'ST-Link communication failed. Device may be locked or in use.\n' +
-                                'Solutions:\n' +
-                                '  1) Unplug and replug ST-Link USB cable\n' +
-                                '  2) Close STM32CubeProgrammer if open\n' +
-                                '  3) Run: killall openocd\n' +
-                                '  4) Try different USB port';
+                            'Solutions:\n' +
+                            '  1) Unplug and replug ST-Link USB cable\n' +
+                            '  2) Close STM32CubeProgrammer if open\n' +
+                            '  3) Run: killall openocd\n' +
+                            '  4) Try different USB port';
                     } else if (errorOutput.includes('not found') || errorOutput.includes('Can\'t find')) {
                         errMsg = 'ST-Link not connected. Check USB connection.';
                     } else if (errorOutput.includes('Error:')) {
@@ -106,9 +114,9 @@ class OpenOCDInterface extends EventEmitter {
                         errMsg = 'USB permission denied. Run: sudo dpkg-reconfigure armeditor';
                     } else if (errorOutput.includes('read version failed')) {
                         errMsg = 'ST-Link communication failed. Device may be locked or in use.\n' +
-                                'Try: 1) Unplug and replug ST-Link\n' +
-                                '     2) Close STM32CubeProgrammer if open\n' +
-                                '     3) Run: killall openocd';
+                            'Try: 1) Unplug and replug ST-Link\n' +
+                            '     2) Close STM32CubeProgrammer if open\n' +
+                            '     3) Run: killall openocd';
                     } else if (errorOutput.includes('not found') || errorOutput.includes('Can\'t find')) {
                         errMsg = 'ST-Link not connected. Check USB connection.';
                     } else {
@@ -233,14 +241,14 @@ class OpenOCDInterface extends EventEmitter {
     /**
      * Memory operations
      */
-    async readMemory(address, count, width = 32) {
+    async readMemory(address, count, width = 32, timeout = 30000) {
         const widthCmd = {
             8: 'mdh',
             16: 'mdh',
             32: 'mdw'
         }[width] || 'mdw';
 
-        const result = await this.sendCommand(`${widthCmd} ${address} ${count}`);
+        const result = await this.sendCommand(`${widthCmd} ${address} ${count}`, timeout);
         return this.parseMemoryDump(result);
     }
 
