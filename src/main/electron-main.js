@@ -24,6 +24,7 @@ const RegisterViewer = require('../debugger/register-viewer');
 const MemoryBrowser = require('../debugger/memory-browser');
 const PeripheralViewer = require('../debugger/peripheral-viewer');
 const MCUDetector = require('../stm32/mcu-detector');
+const CubeMXIntegration = require('../project/cubemx-integration');
 
 let mainWindow;
 let currentProjectPath = null;
@@ -2306,10 +2307,24 @@ ipcMain.on('load-options', (event) => {
     }
 
     try {
-        if (!optionsManager) {
-            optionsManager = new OptionsManager(currentProjectPath);
+        // Check if CubeMX project
+        if (CubeMXIntegration.isCubeMXProject(currentProjectPath)) {
+            console.log('[HopeIDE] CubeMX project detected, loading from CubeMX files...');
+            const cubemx = new CubeMXIntegration(currentProjectPath);
+            cubemx.loadAll();
+            const config = cubemx.getOptionsConfig();
+
+            mainWindow.webContents.send('output-append',
+                '📦 CubeMX project: Configuration loaded (READ-ONLY)\n');
+
+            event.reply('options-loaded', config);
+        } else {
+            // Regular project
+            if (!optionsManager) {
+                optionsManager = new OptionsManager(currentProjectPath);
+            }
+            event.reply('options-loaded', optionsManager.options);
         }
-        event.reply('options-loaded', optionsManager.options);
     } catch (e) {
         console.error('[OptionsManager] Load error:', e);
         event.reply('options-loaded', {});

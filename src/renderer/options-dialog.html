@@ -291,6 +291,26 @@ Drivers/STM32F4xx_HAL_Driver/Inc</textarea>
         // Load current options
         ipcRenderer.send('load-options');
         ipcRenderer.on('options-loaded', (event, options) => {
+            // Check if CubeMX project (READ-ONLY)
+            if (options.readOnly && options.source === 'CubeMX') {
+                // Show CubeMX banner
+                const header = document.querySelector('.header h1');
+                header.innerHTML = '⚙️ Options for Target <span style="color: #4ec9b0; font-size: 14px; margin-left: 15px;">📦 CubeMX Project (Read-Only)</span>';
+
+                // Disable all inputs
+                document.querySelectorAll('input, select, textarea').forEach(el => {
+                    el.disabled = true;
+                    el.style.opacity = '0.6';
+                });
+
+                // Disable buttons
+                document.querySelectorAll('.footer button:not(.secondary)').forEach(btn => {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                });
+            }
+
+            // Populate fields
             if (options.device) {
                 document.getElementById('deviceName').value = options.device.name;
                 document.getElementById('clockSpeed').value = options.device.clockSpeed;
@@ -300,7 +320,25 @@ Drivers/STM32F4xx_HAL_Driver/Inc</textarea>
                 document.getElementById('stackSize').value = options.target.stackSize;
                 document.getElementById('heapSize').value = options.target.heapSize;
             }
-            // ... load other options
+            if (options.output) {
+                document.getElementById('buildDir').value = options.output.buildDirectory || 'build';
+                document.getElementById('execName').value = options.output.executableName || 'firmware';
+                document.getElementById('createHex').checked = options.output.createHex !== false;
+                document.getElementById('createBin').checked = options.output.createBin !== false;
+            }
+            if (options.cc) {
+                if (options.cc.defines) {
+                    document.getElementById('defines').value = options.cc.defines.join('\n');
+                }
+                if (options.cc.includes) {
+                    document.getElementById('includes').value = options.cc.includes.join('\n');
+                }
+            }
+            if (options.linker) {
+                if (options.linker.scriptFile) {
+                    document.getElementById('linkerScript').value = options.linker.scriptFile;
+                }
+            }
         });
 
         function showTab(tabName) {
