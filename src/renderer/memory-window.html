@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Memory Browser</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Consolas', monospace;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 10px;
+        }
+
+        .toolbar {
+            background: #252526;
+            padding: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        input {
+            background: #3c3c3c;
+            color: #d4d4d4;
+            border: 1px solid #555;
+            padding: 6px;
+            font-family: 'Consolas', monospace;
+        }
+
+        button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+
+        button:hover {
+            background: #1177bb;
+        }
+
+        .memory-view {
+            background: #252526;
+            padding: 10px;
+            overflow: auto;
+            max-height: calc(100vh - 100px);
+        }
+
+        .memory-line {
+            display: flex;
+            gap: 20px;
+            padding: 2px 0;
+            font-size: 13px;
+        }
+
+        .memory-line:hover {
+            background: #2a2d2e;
+        }
+
+        .addr {
+            color: #858585;
+            width: 100px;
+        }
+
+        .hex {
+            color: #ce9178;
+            flex: 1;
+        }
+
+        .ascii {
+            color: #4ec9b0;
+            width: 200px;
+        }
+
+        .byte {
+            display: inline-block;
+            width: 24px;
+            cursor: pointer;
+        }
+
+        .byte:hover {
+            background: #094771;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="toolbar">
+        <label>Address:</label>
+        <input type="text" id="addressInput" value="0x08000000" style="width: 150px;">
+        <label>Size:</label>
+        <input type="number" id="sizeInput" value="256" style="width: 80px;">
+        <button onclick="readMemory()">📖 Read</button>
+        <button onclick="jumpTo('0x08000000')">Flash</button>
+        <button onclick="jumpTo('0x20000000')">RAM</button>
+    </div>
+
+    <div class="memory-view" id="memoryView"></div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+
+        function readMemory() {
+            const address = parseInt(document.getElementById('addressInput').value, 16);
+            const size = parseInt(document.getElementById('sizeInput').value);
+            ipcRenderer.send('debug-read-memory', { address, size });
+        }
+
+        function jumpTo(address) {
+            document.getElementById('addressInput').value = address;
+            readMemory();
+        }
+
+        function displayMemory(lines) {
+            const container = document.getElementById('memoryView');
+            container.innerHTML = '';
+
+            for (const line of lines) {
+                const lineDiv = document.createElement('div');
+                lineDiv.className = 'memory-line';
+
+                const addrSpan = document.createElement('span');
+                addrSpan.className = 'addr';
+                addrSpan.textContent = line.address;
+
+                const hexSpan = document.createElement('span');
+                hexSpan.className = 'hex';
+                hexSpan.textContent = line.hex;
+
+                const asciiSpan = document.createElement('span');
+                asciiSpan.className = 'ascii';
+                asciiSpan.textContent = line.ascii;
+
+                lineDiv.appendChild(addrSpan);
+                lineDiv.appendChild(hexSpan);
+                lineDiv.appendChild(asciiSpan);
+
+                container.appendChild(lineDiv);
+            }
+        }
+
+        ipcRenderer.on('memory-data', (event, data) => {
+            displayMemory(data);
+        });
+
+        // Initial read
+        readMemory();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Options for Target</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .header {
+            background: #2d2d30;
+            padding: 15px 20px;
+            border-bottom: 1px solid #007acc;
+        }
+
+        h1 {
+            font-size: 18px;
+            color: #ffffff;
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .tabs {
+            background: #252526;
+            width: 150px;
+            padding: 10px 0;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+        }
+
+        .tab:hover {
+            background: #2a2d2e;
+        }
+
+        .tab.active {
+            background: #1e1e1e;
+            border-left-color: #007acc;
+            color: #ffffff;
+        }
+
+        .content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #cccccc;
+            font-size: 13px;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            max-width: 400px;
+            padding: 8px;
+            background: #3c3c3c;
+            border: 1px solid #555;
+            color: #d4d4d4;
+            font-family: 'Consolas', monospace;
+        }
+
+        .footer {
+            background: #252526;
+            padding: 15px 20px;
+            border-top: 1px solid #333;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+
+        button:hover {
+            background: #1177bb;
+        }
+
+        button.secondary {
+            background: #3c3c3c;
+        }
+
+        button.secondary:hover {
+            background: #505050;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>⚙️ Options for Target</h1>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('device')">Device</div>
+            <div class="tab" onclick="showTab('target')">Target</div>
+            <div class="tab" onclick="showTab('output')">Output</div>
+            <div class="tab" onclick="showTab('cc')">C/C++</div>
+            <div class="tab" onclick="showTab('linker')">Linker</div>
+            <div class="tab" onclick="showTab('debug')">Debug</div>
+        </div>
+
+        <div class="content">
+            <!-- Device Tab -->
+            <div id="device" class="tab-pane active">
+                <h2>Device Selection</h2>
+                <div class="form-group">
+                    <label>Device:</label>
+                    <select id="deviceName"></select>
+                </div>
+                <div class="form-group">
+                    <label>Clock Speed (Hz):</label>
+                    <input type="number" id="clockSpeed" value="168000000">
+                </div>
+                <div class="form-group">
+                    <label>Crystal (Hz):</label>
+                    <input type="number" id="crystal" value="8000000">
+                </div>
+            </div>
+
+            <!-- Target Tab -->
+            <div id="target" class="tab-pane">
+                <h2>Memory Configuration</h2>
+                <div class="grid">
+                    <div class="form-group">
+                        <label>Stack Size (bytes):</label>
+                        <input type="number" id="stackSize" value="1024">
+                    </div>
+                    <div class="form-group">
+                        <label>Heap Size (bytes):</label>
+                        <input type="number" id="heapSize" value="512">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Output Tab -->
+            <div id="output" class="tab-pane">
+                <h2>Build Output</h2>
+                <div class="form-group">
+                    <label>Build Directory:</label>
+                    <input type="text" id="buildDir" value="build">
+                </div>
+                <div class="form-group">
+                    <label>Executable Name:</label>
+                    <input type="text" id="execName" value="firmware">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="createHex" checked> Create HEX file
+                    </label>
+                    <label>
+                        <input type="checkbox" id="createBin" checked> Create BIN file
+                    </label>
+                </div>
+            </div>
+
+            <!-- C/C++ Tab -->
+            <div id="cc" class="tab-pane">
+                <h2>Compiler Settings</h2>
+                <div class="form-group">
+                    <label>Optimization:</label>
+                    <select id="optimization">
+                        <option value="-O0">-O0 (None)</option>
+                        <option value="-O1">-O1</option>
+                        <option value="-O2" selected>-O2</option>
+                        <option value="-O3">-O3</option>
+                        <option value="-Os">-Os (Size)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Defines (one per line):</label>
+                    <textarea id="defines" rows="5">USE_HAL_DRIVER
+STM32F407xx
+DEBUG</textarea>
+                </div>
+                <div class="form-group">
+                    <label>Include Paths (one per line):</label>
+                    <textarea id="includes" rows="3">Inc
+Drivers/STM32F4xx_HAL_Driver/Inc</textarea>
+                </div>
+            </div>
+
+            <!-- Linker Tab -->
+            <div id="linker" class="tab-pane">
+                <h2>Linker Settings</h2>
+                <div class="form-group">
+                    <label>Linker Script:</label>
+                    <input type="text" id="linkerScript" value="STM32F407VGTx_FLASH.ld">
+                </div>
+                <div class="form-group">
+                    <label>Libraries:</label>
+                    <textarea id="libraries" rows="3">-lc
+-lm
+-lnosys</textarea>
+                </div>
+            </div>
+
+            <!-- Debug Tab -->
+            <div id="debug" class="tab-pane">
+                <h2>Debug Settings</h2>
+                <div class="form-group">
+                    <label>Debug Interface:</label>
+                    <select id="debugInterface">
+                        <option value="swd" selected>SWD</option>
+                        <option value="jtag">JTAG</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Speed (kHz):</label>
+                    <input type="number" id="debugSpeed" value="4000">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="runToMain" checked> Run to main()
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <button class="secondary" onclick="window.close()">Cancel</button>
+        <button onclick="apply()">Apply</button>
+        <button onclick="saveAndClose()">OK</button>
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+
+        // Populate device list
+        ipcRenderer.send('get-device-list');
+        ipcRenderer.on('device-list', (event, devices) => {
+            const select = document.getElementById('deviceName');
+            for (const device of devices) {
+                const option = document.createElement('option');
+                option.value = device;
+                option.textContent = device;
+                select.appendChild(option);
+            }
+        });
+
+        // Load current options
+        ipcRenderer.send('load-options');
+        ipcRenderer.on('options-loaded', (event, options) => {
+            if (options.device) {
+                document.getElementById('deviceName').value = options.device.name;
+                document.getElementById('clockSpeed').value = options.device.clockSpeed;
+                document.getElementById('crystal').value = options.device.crystal;
+            }
+            if (options.target) {
+                document.getElementById('stackSize').value = options.target.stackSize;
+                document.getElementById('heapSize').value = options.target.heapSize;
+            }
+            // ... load other options
+        });
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        function collectOptions() {
+            return {
+                device: {
+                    name: document.getElementById('deviceName').value,
+                    clockSpeed: parseInt(document.getElementById('clockSpeed').value),
+                    crystal: parseInt(document.getElementById('crystal').value)
+                },
+                target: {
+                    stackSize: parseInt(document.getElementById('stackSize').value),
+                    heapSize: parseInt(document.getElementById('heapSize').value)
+                },
+                output: {
+                    buildDirectory: document.getElementById('buildDir').value,
+                    executableName: document.getElementById('execName').value,
+                    createHex: document.getElementById('createHex').checked,
+                    createBin: document.getElementById('createBin').checked
+                },
+                cc: {
+                    optimization: document.getElementById('optimization').value,
+                    defines: document.getElementById('defines').value.split('\n').filter(d => d.trim()),
+                    includes: document.getElementById('includes').value.split('\n').filter(i => i.trim())
+                },
+                linker: {
+                    scriptFile: document.getElementById('linkerScript').value,
+                    libraries: document.getElementById('libraries').value.split('\n').filter(l => l.trim())
+                },
+                debug: {
+                    interface: document.getElementById('debugInterface').value,
+                    speed: parseInt(document.getElementById('debugSpeed').value),
+                    runToMain: document.getElementById('runToMain').checked
+                }
+            };
+        }
+
+        function apply() {
+            const options = collectOptions();
+            ipcRenderer.send('save-options', options);
+        }
+
+        function saveAndClose() {
+            apply();
+            window.close();
+        }
+    </script>
+</body>
+
+</html>

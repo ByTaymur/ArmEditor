@@ -17,6 +17,12 @@ const STM32Tools = require('../stm32/stm32-tools');
 const STM32CubeProgrammer = require('../programmer/stm32-cube-programmer');
 const ProjectManager = require('../project/project-manager');
 const TemplateManager = require('../project/template-manager');
+// v3.0.0 Professional Debugger & Options
+const DeviceDatabase = require('../device/device-database');
+const OptionsManager = require('../project/options-manager');
+const RegisterViewer = require('../debugger/register-viewer');
+const MemoryBrowser = require('../debugger/memory-browser');
+const PeripheralViewer = require('../debugger/peripheral-viewer');
 
 let mainWindow;
 let currentProjectPath = null;
@@ -2078,6 +2084,188 @@ ipcMain.on('create-project-from-template', async (event, options) => {
     } catch (error) {
         mainWindow.webContents.send('output-append', `❌ Error: ${error.message}\n`);
         event.reply('project-created', { success: false, error: error.message });
+    }
+});
+
+// ============================================================================
+// v3.0.0: PROFESSIONAL DEBUGGER & OPTIONS
+// ============================================================================
+
+let registerWindow = null;
+let memoryWindow = null;
+let optionsWindow = null;
+let deviceDb = null;
+let optionsManager = null;
+let registerViewer = null;
+let memoryBrowser = null;
+let peripheralViewer = null;
+
+// Initialize device database
+try {
+    deviceDb = new DeviceDatabase();
+    console.log('[HopeIDE] Device database loaded:', deviceDb.getStatistics());
+} catch (e) {
+    console.error('[HopeIDE] Failed to load device database:', e);
+}
+
+// ===== DEBUGGER WINDOWS =====
+
+ipcMain.on('open-register-window', () => {
+    if (registerWindow) {
+        registerWindow.focus();
+        return;
+    }
+
+    registerWindow = new BrowserWindow({
+        width: 600,
+        height: 700,
+        title: 'Register Viewer',
+        webPreferences: { nodeIntegration: true, contextIsolation: false },
+        backgroundColor: '#1e1e1e'
+    });
+
+    registerWindow.loadFile(path.join(__dirname, '../renderer/register-window.html'));
+    registerWindow.on('closed', () => { registerWindow = null; });
+});
+
+ipcMain.on('open-memory-window', () => {
+    if (memoryWindow) {
+        memoryWindow.focus();
+        return;
+    }
+
+    memoryWindow = new BrowserWindow({
+        width: 800,
+        height: 600,
+        title: 'Memory Browser',
+        webPreferences: { nodeIntegration: true, contextIsolation: false },
+        backgroundColor: '#1e1e1e'
+    });
+
+    memoryWindow.loadFile(path.join(__dirname, '../renderer/memory-window.html'));
+    memoryWindow.on('closed', () => { memoryWindow = null; });
+});
+
+ipcMain.on('open-options-dialog', () => {
+    if (optionsWindow) {
+        optionsWindow.focus();
+        return;
+    }
+
+    optionsWindow = new BrowserWindow({
+        width: 900,
+        height: 700,
+        title: 'Options for Target',
+        webPreferences: { nodeIntegration: true, contextIsolation: false },
+        backgroundColor: '#1e1e1e',
+        parent: mainWindow,
+        modal: false
+    });
+
+    optionsWindow.loadFile(path.join(__dirname, '../renderer/options-dialog.html'));
+    optionsWindow.on('closed', () => { optionsWindow = null; });
+});
+
+// ===== REGISTER VIEWER =====
+
+ipcMain.on('debug-read-registers', async () => {
+    if (!gdbBackend || !gdbBackend.isConnected) {
+        if (registerWindow) {
+            registerWindow.webContents.send('registers-data', {
+                cpu: {},
+                error: 'GDB not connected'
+            });
+        }
+        return;
+    }
+
+    try {
+        if (!registerViewer) {
+            registerViewer = new RegisterViewer(gdbBackend);
+        }
+        const data = await registerViewer.readCPURegisters();
+        if (registerWindow) {
+            registerWindow.webContents.send('registers-data', registerViewer.getRegisterSnapshot());
+        }
+    } catch (e) {
+        console.error('[RegisterViewer] Error:', e);
+    }
+});
+
+ipcMain.on('debug-write-register', async (event, { name, value }) => {
+    if (!registerViewer || !gdbBackend) return;
+    try {
+        await registerViewer.writeRegister(name, value);
+    } catch (e) {
+        console.error('[RegisterViewer] Write error:', e);
+    }
+});
+
+// ===== MEMORY BROWSER =====
+
+ipcMain.on('debug-read-memory', async (event, { address, size }) => {
+    if (!gdbBackend || !gdbBackend.isConnected) {
+        if (memoryWindow) {
+            memoryWindow.webContents.send('memory-data', []);
+        }
+        return;
+    }
+
+    try {
+        if (!memoryBrowser) {
+            memoryBrowser = new MemoryBrowser(gdbBackend);
+        }
+        const data = await memoryBrowser.readMemory(address, size);
+        const formatted = memoryBrowser.formatHexView(data, address);
+        if (memoryWindow) {
+            memoryWindow.webContents.send('memory-data', formatted);
+        }
+    } catch (e) {
+        console.error('[MemoryBrowser] Error:', e);
+    }
+});
+
+// ===== OPTIONS DIALOG =====
+
+ipcMain.on('get-device-list', (event) => {
+    if (!deviceDb) return;
+    const devices = Object.keys(deviceDb.getDevices());
+    event.reply('device-list', devices);
+});
+
+ipcMain.on('load-options', (event) => {
+    if (!currentProjectPath) {
+        event.reply('options-loaded', {});
+        return;
+    }
+
+    try {
+        if (!optionsManager) {
+            optionsManager = new OptionsManager(currentProjectPath);
+        }
+        event.reply('options-loaded', optionsManager.options);
+    } catch (e) {
+        console.error('[OptionsManager] Load error:', e);
+        event.reply('options-loaded', {});
+    }
+});
+
+ipcMain.on('save-options', async (event, options) => {
+    if (!currentProjectPath) return;
+
+    try {
+        if (!optionsManager) {
+            optionsManager = new OptionsManager(currentProjectPath);
+        }
+        optionsManager.options = { ...optionsManager.options, ...options };
+        optionsManager.save();
+        optionsManager.generateMakefile();
+
+        if (mainWindow) {
+            mainWindow.webContents.send('output-append', '✅ Options saved\n');
+        }
+    } catch (e) {
+        console.error('[OptionsManager] Save error:', e);
     }
 });
 

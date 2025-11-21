@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Register Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Consolas', monospace;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 10px;
+        }
+
+        .toolbar {
+            background: #252526;
+            padding: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+
+        button:hover {
+            background: #1177bb;
+        }
+
+        .register-group {
+            margin-bottom: 20px;
+        }
+
+        .group-title {
+            background: #2d2d30;
+            padding: 6px 10px;
+            font-weight: bold;
+            border-left: 3px solid #007acc;
+        }
+
+        .register-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .register-table tr:hover {
+            background: #2a2d2e;
+        }
+
+        .register-table td {
+            padding: 6px 10px;
+            border-bottom: 1px solid #333;
+        }
+
+        .reg-name {
+            color: #4ec9b0;
+            font-weight: bold;
+            width: 100px;
+        }
+
+        .reg-value {
+            color: #ce9178;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+        }
+
+        .reg-value:hover {
+            background: #094771;
+        }
+
+        .changed {
+            background: #f39c12;
+            color: #000;
+        }
+
+        input.value-edit {
+            background: #3c3c3c;
+            color: #d4d4d4;
+            border: 1px solid #007acc;
+            padding: 4px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="toolbar">
+        <button onclick="refresh()">🔄 Refresh</button>
+        <button onclick="toggleAutoRefresh()">⏱️ Auto</button>
+        <span id="status" style="margin-left: auto; color: #858585;">Ready</span>
+    </div>
+
+    <div id="registers"></div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+        let autoRefreshInterval = null;
+        let previousValues = {};
+
+        const registerGroups = {
+            'General Purpose': ['r0', 'r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7', 'r8', 'r9', 'r10', 'r11', 'r12'],
+            'Special': ['sp', 'lr', 'pc'],
+            'Status': ['cpsr', 'xpsr']
+        };
+
+        function refresh() {
+            ipcRenderer.send('debug-read-registers');
+            document.getElementById('status').textContent = 'Reading...';
+        }
+
+        function toggleAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+                document.getElementById('status').textContent = 'Auto: OFF';
+            } else {
+                autoRefreshInterval = setInterval(refresh, 1000);
+                document.getElementById('status').textContent = 'Auto: ON';
+            }
+        }
+
+        function displayRegisters(data) {
+            const container = document.getElementById('registers');
+            container.innerHTML = '';
+
+            for (const [groupName, regNames] of Object.entries(registerGroups)) {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'register-group';
+
+                const title = document.createElement('div');
+                title.className = 'group-title';
+                title.textContent = groupName;
+                groupDiv.appendChild(title);
+
+                const table = document.createElement('table');
+                table.className = 'register-table';
+
+                for (const regName of regNames) {
+                    const value = data.cpu[regName];
+                    if (value !== undefined) {
+                        const row = table.insertRow();
+                        const nameCell = row.insertCell();
+                        const valueCell = row.insertCell();
+
+                        nameCell.className = 'reg-name';
+                        nameCell.textContent = regName.toUpperCase();
+
+                        valueCell.className = 'reg-value';
+                        const hexValue = '0x' + value.toString(16).toUpperCase().padStart(8, '0');
+                        valueCell.textContent = hexValue;
+
+                        // Highlight if changed
+                        if (previousValues[regName] !== undefined && previousValues[regName] !== value) {
+                            valueCell.classList.add('changed');
+                            setTimeout(() => valueCell.classList.remove('changed'), 1000);
+                        }
+
+                        previousValues[regName] = value;
+
+                        // Click to edit
+                        valueCell.onclick = () => editRegister(regName, value, valueCell);
+                    }
+                }
+
+                groupDiv.appendChild(table);
+                container.appendChild(groupDiv);
+            }
+
+            document.getElementById('status').textContent = 'Updated';
+        }
+
+        function editRegister(name, currentValue, cell) {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'value-edit';
+            input.value = '0x' + currentValue.toString(16).toUpperCase();
+
+            input.onblur = () => {
+                const newValue = parseInt(input.value, 16);
+                if (!isNaN(newValue)) {
+                    ipcRenderer.send('debug-write-register', { name, value: newValue });
+                }
+                cell.textContent = input.value;
+            };
+
+            input.onkeypress = (e) => {
+                if (e.key === 'Enter') input.blur();
+            };
+
+            cell.textContent = '';
+            cell.appendChild(input);
+            input.focus();
+            input.select();
+        }
+
+        ipcRenderer.on('registers-data', (event, data) => {
+            displayRegisters(data);
+        });
+
+        // Initial load
+        refresh();
+    </script>
+</body>
+
+</html>

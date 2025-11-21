@@ -1,6 +1,6 @@
 {
   "name": "hopeide",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "HopeIDE - Professional ARM Development IDE with Real-time Debugging",
   "main": "src/main/electron-main.js",
   "homepage": "https://github.com/hopeide/hopeide",
