@@ -30,58 +30,24 @@ class STM32Tools {
     }
 
     async getUniqueID() {
-        // STM32 Unique ID addresses
-        // F4: 0x1FFF7A10
-        // F7: 0x1FF0F420
-        // H7: 0x1FF1E800
-        // L4: 0x1FFF7590
+        // STM32 96-bit Unique ID at 0x1FFF7A10 (F4 series)
+        const uid = await this.openocd.readMemory(0x1FFF7A10, 3);
 
-        // Try common addresses
-        const addresses = [0x1FFF7A10, 0x1FF0F420, 0x1FF1E800, 0x1FFF7590];
+        const uid0 = uid[0].values[0];
+        const uid1 = uid[1].values[0];
+        const uid2 = uid[2].values[0];
 
-        for (const addr of addresses) {
-            try {
-                // Short timeout for probing
-                const uid = await this.openocd.readMemory(addr, 3);
-                const uid0 = uid[0].values[0];
-                const uid1 = uid[1].values[0];
-                const uid2 = uid[2].values[0];
-
-                // Basic validation: not all 0s or all Fs
-                if (uid0 === 0 && uid1 === 0) continue;
-                if (uid0 === 0xFFFFFFFF && uid1 === 0xFFFFFFFF) continue;
-
-                return {
-                    uid: [uid0, uid1, uid2],
-                    uidString: `${uid0.toString(16).padStart(8, '0')}-${uid1.toString(16).padStart(8, '0')}-${uid2.toString(16).padStart(8, '0')}`.toUpperCase(),
-                    lotNumber: `LOT_NUM: ${(uid2 >> 0) & 0xFF}`,
-                    wafNumber: `WAF_NUM: ${(uid2 >> 8) & 0xFF}`,
-                    coordinates: `X:${(uid1 >> 16) & 0xFFFF} Y:${uid1 & 0xFFFF}`
-                };
-            } catch (e) {
-                // Continue to next address
-            }
-        }
-
-        throw new Error('Could not read Unique ID from known addresses');
+        return {
+            uid: [uid0, uid1, uid2],
+            uidString: `${uid0.toString(16).padStart(8, '0')}-${uid1.toString(16).padStart(8, '0')}-${uid2.toString(16).padStart(8, '0')}`.toUpperCase(),
+            lotNumber: `LOT_NUM: ${(uid2 >> 0) & 0xFF}`,
+            wafNumber: `WAF_NUM: ${(uid2 >> 8) & 0xFF}`,
+            coordinates: `X:${(uid1 >> 16) & 0xFFFF} Y:${uid1 & 0xFFFF}`
+        };
     }
 
     async getFlashSize() {
-        // Use OpenOCD's flash info command (Universal)
-        try {
-            const info = await this.openocd.getFlashInfo();
-            if (info && info.size) {
-                return {
-                    size: info.size,
-                    sizeKB: `${info.size / 1024} KB`,
-                    sizeMB: `${(info.size / 1024 / 1024).toFixed(2)} MB`
-                };
-            }
-        } catch (e) {
-            console.log('Flash info failed, trying fallback...');
-        }
-
-        // Fallback: Read flash size register (F4: 0x1FFF7A22)
+        // Read flash size register (F4: 0x1FFF7A22)
         const flashSize = await this.openocd.readMemory(0x1FFF7A22, 1, 16);
         return {
             size: flashSize[0].values[0],
@@ -103,18 +69,18 @@ class STM32Tools {
             console.error('Failed to read device ID:', err.message);
         }
 
-        // Try to read flash size (Universal method first)
+        // Try to read unique ID
+        try {
+            uniqueID = await this.getUniqueID();
+        } catch (err) {
+            console.error('Failed to read unique ID:', err.message);
+        }
+
+        // Try to read flash size
         try {
             flashSize = await this.getFlashSize();
         } catch (err) {
             console.error('Failed to read flash size:', err.message);
-        }
-
-        // Try to read unique ID (Optional - don't let this fail the connection)
-        try {
-            uniqueID = await this.getUniqueID();
-        } catch (err) {
-            console.log('Unique ID read skipped:', err.message);
         }
 
         this.deviceInfo = {
@@ -129,8 +95,8 @@ class STM32Tools {
     /**
      * Simple memory read method (for UI)
      */
-    async readMemory(address, size, timeout = 30000) {
-        return await this.programmerReadMemory(address, size, null, timeout);
+    async readMemory(address, size) {
+        return await this.programmerReadMemory(address, size);
     }
 
     /**
@@ -148,8 +114,8 @@ class STM32Tools {
         };
     }
 
-    async programmerReadMemory(address, length, saveToFile = null, timeout = 30000) {
-        const data = await this.openocd.readMemory(address, Math.ceil(length / 4), 32, timeout);
+    async programmerReadMemory(address, length, saveToFile = null) {
+        const data = await this.openocd.readMemory(address, Math.ceil(length / 4));
 
         // Convert to byte array
         const bytes = [];
@@ -180,9 +146,9 @@ class STM32Tools {
             const words = [];
             for (let j = 0; j < chunk.length; j += 4) {
                 const word = (chunk[j] || 0) |
-                    ((chunk[j + 1] || 0) << 8) |
-                    ((chunk[j + 2] || 0) << 16) |
-                    ((chunk[j + 3] || 0) << 24);
+                           ((chunk[j + 1] || 0) << 8) |
+                           ((chunk[j + 2] || 0) << 16) |
+                           ((chunk[j + 3] || 0) << 24);
                 words.push(word);
             }
 
