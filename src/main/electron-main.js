@@ -593,8 +593,8 @@ async function buildProject(autoFlash = false) {
 
                         // Prefer .hex, then .bin, then .elf
                         firmwareFile = files.find(f => f.endsWith('.hex')) ||
-                                     files.find(f => f.endsWith('.bin')) ||
-                                     files.find(f => f.endsWith('.elf'));
+                            files.find(f => f.endsWith('.bin')) ||
+                            files.find(f => f.endsWith('.elf'));
 
                         if (firmwareFile) {
                             firmwareFile = path.join(buildDir, firmwareFile);
@@ -810,15 +810,15 @@ function showAbout() {
         title: 'About HopeIDE',
         message: 'HopeIDE (Umut IDE) v1.0.0',
         detail: 'Professional ARM Development IDE\n\n' +
-                'Features:\n' +
-                '• AI Code Assistant\n' +
-                '• Memory Analyzer\n' +
-                '• Performance Profiler\n' +
-                '• STM32CubeMX Import\n' +
-                '• Real-time Debugging\n\n' +
-                'Better than Keil/IAR, completely free!\n\n' +
-                'Built with Electron + Monaco Editor\n' +
-                'License: MIT'
+            'Features:\n' +
+            '• AI Code Assistant\n' +
+            '• Memory Analyzer\n' +
+            '• Performance Profiler\n' +
+            '• STM32CubeMX Import\n' +
+            '• Real-time Debugging\n\n' +
+            'Better than Keil/IAR, completely free!\n\n' +
+            'Built with Electron + Monaco Editor\n' +
+            'License: MIT'
     });
 }
 
@@ -1259,7 +1259,7 @@ flash: all
 });
 
 function getFileTemplate(ext) {
-    switch(ext) {
+    switch (ext) {
         case '.c':
             return `/**
  * File: ${path.basename(currentFilePath || 'main.c')}
@@ -1515,51 +1515,91 @@ ipcMain.on('connect-stlink', async (event, deviceId) => {
             if (mcuType === 'auto') {
                 mainWindow.webContents.send('output-append', `🔍 Auto-detecting MCU type...\n`);
 
-                // Try with a generic config first to read device ID
+                // METHOD 1: Try st-info (Most Reliable)
                 try {
-                    await openocd.start('stm32f4x', 'stlink'); // Use F4 as generic probe
+                    const { execSync } = require('child_process');
+                    // Check if st-info exists
+                    try {
+                        execSync('st-info --version', { stdio: 'ignore' });
 
-                    // Connect TCL
-                    await openocd.connectTCL();
+                        mainWindow.webContents.send('output-append', `   Trying st-info probe...\n`);
+                        const output = execSync('st-info --probe').toString();
+                        console.log('[st-info] Output:', output);
 
-                    // Try to read device ID
-                    const stm32Tools = new STM32Tools(openocd);
-                    const deviceInfo = await stm32Tools.getDeviceInfo();
+                        // Parse output
+                        // Example: Found 1 stlink programmers... serial: ... openocd: ... flash: ... sram: ... chipid: 0x0413
+                        const chipIdMatch = output.match(/chipid:\s*(0x[0-9a-fA-F]+)/);
+                        if (chipIdMatch) {
+                            const chipId = chipIdMatch[1];
+                            detectedMcuType = detectMCUType(chipId);
 
-                    if (deviceInfo && deviceInfo.deviceID) {
-                        detectedMcuType = detectMCUType(deviceInfo.deviceID);
-                        if (detectedMcuType) {
-                            mcuType = detectedMcuType;
-                            mainWindow.webContents.send('output-append',
-                                `✅ Detected: ${getMCUName(mcuType)} (ID: ${deviceInfo.deviceID})\n`
-                            );
-
-                            // Restart OpenOCD with correct MCU type if different
-                            if (mcuType !== 'stm32f4x') {
-                                await openocd.stop();
-                                await new Promise(resolve => setTimeout(resolve, 500));
-                                await openocd.start(mcuType, 'stlink');
+                            if (detectedMcuType) {
+                                mcuType = detectedMcuType;
                                 mainWindow.webContents.send('output-append',
-                                    `🔄 Reconnecting with ${getMCUName(mcuType)} configuration...\n`
+                                    `✅ Detected via st-info: ${getMCUName(mcuType)} (ID: ${chipId})\n`
                                 );
                             }
-                        } else {
-                            mainWindow.webContents.send('output-append',
-                                `⚠️ Unknown MCU ID: ${deviceInfo.deviceID}, using STM32F4 config\n`
-                            );
-                            mcuType = 'stm32f4x';
                         }
+                    } catch (e) {
+                        console.log('[st-info] Not found or failed:', e.message);
                     }
-                } catch (probeErr) {
-                    // If probe fails, clean up and fall back to F4
-                    mainWindow.webContents.send('output-append',
-                        `⚠️ Auto-detect failed, trying STM32F4 configuration...\n`
-                    );
+                } catch (err) {
+                    console.error('[Auto-Detect] st-info failed:', err);
+                }
+
+                // METHOD 2: OpenOCD Probe (Fallback)
+                if (!detectedMcuType) {
+                    mainWindow.webContents.send('output-append', `   Trying OpenOCD probe (fallback)...\n`);
                     try {
-                        await openocd.stop();
-                        await new Promise(resolve => setTimeout(resolve, 500));
-                    } catch (e) { /* ignore */ }
-                    mcuType = 'stm32f4x';
+                        // Try with a generic config first to read device ID
+                        await openocd.start('stm32f4x', 'stlink'); // Use F4 as generic probe
+
+                        // Connect TCL
+                        await openocd.connectTCL();
+
+                        // Try to read device ID
+                        const stm32Tools = new STM32Tools(openocd);
+                        const deviceInfo = await stm32Tools.getDeviceInfo();
+
+                        if (deviceInfo && deviceInfo.deviceID) {
+                            detectedMcuType = detectMCUType(deviceInfo.deviceID);
+                            if (detectedMcuType) {
+                                mcuType = detectedMcuType;
+                                mainWindow.webContents.send('output-append',
+                                    `✅ Detected via OpenOCD: ${getMCUName(mcuType)} (ID: ${deviceInfo.deviceID})\n`
+                                );
+
+                                // Restart OpenOCD with correct MCU type if different
+                                if (mcuType !== 'stm32f4x') {
+                                    await openocd.stop();
+                                    await new Promise(resolve => setTimeout(resolve, 500));
+                                    await openocd.start(mcuType, 'stlink');
+                                    mainWindow.webContents.send('output-append',
+                                        `🔄 Reconnecting with ${getMCUName(mcuType)} configuration...\n`
+                                    );
+                                }
+                            } else {
+                                mainWindow.webContents.send('output-append',
+                                    `⚠️ Unknown MCU ID: ${deviceInfo.deviceID}, using STM32F4 config\n`
+                                );
+                                mcuType = 'stm32f4x';
+                            }
+                        }
+                    } catch (probeErr) {
+                        // If probe fails, clean up and fall back to F4
+                        mainWindow.webContents.send('output-append',
+                            `⚠️ Auto-detect failed, trying STM32F4 configuration...\n`
+                        );
+                        console.error('[Auto-Detect] OpenOCD probe failed:', probeErr);
+                        try {
+                            await openocd.stop();
+                            await new Promise(resolve => setTimeout(resolve, 500));
+                        } catch (e) { /* ignore */ }
+                        mcuType = 'stm32f4x';
+                        await openocd.start(mcuType, 'stlink');
+                    }
+                } else {
+                    // Start OpenOCD with detected type (from st-info)
                     await openocd.start(mcuType, 'stlink');
                 }
             } else {
@@ -1899,7 +1939,7 @@ ipcMain.on('swv-enable', async (event, config) => {
             return;
         }
 
-        mainWindow.webContents.send('output-append', `📡 Configuring SWV (CPU: ${config.cpuFreq/1000000} MHz)...\n`);
+        mainWindow.webContents.send('output-append', `📡 Configuring SWV (CPU: ${config.cpuFreq / 1000000} MHz)...\n`);
 
         const stm32Tools = new STM32Tools(connectedStLink.openocd);
         await stm32Tools.monitorStartSWO(0, config.cpuFreq, config.swoFreq);
