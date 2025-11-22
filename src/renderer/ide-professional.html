@@ -89,7 +89,13 @@
         /* MAIN CONTAINER */
         .main-container {
             display: flex;
-            height: calc(100vh - 40px);
+            position: absolute;
+            top: 48px;
+            bottom: 24px;
+            /* Space for status bar */
+            left: 0;
+            right: 0;
+            overflow: hidden;
         }
 
         /* LEFT SIDEBAR */
@@ -1893,9 +1899,14 @@
         });
 
         // Update project path in status bar when project opened
-        ipcRenderer.on('project-opened', (event, projectPath) => {
-            currentProjectPath = projectPath;
-            const projectName = projectPath.split('/').pop();
+        ipcRenderer.on('project-opened', (event, projectInfo) => {
+            // Handle if projectInfo is object or string
+            const path = (typeof projectInfo === 'object' && projectInfo.path) ? projectInfo.path : projectInfo;
+            currentProjectPath = path;
+
+            console.log('[UI] Project opened:', currentProjectPath);
+
+            const projectName = currentProjectPath.split('/').pop();
             updateStatusBar('project', projectName);
         });
 
