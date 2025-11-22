@@ -528,6 +528,7 @@ async function buildProject(autoFlash = false) {
 
     mainWindow.webContents.send('output-clear');
     mainWindow.webContents.send('output-append', '🔨 Building project...\n');
+    mainWindow.webContents.send('status-bar-update', { type: 'build', value: '🔨 Building...' });
 
     // Check if Makefile exists
     const makefilePath = path.join(currentProjectPath, 'Makefile');
@@ -549,10 +550,12 @@ async function buildProject(autoFlash = false) {
                     `❌ Could not generate Makefile.\n` +
                     `   Please create it manually or use STM32CubeMX.\n`
                 );
+                mainWindow.webContents.send('status-bar-update', { type: 'build', value: '❌ Failed' });
                 return;
             }
         } catch (err) {
             mainWindow.webContents.send('output-append', `❌ Makefile generation failed: ${err.message}\n`);
+            mainWindow.webContents.send('status-bar-update', { type: 'build', value: '❌ Failed' });
             return;
         }
     }
@@ -575,13 +578,22 @@ async function buildProject(autoFlash = false) {
         }
     }
 
+    mainWindow.webContents.send('output-append', `⚙️ Invoking: make ${buildTarget}\n`);
     const make = spawn('make', [buildTarget], {
         cwd: currentProjectPath,
         shell: true
     });
 
     make.stdout.on('data', (data) => {
-        mainWindow.webContents.send('output-append', data.toString());
+        const output = data.toString();
+        mainWindow.webContents.send('output-append', output);
+
+        // Detect compilation steps for better feedback
+        if (output.includes('Compiling')) {
+            mainWindow.webContents.send('status-bar-update', { type: 'build', value: '🔨 Compiling...' });
+        } else if (output.includes('Linking')) {
+            mainWindow.webContents.send('status-bar-update', { type: 'build', value: '🔗 Linking...' });
+        }
     });
 
     make.stderr.on('data', (data) => {
@@ -590,7 +602,27 @@ async function buildProject(autoFlash = false) {
 
     make.on('close', async (code) => {
         if (code === 0) {
-            mainWindow.webContents.send('output-append', '\n✅ Build successful!\n');
+            // Check firmware size
+            const buildDir = path.join(currentProjectPath, 'build');
+            let firmwareFile = null;
+            let firmwareSize = 0;
+
+            if (fs.existsSync(buildDir)) {
+                const files = fs.readdirSync(buildDir);
+                firmwareFile = files.find(f => f.endsWith('.hex')) ||
+                    files.find(f => f.endsWith('.bin')) ||
+                    files.find(f => f.endsWith('.elf'));
+
+                if (firmwareFile) {
+                    const fullPath = path.join(buildDir, firmwareFile);
+                    const stats = fs.statSync(fullPath);
+                    firmwareSize = (stats.size / 1024).toFixed(1);
+                }
+            }
+
+            mainWindow.webContents.send('output-append',
+                `\n✅ Build successful! ${firmwareFile ? `(${firmwareFile}, ${firmwareSize} KB)` : ''}\n`);
+            mainWindow.webContents.send('status-bar-update', { type: 'build', value: '✅ Success' });
 
             // Auto-flash if requested and device is connected
             if (autoFlash && connectedStLink && connectedStLink.openocd) {
@@ -598,27 +630,13 @@ async function buildProject(autoFlash = false) {
 
                 try {
                     // Find built firmware (check build directory)
-                    const buildDir = path.join(currentProjectPath, 'build');
-                    let firmwareFile = null;
-
-                    if (fs.existsSync(buildDir)) {
-                        const files = fs.readdirSync(buildDir);
-
-                        // Prefer .hex, then .bin, then .elf
-                        firmwareFile = files.find(f => f.endsWith('.hex')) ||
-                            files.find(f => f.endsWith('.bin')) ||
-                            files.find(f => f.endsWith('.elf'));
-
-                        if (firmwareFile) {
-                            firmwareFile = path.join(buildDir, firmwareFile);
-                        }
-                    }
-
-                    if (firmwareFile && fs.existsSync(firmwareFile)) {
-                        mainWindow.webContents.send('output-append', `📁 Found firmware: ${path.basename(firmwareFile)}\n`);
+                    // firmwareFile is already determined above
+                    if (firmwareFile && fs.existsSync(path.join(buildDir, firmwareFile))) {
+                        const fullPath = path.join(buildDir, firmwareFile);
+                        mainWindow.webContents.send('output-append', `📁 Found firmware: ${firmwareFile}\n`);
 
                         const flashManager = new FlashManager(connectedStLink.openocd);
-                        await flashManager.flash(firmwareFile, {
+                        await flashManager.flash(fullPath, {
                             verify: true,
                             reset: true,
                             erase: true
@@ -636,6 +654,7 @@ async function buildProject(autoFlash = false) {
             }
         } else {
             mainWindow.webContents.send('output-append', `\n❌ Build failed (exit code: ${code})\n`);
+            mainWindow.webContents.send('status-bar-update', { type: 'build', value: '❌ Failed' });
         }
     });
 }

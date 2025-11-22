@@ -1887,6 +1887,18 @@
             ipcRenderer.send('reset-target');
         }
 
+        // IPC Listeners for status bar updates
+        ipcRenderer.on('status-bar-update', (event, data) => {
+            updateStatusBar(data.type, data.value);
+        });
+
+        // Update project path in status bar when project opened
+        ipcRenderer.on('project-opened', (event, projectPath) => {
+            currentProjectPath = projectPath;
+            const projectName = projectPath.split('/').pop();
+            updateStatusBar('project', projectName);
+        });
+
         function openOptionsDialog() {
             ipcRenderer.send('open-options-dialog');
         }
