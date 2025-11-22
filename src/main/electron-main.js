@@ -1864,16 +1864,19 @@ ipcMain.on('flash-firmware', async (event, data) => {
 });
 
 ipcMain.on('scan-stlinks', async (event, tool = 'cubeprogrammer') => {
+    console.log(`[scan-stlinks] Called with tool: ${tool}`);
     try {
         let devices = [];
         let toolUsed = tool;
 
         if (tool === 'stlink-org') {
+            console.log('[scan-stlinks] Using stlink-org path');
             mainWindow.webContents.send('output-append', '🔍 Scanning with Open Source ST-Link...\n');
             const stLinkOrg = new OpenSourceSTLink();
 
             // Check if stlink tools are installed
             const isInstalled = await stLinkOrg.isInstalled();
+            console.log(`[scan-stlinks] st-info installed: ${isInstalled}`);
             if (!isInstalled) {
                 mainWindow.webContents.send('output-append', '⚠️ st-info not found. Install stlink-tools or switch to CubeProgrammer.\n');
                 event.reply('stlink-scan-complete', []);
@@ -1881,23 +1884,29 @@ ipcMain.on('scan-stlinks', async (event, tool = 'cubeprogrammer') => {
             }
 
             devices = await stLinkOrg.listDevices();
+            console.log(`[scan-stlinks] Found ${devices.length} devices via stlink-org:`, devices);
         } else {
+            console.log('[scan-stlinks] Using CubeProgrammer path');
             // Default: STM32CubeProgrammer
             mainWindow.webContents.send('output-append', '🔍 Scanning with STM32CubeProgrammer...\n');
 
             const cubeProg = new STM32CubeProgrammer();
             const isInstalled = await cubeProg.isInstalled();
+            console.log(`[scan-stlinks] CubeProgrammer installed: ${isInstalled}`);
 
             if (!isInstalled) {
                 mainWindow.webContents.send('output-append', '⚠️ STM32_Programmer_CLI not found.\n');
 
                 // Try fallback to Open Source ST-Link
+                console.log('[scan-stlinks] Falling back to stlink-org');
                 mainWindow.webContents.send('output-append', '🔄 Trying Open Source ST-Link as fallback...\n');
                 const stLinkOrg = new OpenSourceSTLink();
                 const stlinkInstalled = await stLinkOrg.isInstalled();
+                console.log(`[scan-stlinks] Fallback st-info installed: ${stlinkInstalled}`);
 
                 if (stlinkInstalled) {
                     devices = await stLinkOrg.listDevices();
+                    console.log(`[scan-stlinks] Found ${devices.length} devices via fallback:`, devices);
                     toolUsed = 'stlink-org';
                     mainWindow.webContents.send('output-append', '✅ Using Open Source ST-Link\n');
                 } else {
@@ -1911,23 +1920,29 @@ ipcMain.on('scan-stlinks', async (event, tool = 'cubeprogrammer') => {
                     stm32Tools = new STM32Tools();
                 }
                 devices = await stm32Tools.scanSTLink();
+                console.log(`[scan-stlinks] Found ${devices.length} devices via STM32Tools:`, devices);
             }
         }
 
+        console.log(`[scan-stlinks] Total devices found: ${devices.length}`);
         if (devices.length > 0) {
             const device = devices[0];
+            console.log(`[scan-stlinks] Selected device:`, device);
             mainWindow.webContents.send('output-append', `✅ Found: ${device.serial || device.name || 'ST-Link'}\n`);
             mainWindow.webContents.send('stlink-detected', device);
 
             // AUTO MCU DETECTION (only if we actually have a connected device)
             // Skip if we're using fallback tools that may not work
             if (toolUsed === 'cubeprogrammer' && !isInstalled) {
+                console.log('[scan-stlinks] Skipping MCU detection - no CubeProgrammer');
                 mainWindow.webContents.send('output-append', '⚠️ Skipping MCU auto-detection (no CubeProgrammer)\n');
             } else {
+                console.log('[scan-stlinks] Starting MCU auto-detection');
                 mainWindow.webContents.send('output-append', '🤖 Auto-detecting MCU...\n');
                 try {
                     const mcuDetector = new MCUDetector();
                     const detected = await mcuDetector.autoDetect();
+                    console.log('[scan-stlinks] MCU detection result:', detected);
 
                     if (detected.success) {
                         mainWindow.webContents.send('output-append',
@@ -1959,15 +1974,18 @@ ipcMain.on('scan-stlinks', async (event, tool = 'cubeprogrammer') => {
                         mainWindow.webContents.send('output-append', '⚠️ MCU auto-detection failed\n');
                     }
                 } catch (detectionError) {
+                    console.log('[scan-stlinks] MCU detection error:', detectionError.message);
                     // Don't spam logs on detection failure
                     mainWindow.webContents.send('output-append',
                         `⚠️ Auto-detection unavailable\n`);
                 }
             }
         } else {
+            console.log('[scan-stlinks] No devices found');
             mainWindow.webContents.send('output-append', '❌ No ST-Link devices found\n');
         }
 
+        console.log('[scan-stlinks] Sending stlink-scan-complete event');
         event.reply('stlink-scan-complete', devices);
     } catch (error) {
         console.error('[scan-stlinks Error]', error);
