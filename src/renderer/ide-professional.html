@@ -1916,6 +1916,28 @@
             updateStatusBar('project', projectName);
         });
 
+        // Real-time Debug Listeners
+        ipcRenderer.on('registers-update', (event, registers) => {
+            console.log('[UI] Registers update:', registers);
+            updateRegisters(registers);
+        });
+
+        ipcRenderer.on('debug-stopped', (event, data) => {
+            console.log('[UI] Debug stopped:', data);
+            updateDebugStatus('Paused');
+
+            // Highlight current line if available
+            if (data.frame && data.frame.line) {
+                // TODO: Highlight line in editor
+                console.log('[UI] Stopped at line:', data.frame.line);
+            }
+        });
+
+        ipcRenderer.on('debug-running', () => {
+            console.log('[UI] Debug running');
+            updateDebugStatus('Running');
+        });
+
         function openOptionsDialog() {
             ipcRenderer.send('open-options-dialog');
         }
