@@ -1919,44 +1919,50 @@ ipcMain.on('scan-stlinks', async (event, tool = 'cubeprogrammer') => {
             mainWindow.webContents.send('output-append', `✅ Found: ${device.serial || device.name || 'ST-Link'}\n`);
             mainWindow.webContents.send('stlink-detected', device);
 
-            // AUTO MCU DETECTION (Keil-like)
-            mainWindow.webContents.send('output-append', '🤖 Auto-detecting MCU...\n');
-            try {
-                const mcuDetector = new MCUDetector();
-                const detected = await mcuDetector.autoDetect();
+            // AUTO MCU DETECTION (only if we actually have a connected device)
+            // Skip if we're using fallback tools that may not work
+            if (toolUsed === 'cubeprogrammer' && !isInstalled) {
+                mainWindow.webContents.send('output-append', '⚠️ Skipping MCU auto-detection (no CubeProgrammer)\n');
+            } else {
+                mainWindow.webContents.send('output-append', '🤖 Auto-detecting MCU...\n');
+                try {
+                    const mcuDetector = new MCUDetector();
+                    const detected = await mcuDetector.autoDetect();
 
-                if (detected.success) {
-                    mainWindow.webContents.send('output-append',
-                        `✅ Detected: ${detected.deviceName} (${detected.core})\n`);
+                    if (detected.success) {
+                        mainWindow.webContents.send('output-append',
+                            `✅ Detected: ${detected.deviceName} (${detected.core})\n`);
 
-                    // Match with database
-                    if (deviceDb) {
-                        const dbDevice = mcuDetector.matchWithDatabase(deviceDb);
-                        if (dbDevice) {
-                            mainWindow.webContents.send('output-append',
-                                `📦 Found in database: ${dbDevice.name}\n`);
-                            mainWindow.webContents.send('mcu-auto-detected', {
-                                detected: detected,
-                                dbDevice: dbDevice
-                            });
-
-                            // Auto-apply to project if open
-                            if (currentProjectPath && optionsManager) {
-                                optionsManager.setDevice(dbDevice.name);
+                        // Match with database
+                        if (deviceDb) {
+                            const dbDevice = mcuDetector.matchWithDatabase(deviceDb);
+                            if (dbDevice) {
                                 mainWindow.webContents.send('output-append',
-                                    `⚙️ Auto-configured project for ${dbDevice.name}\n`);
+                                    `📦 Found in database: ${dbDevice.name}\n`);
+                                mainWindow.webContents.send('mcu-auto-detected', {
+                                    detected: detected,
+                                    dbDevice: dbDevice
+                                });
+
+                                // Auto-apply to project if open
+                                if (currentProjectPath && optionsManager) {
+                                    optionsManager.setDevice(dbDevice.name);
+                                    mainWindow.webContents.send('output-append',
+                                        `⚙️ Auto-configured project for ${dbDevice.name}\n`);
+                                }
+                            } else {
+                                mainWindow.webContents.send('output-append',
+                                    `⚠️ ${detected.deviceName} not in database\n`);
                             }
-                        } else {
-                            mainWindow.webContents.send('output-append',
-                                `⚠️ ${detected.deviceName} not in database\n`);
                         }
+                    } else {
+                        mainWindow.webContents.send('output-append', '⚠️ MCU auto-detection failed\n');
                     }
-                } else {
-                    mainWindow.webContents.send('output-append', '⚠️ MCU auto-detection failed\n');
+                } catch (detectionError) {
+                    // Don't spam logs on detection failure
+                    mainWindow.webContents.send('output-append',
+                        `⚠️ Auto-detection unavailable\n`);
                 }
-            } catch (detectionError) {
-                mainWindow.webContents.send('output-append',
-                    `⚠️ Auto-detection error: ${detectionError.message}\n`);
             }
         } else {
             mainWindow.webContents.send('output-append', '❌ No ST-Link devices found\n');
