@@ -1019,9 +1019,21 @@
                             style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 5px;">
                             <span>⚡</span> Connect
                         </button>
+
                         <div id="detection-status"
-                            style="display: none; font-size: 10px; color: #858585; margin-top: 5px; text-align: center;">
-                            <span id="status-text">Idle</span>
+                            style="display: none; font-size: 10px; margin-top: 8px; padding: 8px; background: #2d2d30; border-radius: 3px;">
+                            <div style="color: #858585; margin-bottom: 4px;">
+                                <span>Status:</span>
+                                <span id="status-text" style="color: #4ec9b0;">Idle</span>
+                            </div>
+                            <div style="color: #858585; margin-bottom: 4px;">
+                                <span>Device:</span>
+                                <span id="detected-device" style="color: #cccccc;">-</span>
+                            </div>
+                            <div style="color: #858585;">
+                                <span>IDCODE:</span>
+                                <span id="detected-idcode" style="color: #cccccc;">-</span>
+                            </div>
                         </div>
                     </div>
 
