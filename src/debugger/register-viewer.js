@@ -21,11 +21,13 @@ class RegisterViewer extends EventEmitter {
         }
 
         try {
-            // Read general purpose registers
-            const response = await this.gdb.sendCommand('info registers');
+            // Use GDBBackend's robust MI implementation
+            this.registers = await this.gdb.readRegisters();
 
-            // Parse register values
-            this.registers = this.parseRegisterOutput(response);
+            // Convert Map/Object if needed (gdb.readRegisters returns Object)
+            if (!(this.registers instanceof Map)) {
+                this.registers = new Map(Object.entries(this.registers));
+            }
 
             this.emit('registers-updated', this.getRegisterSnapshot());
             return this.registers;
@@ -36,24 +38,12 @@ class RegisterViewer extends EventEmitter {
     }
 
     /**
-     * Parse GDB register output
+     * Parse GDB register output (Deprecated - using MI now)
      * @private
      */
     parseRegisterOutput(output) {
-        const registers = new Map();
-        const lines = output.split('\n');
-
-        // Expected format: "r0    0x12345678    305419896"
-        for (const line of lines) {
-            const match = line.match(/^(\w+)\s+(0x[0-9a-fA-F]+)/);
-            if (match) {
-                const name = match[1];
-                const value = parseInt(match[2], 16);
-                registers.set(name, value);
-            }
-        }
-
-        return registers;
+        // Kept for compatibility if needed
+        return new Map();
     }
 
     /**

@@ -212,12 +212,27 @@ class GDBBackend extends EventEmitter {
         await this.sendCommand('exec-run');
     }
 
+    get isConnected() {
+        return this.running;
+    }
+
     /**
      * Register operations
      */
+    async getRegisterNames() {
+        if (this.registerNames) return this.registerNames;
+
+        const result = await this.sendCommand('data-list-register-names');
+        this.registerNames = result['register-names'] || [];
+        return this.registerNames;
+    }
+
     async readRegisters() {
+        // Ensure we have names
+        const names = await this.getRegisterNames();
+
         const result = await this.sendCommand('data-list-register-values', 'x');
-        return this.parseRegisters(result);
+        return this.parseRegisters(result, names);
     }
 
     async readRegister(name) {
@@ -227,6 +242,23 @@ class GDBBackend extends EventEmitter {
 
     async writeRegister(name, value) {
         await this.sendCommand('gdb-set', `$${name}=${value}`);
+    }
+
+    // ... memory operations ...
+
+    parseRegisters(data, names) {
+        const registers = {};
+        if (data['register-values']) {
+            for (const reg of data['register-values']) {
+                const num = parseInt(reg.number);
+                const name = names[num] || `r${num}`;
+                // Filter out empty names (unused registers)
+                if (name) {
+                    registers[name] = reg.value;
+                }
+            }
+        }
+        return registers;
     }
 
     /**
@@ -322,11 +354,15 @@ class GDBBackend extends EventEmitter {
         return value;
     }
 
-    parseRegisters(data) {
+    parseRegisters(data, names) {
         const registers = {};
         if (data['register-values']) {
             for (const reg of data['register-values']) {
-                registers[`R${reg.number}`] = reg.value;
+                const num = parseInt(reg.number);
+                const name = (names && names[num]) ? names[num] : `R${num}`;
+                if (name && name.length > 0) {
+                    registers[name] = reg.value;
+                }
             }
         }
         return registers;
