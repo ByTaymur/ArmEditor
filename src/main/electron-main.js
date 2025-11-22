@@ -680,14 +680,10 @@ async function buildProject(autoFlash = false) {
                     mainWindow.webContents.send('flash-progress', 0);
                 }
             }
-            mainWindow.webContents.send('output-append', `❌ Flash failed: ${flashErr.message}\n`);
-            mainWindow.webContents.send('flash-progress', 0);
-        }
-    }
         } else {
-    mainWindow.webContents.send('output-append', `\n❌ Build failed (exit code: ${code})\n`);
-    mainWindow.webContents.send('status-bar-update', { type: 'build', value: '❌ Failed' });
-}
+            mainWindow.webContents.send('output-append', `\n❌ Build failed (exit code: ${code})\n`);
+            mainWindow.webContents.send('status-bar-update', { type: 'build', value: '❌ Failed' });
+        }
     });
 }
 
