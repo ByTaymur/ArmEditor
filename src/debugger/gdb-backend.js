@@ -3,7 +3,7 @@
  * Full debugging support: breakpoints, step, continue, registers, memory, variables
  */
 
-const { spawn } = require('child_process');
+const { spawn, execSync } = require('child_process');
 const EventEmitter = require('events');
 
 class GDBBackend extends EventEmitter {
@@ -18,9 +18,31 @@ class GDBBackend extends EventEmitter {
     }
 
     /**
+     * Detect available GDB executable
+     */
+    detectGDB() {
+        const candidates = ['arm-none-eabi-gdb', 'gdb-multiarch'];
+        for (const cmd of candidates) {
+            try {
+                execSync(`which ${cmd}`, { stdio: 'ignore' });
+                return cmd;
+            } catch (e) {
+                // Continue
+            }
+        }
+        return 'arm-none-eabi-gdb'; // Default fallback
+    }
+
+    /**
      * Start GDB with target ELF file
      */
-    async start(elfFile, gdbPath = 'arm-none-eabi-gdb') {
+    async start(elfFile, gdbPath = null) {
+        // Auto-detect if not provided
+        if (!gdbPath) {
+            gdbPath = this.detectGDB();
+            console.log(`[GDBBackend] Using GDB: ${gdbPath}`);
+        }
+
         return new Promise((resolve, reject) => {
             // Launch GDB in MI mode
             this.gdb = spawn(gdbPath, [
@@ -322,10 +344,10 @@ class GDBBackend extends EventEmitter {
 
     unescapeString(str) {
         return str.replace(/\\n/g, '\n')
-                  .replace(/\\t/g, '\t')
-                  .replace(/\\r/g, '\r')
-                  .replace(/\\"/g, '"')
-                  .replace(/\\\\/g, '\\');
+            .replace(/\\t/g, '\t')
+            .replace(/\\r/g, '\r')
+            .replace(/\\"/g, '"')
+            .replace(/\\\\/g, '\\');
     }
 
     /**
