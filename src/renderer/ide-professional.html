@@ -1617,6 +1617,10 @@
         // Listen for ST-Link detection
         ipcRenderer.on('stlink-detected', (event, device) => {
             console.log('[UI] ST-Link detected:', device);
+
+            // SET CURRENT DEVICE - THIS ENABLES ALL DEBUG ACTIONS
+            currentDevice = device;
+
             const statusText = document.getElementById('status-text');
             const connectionIndicator = document.getElementById('connection-indicator');
             const connectionStatusText = document.getElementById('connection-status-text');
@@ -1642,6 +1646,10 @@
                 deviceText.textContent = 'ST-Link ' + device.serial.substring(0, 8);
                 deviceText.style.color = '#4ec9b0';
             }
+
+            // Log to console
+            appendConsole('✅ ST-Link connected: ' + (device.serial || device.type), 'success');
+            appendConsole('💡 Debug actions now available', 'normal');
         });
 
         // Listen for MCU auto-detection results (bonus if it works)
