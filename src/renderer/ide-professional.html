@@ -991,561 +991,536 @@
 
             <!-- ST-LINK VIEW -->
             <div class="view stlink-view" id="stlink-view">
-                <!-- CONNECTION SETTINGS -->
-                <div class="card">
-                    <div class="card-title">
-                        <span class="card-title-icon">🔌</span>
-                        ST-Link Connection Settings
+                <div class="card" style="text-align: center; padding: 40px 20px;">
+                    <div class="card-title" style="justify-content: center; margin-bottom: 20px;">
+                        <span class="card-title-icon" style="font-size: 32px;">🔌</span>
                     </div>
-                    <div class="connection-grid">
-                        <div>
-                            <div class="form-group">
-                                <label class="form-label">Debug Interface</label>
-                                <select class="form-control" id="debug-interface">
-                                    <option value="swd">SWD (Serial Wire Debug)</option>
-                                    <option value="jtag">JTAG</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Frequency (kHz)</label>
-                                <select class="form-control" id="debug-frequency">
-                                    <option value="5">5 kHz</option>
-                                    <option value="25">25 kHz</option>
-                                    <option value="100">100 kHz</option>
-                                    <option value="240">240 kHz</option>
-                                    <option value="950">950 kHz</option>
-                                    <option value="1800" selected>1800 kHz</option>
-                                    <option value="4000">4000 kHz</option>
-                                    <option value="8000">8000 kHz</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="form-group">
-                                <label class="form-label">Reset Mode</label>
-                                <select class="form-control" id="reset-mode">
-                                    <option value="software">Software System Reset</option>
-                                    <option value="hardware">Hardware Reset (nRST)</option>
-                                    <option value="core">Core Reset</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Connection Mode</label>
-                                <select class="form-control" id="connection-mode">
-                                    <option value="normal">Normal</option>
-                                    <option value="hotplug">Hot Plug</option>
-                                    <option value="under-reset">Connect Under Reset</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="form-group">
-                                <label class="form-label">Shared Mode</label>
-                                <select class="form-control" id="shared-mode">
-                                    <option value="disabled">Disabled</option>
-                                    <option value="enabled">Enabled</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Target MCU (Auto-Detected)</label>
-                                <select class="form-control" id="target-mcu">
-                                    <option value="auto" selected>🔍 Auto-Detect MCU</option>
-                                    <option value="stm32f0x">STM32F0xx</option>
-                                    <option value="stm32f1x">STM32F1xx</option>
-                                    <option value="stm32f2x">STM32F2xx</option>
-                                    <option value="stm32f3x">STM32F3xx</option>
-                                    <option value="stm32f4x">STM32F4xx</option>
-                                    <option value="stm32f7x">STM32F7xx</option>
-                                    <option value="stm32g0x">STM32G0xx</option>
-                                    <option value="stm32g4x">STM32G4xx</option>
-                                    <option value="stm32h7x">STM32H7xx</option>
-                                    <option value="stm32l0x">STM32L0xx</option>
-                                    <option value="stm32l1x">STM32L1xx</option>
-                                    <option value="stm32l4x">STM32L4xx</option>
-                                    <option value="stm32l5x">STM32L5xx</option>
-                                    <option value="stm32wbx">STM32WBxx</option>
-                                    <option value="stm32wlx">STM32WLxx</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <button class="btn btn-primary" onclick="refreshDevices()">🔄 Refresh Devices</button>
-                </div>
+                    <h2 style="color: #cccccc; margin-bottom: 10px;">ST-Link Connection</h2>
+                    <p style="color: #858585; margin-bottom: 30px;">
+                        Connect your ST-Link debugger to the USB port.<br>
+                        The system will automatically detect the connected STM32 device.
+                    </p>
 
-                <!-- DEVICE LIST -->
-                <div class="card">
-                    <div class="card-title">
-                        <span class="card-title-icon">📱</span>
-                        Connected Devices
+                    <div id="connection-status-area">
+                        <button class="btn btn-primary" onclick="connectToTarget()"
+                            style="padding: 12px 30px; font-size: 16px; display: inline-flex; align-items: center; gap: 10px;">
+                            <span>⚡</span> Connect to Target
+                        </button>
                     </div>
-                    <div class="device-list" id="device-list">
-                        <div style="padding: 20px; text-align: center; color: #858585;">
-                            Click "Refresh Devices" to scan for ST-Link
+
+                    <div id="detection-status"
+                        style="margin-top: 30px; text-align: left; background: #1e1e1e; padding: 15px; border-radius: 4px; display: none;">
+                        <div style="color: #cccccc; font-weight: 600; margin-bottom: 10px;">Detection Status:</div>
+                        <div style="display: grid; grid-template-columns: auto 1fr; gap: 10px; font-size: 13px;">
+                            <span style="color: #858585;">Status:</span>
+                            <span id="status-text" style="color: #4ec9b0;">Searching...</span>
+
+                            <span style="color: #858585;">Device:</span>
+                            <span id="detected-device" style="color: #cccccc;">-</span>
+
+                            <span style="color: #858585;">IDCODE:</span>
+                            <span id="detected-idcode" style="color: #cccccc;">-</span>
                         </div>
                     </div>
                 </div>
             </div>
+            <select class="form-control" id="target-mcu">
+                <option value="auto" selected>🔍 Auto-Detect MCU</option>
+                <option value="stm32f0x">STM32F0xx</option>
+                <option value="stm32f1x">STM32F1xx</option>
+                <option value="stm32f2x">STM32F2xx</option>
+                <option value="stm32f3x">STM32F3xx</option>
+                <option value="stm32f4x">STM32F4xx</option>
+                <option value="stm32f7x">STM32F7xx</option>
+                <option value="stm32g0x">STM32G0xx</option>
+                <option value="stm32g4x">STM32G4xx</option>
+                <option value="stm32h7x">STM32H7xx</option>
+                <option value="stm32l0x">STM32L0xx</option>
+                <option value="stm32l1x">STM32L1xx</option>
+                <option value="stm32l4x">STM32L4xx</option>
+                <option value="stm32l5x">STM32L5xx</option>
+                <option value="stm32wbx">STM32WBxx</option>
+                <option value="stm32wlx">STM32WLxx</option>
+            </select>
+        </div>
+    </div>
+    </div>
+    <button class="btn btn-primary" onclick="refreshDevices()">🔄 Refresh Devices</button>
+    </div>
 
-            <!-- MEMORY VIEW -->
-            <div class="view memory-view" id="memory-view">
-                <div class="card">
-                    <div class="card-title">
-                        <span class="card-title-icon">💾</span>
-                        Memory Browser
-                    </div>
-                    <div class="memory-controls">
-                        <div class="form-group" style="margin: 0;">
-                            <label class="form-label">Start Address (Hex)</label>
-                            <input type="text" class="form-control" id="memory-address" value="0x08000000"
-                                style="width: 150px;">
-                        </div>
-                        <div class="form-group" style="margin: 0;">
-                            <label class="form-label">Size (bytes)</label>
-                            <input type="number" class="form-control" id="memory-size" value="256"
-                                style="width: 120px;">
-                        </div>
-                        <button class="btn btn-primary" onclick="readMemory()">📖 Read</button>
-                        <button class="btn btn-secondary" onclick="saveMemory()">💾 Save to File</button>
-                    </div>
-                    <div class="memory-table">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Address</th>
-                                    <th>+0</th>
-                                    <th>+1</th>
-                                    <th>+2</th>
-                                    <th>+3</th>
-                                    <th>+4</th>
-                                    <th>+5</th>
-                                    <th>+6</th>
-                                    <th>+7</th>
-                                    <th>+8</th>
-                                    <th>+9</th>
-                                    <th>+A</th>
-                                    <th>+B</th>
-                                    <th>+C</th>
-                                    <th>+D</th>
-                                    <th>+E</th>
-                                    <th>+F</th>
-                                    <th>ASCII</th>
-                                </tr>
-                            </thead>
-                            <tbody id="memory-table-body">
-                                <tr>
-                                    <td colspan="18" style="text-align: center; color: #858585; padding: 40px;">
-                                        Connect to ST-Link and click "Read" to view memory
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+    <!-- DEVICE LIST -->
+    <div class="card">
+        <div class="card-title">
+            <span class="card-title-icon">📱</span>
+            Connected Devices
+        </div>
+        <div class="device-list" id="device-list">
+            <div style="padding: 20px; text-align: center; color: #858585;">
+                Click "Refresh Devices" to scan for ST-Link
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- MEMORY VIEW -->
+    <div class="view memory-view" id="memory-view">
+        <div class="card">
+            <div class="card-title">
+                <span class="card-title-icon">💾</span>
+                Memory Browser
+            </div>
+            <div class="memory-controls">
+                <div class="form-group" style="margin: 0;">
+                    <label class="form-label">Start Address (Hex)</label>
+                    <input type="text" class="form-control" id="memory-address" value="0x08000000"
+                        style="width: 150px;">
+                </div>
+                <div class="form-group" style="margin: 0;">
+                    <label class="form-label">Size (bytes)</label>
+                    <input type="number" class="form-control" id="memory-size" value="256" style="width: 120px;">
+                </div>
+                <button class="btn btn-primary" onclick="readMemory()">📖 Read</button>
+                <button class="btn btn-secondary" onclick="saveMemory()">💾 Save to File</button>
+            </div>
+            <div class="memory-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Address</th>
+                            <th>+0</th>
+                            <th>+1</th>
+                            <th>+2</th>
+                            <th>+3</th>
+                            <th>+4</th>
+                            <th>+5</th>
+                            <th>+6</th>
+                            <th>+7</th>
+                            <th>+8</th>
+                            <th>+9</th>
+                            <th>+A</th>
+                            <th>+B</th>
+                            <th>+C</th>
+                            <th>+D</th>
+                            <th>+E</th>
+                            <th>+F</th>
+                            <th>ASCII</th>
+                        </tr>
+                    </thead>
+                    <tbody id="memory-table-body">
+                        <tr>
+                            <td colspan="18" style="text-align: center; color: #858585; padding: 40px;">
+                                Connect to ST-Link and click "Read" to view memory
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- FLASH DOWNLOAD VIEW -->
+    <div class="view flash-view" id="flash-view">
+        <div class="card">
+            <div class="card-title">
+                <span class="card-title-icon">⚡</span>
+                Flash Download
+            </div>
+
+            <div class="file-drop-zone" id="drop-zone" onclick="selectFile()">
+                <div class="drop-icon">📁</div>
+                <div class="drop-text">Drag and drop firmware file here</div>
+                <div class="drop-hint">Supported: .hex, .bin, .elf</div>
+            </div>
+            <input type="file" id="file-input" accept=".hex,.bin,.elf" style="display: none;">
+
+            <div class="file-info" id="file-info">
+                <div class="file-info-row">
+                    <span class="file-info-label">File Name:</span>
+                    <span class="file-info-value" id="file-name">-</span>
+                </div>
+                <div class="file-info-row">
+                    <span class="file-info-label">File Size:</span>
+                    <span class="file-info-value" id="file-size">-</span>
+                </div>
+                <div class="file-info-row">
+                    <span class="file-info-label">File Type:</span>
+                    <span class="file-info-value" id="file-type">-</span>
+                </div>
+                <div class="file-info-row">
+                    <span class="file-info-label">Start Address:</span>
+                    <span class="file-info-value" id="file-address">0x08000000</span>
                 </div>
             </div>
 
-            <!-- FLASH DOWNLOAD VIEW -->
-            <div class="view flash-view" id="flash-view">
-                <div class="card">
-                    <div class="card-title">
-                        <span class="card-title-icon">⚡</span>
-                        Flash Download
-                    </div>
-
-                    <div class="file-drop-zone" id="drop-zone" onclick="selectFile()">
-                        <div class="drop-icon">📁</div>
-                        <div class="drop-text">Drag and drop firmware file here</div>
-                        <div class="drop-hint">Supported: .hex, .bin, .elf</div>
-                    </div>
-                    <input type="file" id="file-input" accept=".hex,.bin,.elf" style="display: none;">
-
-                    <div class="file-info" id="file-info">
-                        <div class="file-info-row">
-                            <span class="file-info-label">File Name:</span>
-                            <span class="file-info-value" id="file-name">-</span>
-                        </div>
-                        <div class="file-info-row">
-                            <span class="file-info-label">File Size:</span>
-                            <span class="file-info-value" id="file-size">-</span>
-                        </div>
-                        <div class="file-info-row">
-                            <span class="file-info-label">File Type:</span>
-                            <span class="file-info-value" id="file-type">-</span>
-                        </div>
-                        <div class="file-info-row">
-                            <span class="file-info-label">Start Address:</span>
-                            <span class="file-info-value" id="file-address">0x08000000</span>
-                        </div>
-                    </div>
-
-                    <div class="card-title" style="margin-top: 20px;">Download Options</div>
-                    <div class="flash-options">
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="verify-after" checked>
-                            <label for="verify-after">Verify after programming</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="run-after" checked>
-                            <label for="run-after">Run after programming</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="full-chip-erase">
-                            <label for="full-chip-erase">Full chip erase</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="skip-erase">
-                            <label for="skip-erase">Skip flash erase</label>
-                        </div>
-                    </div>
-
-                    <div class="progress-bar" id="flash-progress">
-                        <div class="progress-fill" id="flash-progress-fill" style="width: 0%"></div>
-                    </div>
-
-                    <div class="flash-actions">
-                        <button class="btn btn-success" onclick="startDownload()" id="download-btn" disabled>
-                            ⚡ Start Programming
-                        </button>
-                        <button class="btn btn-danger" onclick="eraseChip()">
-                            🗑️ Erase Chip
-                        </button>
-                        <button class="btn btn-secondary" onclick="readDeviceMemory()">
-                            📖 Read Device Memory
-                        </button>
-                    </div>
+            <div class="card-title" style="margin-top: 20px;">Download Options</div>
+            <div class="flash-options">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="verify-after" checked>
+                    <label for="verify-after">Verify after programming</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="run-after" checked>
+                    <label for="run-after">Run after programming</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="full-chip-erase">
+                    <label for="full-chip-erase">Full chip erase</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="skip-erase">
+                    <label for="skip-erase">Skip flash erase</label>
                 </div>
             </div>
 
-            <!-- OPTION BYTES VIEW -->
-            <div class="view" id="options-view" style="padding: 20px;">
-                <div class="card">
-                    <div class="card-title">
-                        <span class="card-title-icon">⚙️</span>
-                        Option Bytes Configuration
-                    </div>
-                    <div style="padding: 40px; text-align: center; color: #858585;">
-                        <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
-                        <div style="font-size: 14px; margin-bottom: 10px;">Option Bytes Configuration</div>
-                        <div style="font-size: 12px;">
-                            Connect to a device to configure option bytes<br>
-                            (Read Protection, Write Protection, Boot Configuration)
-                        </div>
-                    </div>
-                </div>
+            <div class="progress-bar" id="flash-progress">
+                <div class="progress-fill" id="flash-progress-fill" style="width: 0%"></div>
             </div>
 
-            <!-- DEBUG VIEW -->
-            <div class="view" id="debug-view" style="padding: 20px; overflow-y: auto;">
-                <!-- DEBUG CONTROLS -->
-                <div class="card">
-                    <div class="card-title">
-                        <span class="card-title-icon">🐛</span>
-                        Debug Controls
-                    </div>
-                    <div class="debug-controls" style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <button class="btn btn-success" onclick="debugRun()" title="Run (F5)">
-                            ▶️ Run
-                        </button>
-                        <button class="btn btn-danger" onclick="debugStop()" title="Stop (Shift+F5)">
-                            ⏹️ Stop
-                        </button>
-                        <button class="btn btn-warning" onclick="debugPause()" title="Pause">
-                            ⏸️ Pause
-                        </button>
-                        <button class="btn btn-primary" onclick="debugContinue()" title="Continue">
-                            ▶️ Continue
-                        </button>
-                        <div style="width: 2px; background: #3e3e42; margin: 0 5px;"></div>
-                        <button class="btn btn-info" onclick="debugStepOver()" title="Step Over (F10)">
-                            ⏭️ Step Over
-                        </button>
-                        <button class="btn btn-info" onclick="debugStepInto()" title="Step Into (F11)">
-                            ⤵️ Step Into
-                        </button>
-                        <button class="btn btn-info" onclick="debugStepOut()" title="Step Out (Shift+F11)">
-                            ⤴️ Step Out
-                        </button>
-                        <div style="width: 2px; background: #3e3e42; margin: 0 5px;"></div>
-                        <button class="btn btn-secondary" onclick="debugReset()" title="Reset MCU">
-                            🔄 Reset
-                        </button>
-                    </div>
-                    <div style="margin-top: 15px; padding: 10px; background: #1e1e1e; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 12px;"
-                        id="debug-status">
-                        <span style="color: #858585;">Debug Status: Not Running</span>
-                    </div>
-                </div>
+            <div class="flash-actions">
+                <button class="btn btn-success" onclick="startDownload()" id="download-btn" disabled>
+                    ⚡ Start Programming
+                </button>
+                <button class="btn btn-danger" onclick="eraseChip()">
+                    🗑️ Erase Chip
+                </button>
+                <button class="btn btn-secondary" onclick="readDeviceMemory()">
+                    📖 Read Device Memory
+                </button>
+            </div>
+        </div>
+    </div>
 
-                <!-- VARIABLE VIEWER -->
-                <div class="card" style="margin-top: 20px;">
-                    <div class="card-title">
-                        <span class="card-title-icon">📊</span>
-                        Variable Viewer
-                        <button class="btn btn-sm" onclick="addVariable()" style="margin-left: auto; font-size: 12px;">+
-                            Add Variable</button>
-                    </div>
-                    <div class="variable-table-container">
-                        <table class="debug-table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 30px;">📌</th>
-                                    <th>Variable Name</th>
-                                    <th>Type</th>
-                                    <th>Value</th>
-                                    <th>Address</th>
-                                    <th style="width: 80px;">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="variable-list">
-                                <tr>
-                                    <td colspan="6" style="text-align: center; color: #858585; padding: 20px;">
-                                        No variables added. Click "+ Add Variable" to monitor a variable.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- REGISTER VIEWER -->
-                <div class="card" style="margin-top: 20px;">
-                    <div class="card-title">
-                        <span class="card-title-icon">🎚️</span>
-                        Register Viewer
-                        <button class="btn btn-sm" onclick="refreshRegisters()"
-                            style="margin-left: auto; font-size: 12px;">🔄 Refresh</button>
-                    </div>
-                    <div class="register-grid"
-                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px;">
-                        <div class="register-item" id="reg-r0">
-                            <div class="register-name">R0</div>
-                            <div class="register-value">0x00000000</div>
-                        </div>
-                        <div class="register-item" id="reg-r1">
-                            <div class="register-name">R1</div>
-                            <div class="register-value">0x00000000</div>
-                        </div>
-                        <div class="register-item" id="reg-r2">
-                            <div class="register-name">R2</div>
-                            <div class="register-value">0x00000000</div>
-                        </div>
-                        <div class="register-item" id="reg-r3">
-                            <div class="register-name">R3</div>
-                            <div class="register-value">0x00000000</div>
-                        </div>
-                        <div class="register-item" id="reg-r4">
-                            <div class="register-name">R4</div>
-                            <div class="register-value">0x00000000</div>
-                        </div>
-                        <div class="register-item" id="reg-r5">
-                            <div class="register-name">R5</div>
-                            <div class="register-value">0x00000000</div>
-                        </div>
-                        <div class="register-item" id="reg-r6">
-                            <div class="register-name">R6</div>
-                            <div class="register-value">0x00000000</div>
-                        </div>
-                        <div class="register-item" id="reg-r7">
-                            <div class="register-name">R7</div>
-                            <div class="register-value">0x00000000</div>
-                        </div>
-                        <div class="register-item" id="reg-r8">
-                            <div class="register-name">R8</div>
-                            <div class="register-value">0x00000000</div>
-                        </div>
-                        <div class="register-item" id="reg-r9">
-                            <div class="register-name">R9</div>
-                            <div class="register-value">0x00000000</div>
-                        </div>
-                        <div class="register-item" id="reg-r10">
-                            <div class="register-name">R10</div>
-                            <div class="register-value">0x00000000</div>
-                        </div>
-                        <div class="register-item" id="reg-r11">
-                            <div class="register-name">R11</div>
-                            <div class="register-value">0x00000000</div>
-                        </div>
-                        <div class="register-item" id="reg-r12">
-                            <div class="register-name">R12</div>
-                            <div class="register-value">0x00000000</div>
-                        </div>
-                        <div class="register-item highlight" id="reg-sp">
-                            <div class="register-name">SP</div>
-                            <div class="register-value">0x20020000</div>
-                        </div>
-                        <div class="register-item highlight" id="reg-lr">
-                            <div class="register-name">LR</div>
-                            <div class="register-value">0x00000000</div>
-                        </div>
-                        <div class="register-item highlight" id="reg-pc">
-                            <div class="register-name">PC</div>
-                            <div class="register-value">0x08000000</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- BREAKPOINTS -->
-                <div class="card" style="margin-top: 20px;">
-                    <div class="card-title">
-                        <span class="card-title-icon">🔴</span>
-                        Breakpoints
-                        <button class="btn btn-sm" onclick="addBreakpoint()"
-                            style="margin-left: auto; font-size: 12px;">+ Add Breakpoint</button>
-                    </div>
-                    <div class="breakpoint-list" id="breakpoint-list">
-                        <div style="text-align: center; color: #858585; padding: 20px;">
-                            No breakpoints set. Click "+ Add Breakpoint" to add one.
-                        </div>
-                    </div>
-                </div>
-
-                <!-- CALL STACK -->
-                <div class="card" style="margin-top: 20px;">
-                    <div class="card-title">
-                        <span class="card-title-icon">📚</span>
-                        Call Stack
-                    </div>
-                    <div class="callstack-list" id="callstack-list">
-                        <div style="text-align: center; color: #858585; padding: 20px;">
-                            Start debugging to view call stack
-                        </div>
-                    </div>
-                </div>
-
-                <!-- DISASSEMBLY VIEW -->
-                <div class="card" style="margin-top: 20px;">
-                    <div class="card-title">
-                        <span class="card-title-icon">🔍</span>
-                        Disassembly View
-                        <button class="btn btn-sm" onclick="refreshDisassembly()"
-                            style="margin-left: auto; font-size: 12px;">🔄 Refresh</button>
-                    </div>
-                    <div class="disassembly-view" id="disassembly-view"
-                        style="font-family: 'Courier New', monospace; font-size: 12px; background: #1e1e1e; border-radius: 4px; padding: 10px; max-height: 400px; overflow-y: auto;">
-                        <div style="text-align: center; color: #858585; padding: 20px;">
-                            Start debugging to view disassembly
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SWV TRACE VIEWER -->
-                <div class="card" style="margin-top: 20px;">
-                    <div class="card-title">
-                        <span class="card-title-icon">📡</span>
-                        SWV Trace Viewer (Serial Wire Viewer)
-                        <div style="margin-left: auto; display: flex; gap: 10px; align-items: center;">
-                            <label style="font-size: 11px; color: #858585;">CPU Freq (MHz):</label>
-                            <input type="number" id="swv-cpu-freq" value="168"
-                                style="width: 70px; padding: 4px 8px; background: #1e1e1e; border: 1px solid #3e3e42; color: #cccccc; border-radius: 4px; font-size: 12px;">
-                            <button class="btn btn-sm btn-success" onclick="enableSWV()" id="swv-enable-btn">▶️
-                                Enable</button>
-                            <button class="btn btn-sm btn-danger" onclick="disableSWV()" id="swv-disable-btn"
-                                style="display: none;">⏹️ Disable</button>
-                            <button class="btn btn-sm btn-secondary" onclick="clearSWVTrace()">🗑️ Clear</button>
-                        </div>
-                    </div>
-                    <div
-                        style="background: #1e1e1e; border-radius: 4px; padding: 10px; font-family: 'Courier New', monospace; font-size: 12px;">
-                        <div style="margin-bottom: 10px; color: #858585; font-size: 11px;">
-                            💡 Tip: Use ITM_SendChar() in your code for printf-style debugging without UART
-                        </div>
-                        <div id="swv-trace-output"
-                            style="max-height: 300px; overflow-y: auto; background: #000000; padding: 10px; border-radius: 4px; border: 1px solid #3e3e42;">
-                            <div style="color: #858585; text-align: center; padding: 10px;">
-                                SWV Trace disabled. Click "Enable" to start capturing ITM trace data.
-                            </div>
-                        </div>
-                        <div style="margin-top: 10px; display: flex; gap: 10px; align-items: center;">
-                            <span style="color: #858585; font-size: 11px;">Status:</span>
-                            <span id="swv-status" style="color: #858585; font-size: 11px;">Disabled</span>
-                            <span style="margin-left: auto; color: #858585; font-size: 11px;">Packets:</span>
-                            <span id="swv-packet-count" style="color: #4ec9b0; font-size: 11px;">0</span>
-                        </div>
-                    </div>
+    <!-- OPTION BYTES VIEW -->
+    <div class="view" id="options-view" style="padding: 20px;">
+        <div class="card">
+            <div class="card-title">
+                <span class="card-title-icon">⚙️</span>
+                Option Bytes Configuration
+            </div>
+            <div style="padding: 40px; text-align: center; color: #858585;">
+                <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
+                <div style="font-size: 14px; margin-bottom: 10px;">Option Bytes Configuration</div>
+                <div style="font-size: 12px;">
+                    Connect to a device to configure option bytes<br>
+                    (Read Protection, Write Protection, Boot Configuration)
                 </div>
             </div>
+        </div>
+    </div>
 
-            <!-- OUTPUT CONSOLE -->
-            <div class="output-console">
-                <div class="console-header">
-                    <div class="console-title">OUTPUT</div>
-                    <div class="console-actions">
-                        <button class="console-btn" onclick="clearConsole()" title="Clear">🗑️</button>
-                        <button class="console-btn" onclick="saveConsoleLog()" title="Save Log">💾</button>
-                    </div>
+    <!-- DEBUG VIEW -->
+    <div class="view" id="debug-view" style="padding: 20px; overflow-y: auto;">
+        <!-- DEBUG CONTROLS -->
+        <div class="card">
+            <div class="card-title">
+                <span class="card-title-icon">🐛</span>
+                Debug Controls
+            </div>
+            <div class="debug-controls" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn-success" onclick="debugRun()" title="Run (F5)">
+                    ▶️ Run
+                </button>
+                <button class="btn btn-danger" onclick="debugStop()" title="Stop (Shift+F5)">
+                    ⏹️ Stop
+                </button>
+                <button class="btn btn-warning" onclick="debugPause()" title="Pause">
+                    ⏸️ Pause
+                </button>
+                <button class="btn btn-primary" onclick="debugContinue()" title="Continue">
+                    ▶️ Continue
+                </button>
+                <div style="width: 2px; background: #3e3e42; margin: 0 5px;"></div>
+                <button class="btn btn-info" onclick="debugStepOver()" title="Step Over (F10)">
+                    ⏭️ Step Over
+                </button>
+                <button class="btn btn-info" onclick="debugStepInto()" title="Step Into (F11)">
+                    ⤵️ Step Into
+                </button>
+                <button class="btn btn-info" onclick="debugStepOut()" title="Step Out (Shift+F11)">
+                    ⤴️ Step Out
+                </button>
+                <div style="width: 2px; background: #3e3e42; margin: 0 5px;"></div>
+                <button class="btn btn-secondary" onclick="debugReset()" title="Reset MCU">
+                    🔄 Reset
+                </button>
+            </div>
+            <div style="margin-top: 15px; padding: 10px; background: #1e1e1e; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 12px;"
+                id="debug-status">
+                <span style="color: #858585;">Debug Status: Not Running</span>
+            </div>
+        </div>
+
+        <!-- VARIABLE VIEWER -->
+        <div class="card" style="margin-top: 20px;">
+            <div class="card-title">
+                <span class="card-title-icon">📊</span>
+                Variable Viewer
+                <button class="btn btn-sm" onclick="addVariable()" style="margin-left: auto; font-size: 12px;">+
+                    Add Variable</button>
+            </div>
+            <div class="variable-table-container">
+                <table class="debug-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 30px;">📌</th>
+                            <th>Variable Name</th>
+                            <th>Type</th>
+                            <th>Value</th>
+                            <th>Address</th>
+                            <th style="width: 80px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="variable-list">
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: #858585; padding: 20px;">
+                                No variables added. Click "+ Add Variable" to monitor a variable.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- REGISTER VIEWER -->
+        <div class="card" style="margin-top: 20px;">
+            <div class="card-title">
+                <span class="card-title-icon">🎚️</span>
+                Register Viewer
+                <button class="btn btn-sm" onclick="refreshRegisters()" style="margin-left: auto; font-size: 12px;">🔄
+                    Refresh</button>
+            </div>
+            <div class="register-grid"
+                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px;">
+                <div class="register-item" id="reg-r0">
+                    <div class="register-name">R0</div>
+                    <div class="register-value">0x00000000</div>
                 </div>
-                <div class="console-content" id="console-output">
-                    <div class="console-line">🌟 HopeIDE (Umut IDE) v3.0.0 - Professional Edition</div>
-                    <div class="console-line">Ready.</div>
+                <div class="register-item" id="reg-r1">
+                    <div class="register-name">R1</div>
+                    <div class="register-value">0x00000000</div>
+                </div>
+                <div class="register-item" id="reg-r2">
+                    <div class="register-name">R2</div>
+                    <div class="register-value">0x00000000</div>
+                </div>
+                <div class="register-item" id="reg-r3">
+                    <div class="register-name">R3</div>
+                    <div class="register-value">0x00000000</div>
+                </div>
+                <div class="register-item" id="reg-r4">
+                    <div class="register-name">R4</div>
+                    <div class="register-value">0x00000000</div>
+                </div>
+                <div class="register-item" id="reg-r5">
+                    <div class="register-name">R5</div>
+                    <div class="register-value">0x00000000</div>
+                </div>
+                <div class="register-item" id="reg-r6">
+                    <div class="register-name">R6</div>
+                    <div class="register-value">0x00000000</div>
+                </div>
+                <div class="register-item" id="reg-r7">
+                    <div class="register-name">R7</div>
+                    <div class="register-value">0x00000000</div>
+                </div>
+                <div class="register-item" id="reg-r8">
+                    <div class="register-name">R8</div>
+                    <div class="register-value">0x00000000</div>
+                </div>
+                <div class="register-item" id="reg-r9">
+                    <div class="register-name">R9</div>
+                    <div class="register-value">0x00000000</div>
+                </div>
+                <div class="register-item" id="reg-r10">
+                    <div class="register-name">R10</div>
+                    <div class="register-value">0x00000000</div>
+                </div>
+                <div class="register-item" id="reg-r11">
+                    <div class="register-name">R11</div>
+                    <div class="register-value">0x00000000</div>
+                </div>
+                <div class="register-item" id="reg-r12">
+                    <div class="register-name">R12</div>
+                    <div class="register-value">0x00000000</div>
+                </div>
+                <div class="register-item highlight" id="reg-sp">
+                    <div class="register-name">SP</div>
+                    <div class="register-value">0x20020000</div>
+                </div>
+                <div class="register-item highlight" id="reg-lr">
+                    <div class="register-name">LR</div>
+                    <div class="register-value">0x00000000</div>
+                </div>
+                <div class="register-item highlight" id="reg-pc">
+                    <div class="register-name">PC</div>
+                    <div class="register-value">0x08000000</div>
                 </div>
             </div>
         </div>
 
-        <!-- DEVICE INFO PANEL -->
-        <div class="device-info-panel">
-            <div class="info-section">
-                <div class="info-section-title">Connection Status</div>
-                <div class="info-row">
-                    <span class="info-label">Status:</span>
-                    <span class="info-value">
-                        <span class="connection-indicator disconnected" id="connection-indicator"></span>
-                        <span id="connection-status">Disconnected</span>
-                    </span>
-                </div>
+        <!-- BREAKPOINTS -->
+        <div class="card" style="margin-top: 20px;">
+            <div class="card-title">
+                <span class="card-title-icon">🔴</span>
+                Breakpoints
+                <button class="btn btn-sm" onclick="addBreakpoint()" style="margin-left: auto; font-size: 12px;">+ Add
+                    Breakpoint</button>
             </div>
-
-            <div class="info-section" id="stlink-info-section" style="display: none;">
-                <div class="info-section-title">ST-Link Information</div>
-                <div class="info-row">
-                    <span class="info-label">Version:</span>
-                    <span class="info-value" id="stlink-version">-</span>
+            <div class="breakpoint-list" id="breakpoint-list">
+                <div style="text-align: center; color: #858585; padding: 20px;">
+                    No breakpoints set. Click "+ Add Breakpoint" to add one.
                 </div>
-                <div class="info-row">
-                    <span class="info-label">Firmware:</span>
-                    <span class="info-value" id="stlink-firmware">-</span>
-                </div>
-            </div>
-
-            <div class="info-section" id="mcu-info-section" style="display: none;">
-                <div class="info-section-title">MCU Information</div>
-                <div class="info-row">
-                    <span class="info-label">MCU Type:</span>
-                    <span class="info-value" id="mcu-type" style="color: #4ec9b0; font-weight: 600;">-</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Device:</span>
-                    <span class="info-value" id="mcu-device">-</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Device ID:</span>
-                    <span class="info-value" id="mcu-id">-</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Flash Size:</span>
-                    <span class="info-value" id="mcu-flash">-</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">RAM Size:</span>
-                    <span class="info-value" id="mcu-ram">-</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Core:</span>
-                    <span class="info-value" id="mcu-core">-</span>
-                </div>
-            </div>
-
-            <div class="info-section">
-                <div class="info-section-title">Quick Actions</div>
-                <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="showView('stlink')">
-                    🔌 Connection Settings
-                </button>
-                <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="showView('flash')">
-                    ⚡ Flash Firmware
-                </button>
-                <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="showView('memory')">
-                    💾 Memory Browser
-                </button>
             </div>
         </div>
+
+        <!-- CALL STACK -->
+        <div class="card" style="margin-top: 20px;">
+            <div class="card-title">
+                <span class="card-title-icon">📚</span>
+                Call Stack
+            </div>
+            <div class="callstack-list" id="callstack-list">
+                <div style="text-align: center; color: #858585; padding: 20px;">
+                    Start debugging to view call stack
+                </div>
+            </div>
+        </div>
+
+        <!-- DISASSEMBLY VIEW -->
+        <div class="card" style="margin-top: 20px;">
+            <div class="card-title">
+                <span class="card-title-icon">🔍</span>
+                Disassembly View
+                <button class="btn btn-sm" onclick="refreshDisassembly()" style="margin-left: auto; font-size: 12px;">🔄
+                    Refresh</button>
+            </div>
+            <div class="disassembly-view" id="disassembly-view"
+                style="font-family: 'Courier New', monospace; font-size: 12px; background: #1e1e1e; border-radius: 4px; padding: 10px; max-height: 400px; overflow-y: auto;">
+                <div style="text-align: center; color: #858585; padding: 20px;">
+                    Start debugging to view disassembly
+                </div>
+            </div>
+        </div>
+
+        <!-- SWV TRACE VIEWER -->
+        <div class="card" style="margin-top: 20px;">
+            <div class="card-title">
+                <span class="card-title-icon">📡</span>
+                SWV Trace Viewer (Serial Wire Viewer)
+                <div style="margin-left: auto; display: flex; gap: 10px; align-items: center;">
+                    <label style="font-size: 11px; color: #858585;">CPU Freq (MHz):</label>
+                    <input type="number" id="swv-cpu-freq" value="168"
+                        style="width: 70px; padding: 4px 8px; background: #1e1e1e; border: 1px solid #3e3e42; color: #cccccc; border-radius: 4px; font-size: 12px;">
+                    <button class="btn btn-sm btn-success" onclick="enableSWV()" id="swv-enable-btn">▶️
+                        Enable</button>
+                    <button class="btn btn-sm btn-danger" onclick="disableSWV()" id="swv-disable-btn"
+                        style="display: none;">⏹️ Disable</button>
+                    <button class="btn btn-sm btn-secondary" onclick="clearSWVTrace()">🗑️ Clear</button>
+                </div>
+            </div>
+            <div
+                style="background: #1e1e1e; border-radius: 4px; padding: 10px; font-family: 'Courier New', monospace; font-size: 12px;">
+                <div style="margin-bottom: 10px; color: #858585; font-size: 11px;">
+                    💡 Tip: Use ITM_SendChar() in your code for printf-style debugging without UART
+                </div>
+                <div id="swv-trace-output"
+                    style="max-height: 300px; overflow-y: auto; background: #000000; padding: 10px; border-radius: 4px; border: 1px solid #3e3e42;">
+                    <div style="color: #858585; text-align: center; padding: 10px;">
+                        SWV Trace disabled. Click "Enable" to start capturing ITM trace data.
+                    </div>
+                </div>
+                <div style="margin-top: 10px; display: flex; gap: 10px; align-items: center;">
+                    <span style="color: #858585; font-size: 11px;">Status:</span>
+                    <span id="swv-status" style="color: #858585; font-size: 11px;">Disabled</span>
+                    <span style="margin-left: auto; color: #858585; font-size: 11px;">Packets:</span>
+                    <span id="swv-packet-count" style="color: #4ec9b0; font-size: 11px;">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- OUTPUT CONSOLE -->
+    <div class="output-console">
+        <div class="console-header">
+            <div class="console-title">OUTPUT</div>
+            <div class="console-actions">
+                <button class="console-btn" onclick="clearConsole()" title="Clear">🗑️</button>
+                <button class="console-btn" onclick="saveConsoleLog()" title="Save Log">💾</button>
+            </div>
+        </div>
+        <div class="console-content" id="console-output">
+            <div class="console-line">🌟 HopeIDE (Umut IDE) v3.0.0 - Professional Edition</div>
+            <div class="console-line">Ready.</div>
+        </div>
+    </div>
+    </div>
+
+    <!-- DEVICE INFO PANEL -->
+    <div class="device-info-panel">
+        <div class="info-section">
+            <div class="info-section-title">Connection Status</div>
+            <div class="info-row">
+                <span class="info-label">Status:</span>
+                <span class="info-value">
+                    <span class="connection-indicator disconnected" id="connection-indicator"></span>
+                    <span id="connection-status">Disconnected</span>
+                </span>
+            </div>
+        </div>
+
+        <div class="info-section" id="stlink-info-section" style="display: none;">
+            <div class="info-section-title">ST-Link Information</div>
+            <div class="info-row">
+                <span class="info-label">Version:</span>
+                <span class="info-value" id="stlink-version">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Firmware:</span>
+                <span class="info-value" id="stlink-firmware">-</span>
+            </div>
+        </div>
+
+        <div class="info-section" id="mcu-info-section" style="display: none;">
+            <div class="info-section-title">MCU Information</div>
+            <div class="info-row">
+                <span class="info-label">MCU Type:</span>
+                <span class="info-value" id="mcu-type" style="color: #4ec9b0; font-weight: 600;">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Device:</span>
+                <span class="info-value" id="mcu-device">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Device ID:</span>
+                <span class="info-value" id="mcu-id">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Flash Size:</span>
+                <span class="info-value" id="mcu-flash">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">RAM Size:</span>
+                <span class="info-value" id="mcu-ram">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Core:</span>
+                <span class="info-value" id="mcu-core">-</span>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <div class="info-section-title">Quick Actions</div>
+            <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="showView('stlink')">
+                🔌 Connection Settings
+            </button>
+            <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="showView('flash')">
+                ⚡ Flash Firmware
+            </button>
+            <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="showView('memory')">
+                💾 Memory Browser
+            </button>
+        </div>
+    </div>
     </div>
 
     <!-- STATUS BAR -->
@@ -1612,6 +1587,49 @@
         function openProject() {
             ipcRenderer.send('open-project');
         }
+
+        // Connection Logic
+        async function connectToTarget() {
+            const statusArea = document.getElementById('detection-status');
+            const statusText = document.getElementById('status-text');
+            const deviceText = document.getElementById('detected-device');
+            const idcodeText = document.getElementById('detected-idcode');
+
+            statusArea.style.display = 'block';
+            statusText.textContent = 'Scanning for ST-Link...';
+            statusText.style.color = '#e5e510'; // Yellow
+
+            // Trigger scan and auto-detect via IPC
+            ipcRenderer.send('scan-stlinks');
+        }
+
+        // Listen for auto-detection results
+        ipcRenderer.on('stlink-detected', (event, device) => {
+            const statusText = document.getElementById('status-text');
+            statusText.textContent = 'ST-Link Found. Detecting Target...';
+        });
+
+        ipcRenderer.on('mcu-detected', (event, mcuInfo) => {
+            const statusText = document.getElementById('status-text');
+            const deviceText = document.getElementById('detected-device');
+            const idcodeText = document.getElementById('detected-idcode');
+
+            statusText.textContent = 'Connected';
+            statusText.style.color = '#4ec9b0'; // Green
+
+            deviceText.textContent = mcuInfo.name || 'Unknown STM32';
+            idcodeText.textContent = mcuInfo.idcode || 'N/A';
+
+            // Update connection indicator in sidebar
+            document.getElementById('connection-status-text').textContent = 'Connected: ' + (mcuInfo.name || 'STM32');
+            document.getElementById('connection-indicator').style.background = '#4ec9b0';
+        });
+
+        ipcRenderer.on('detection-failed', (event, error) => {
+            const statusText = document.getElementById('status-text');
+            statusText.textContent = 'Detection Failed: ' + error;
+            statusText.style.color = '#f44336'; // Red
+        });
 
         function buildProject() {
             if (!currentProject) {
