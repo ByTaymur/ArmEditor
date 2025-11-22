@@ -1567,23 +1567,33 @@
 
         // Console functions
         function appendConsole(message, type = 'normal') {
-            const console = document.getElementById('console-output');
+            const outputConsole = document.getElementById('console-output');
+            if (!outputConsole) {
+                console.error('[appendConsole] ERROR: console-output element not found!');
+                return;
+            }
             const line = document.createElement('div');
             line.className = 'console-line ' + type;
             line.textContent = message;
-            console.appendChild(line);
-            console.scrollTop = console.scrollHeight;
+            outputConsole.appendChild(line);
+            outputConsole.scrollTop = outputConsole.scrollHeight;
         }
 
         function clearConsole() {
-            document.getElementById('console-output').innerHTML = '';
-            appendConsole('Console cleared.', 'normal');
+            const outputConsole = document.getElementById('console-output');
+            if (outputConsole) {
+                outputConsole.innerHTML = '';
+                appendConsole('Console cleared.', 'normal');
+            }
         }
 
         function saveConsoleLog() {
-            const content = document.getElementById('console-output').innerText;
-            ipcRenderer.send('save-console-log', content);
-            appendConsole('Log saved.', 'success');
+            const outputConsole = document.getElementById('console-output');
+            if (outputConsole) {
+                const content = outputConsole.innerText;
+                ipcRenderer.send('save-console-log', content);
+                appendConsole('Log saved.', 'success');
+            }
         }
 
         // Project functions
