@@ -1598,20 +1598,28 @@
         function openProject() {
             ipcRenderer.send('open-project');
         }
-
-        // Connection Logic
-        async function connectToTarget() {
-            const statusArea = document.getElementById('detection-status');
+        // ST-LINK CONNECTION
+        function connectToTarget() {
+            const btn = document.querySelector('button[onclick="connectToTarget()"]');
             const statusText = document.getElementById('status-text');
-            const deviceText = document.getElementById('detected-device');
-            const idcodeText = document.getElementById('detected-idcode');
+            const detectionStatus = document.getElementById('detection-status');
+            const toolSelect = document.getElementById('programmer-tool');
+            const selectedTool = toolSelect ? toolSelect.value : 'cubeprogrammer'; // Default
 
-            statusArea.style.display = 'block';
-            statusText.textContent = 'Scanning for ST-Link...';
-            statusText.style.color = '#e5e510'; // Yellow
+            // Reset UI
+            document.getElementById('detected-device').textContent = '-';
+            document.getElementById('detected-idcode').textContent = '-';
+            document.getElementById('detected-device').style.color = '#cccccc';
 
-            // Trigger scan and auto-detect via IPC
-            ipcRenderer.send('scan-stlinks');
+            // Show scanning status
+            if (detectionStatus) detectionStatus.style.display = 'block';
+            if (statusText) {
+                statusText.textContent = 'Scanning...';
+                statusText.style.color = '#4ec9b0';
+            }
+
+            // Send scan request with selected tool
+            ipcRenderer.send('scan-stlinks', selectedTool);
         }
 
         // Listen for auto-detection results

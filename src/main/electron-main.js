@@ -25,6 +25,7 @@ const MemoryBrowser = require('../debugger/memory-browser');
 const PeripheralViewer = require('../debugger/peripheral-viewer');
 const MCUDetector = require('../stm32/mcu-detector');
 const CubeMXIntegration = require('../project/cubemx-integration');
+const OpenSourceSTLink = require('../programmer/open-source-stlink');
 
 let mainWindow;
 let currentProjectPath = null;
@@ -1019,6 +1020,29 @@ ipcMain.on('flash-program', async (event, filePath) => {
     }
 });
 
+ipcMain.on('flash-binary', async (event, { filePath, address, tool }) => {
+    try {
+        mainWindow.webContents.send('output-append', `⚡ Flashing ${path.basename(filePath)}...\n`);
+        mainWindow.webContents.send('flash-progress', 10);
+
+        let result;
+        if (tool === 'stlink-org') {
+            const stLinkOrg = new OpenSourceSTLink();
+            result = await stLinkOrg.flashBinary(filePath, address);
+        } else {
+            // Default: STM32CubeProgrammer
+            const programmer = new STM32CubeProgrammer();
+            result = await programmer.flashBinary(filePath, address);
+        }
+        mainWindow.webContents.send('flash-progress', 100);
+        mainWindow.webContents.send('output-append', `✅ Flash successful!\n`);
+
+    } catch (error) {
+        mainWindow.webContents.send('output-append', `❌ Flash failed: ${error.message}\n`);
+        mainWindow.webContents.send('flash-progress', 0);
+    }
+});
+
 // Debug controls
 ipcMain.on('debug-continue', async () => {
     if (gdbBackend) {
@@ -1781,24 +1805,21 @@ ipcMain.on('save-console-log', (event, content) => {
 });
 
 // Read memory handler
-ipcMain.on('read-memory', async (event, data) => {
+ipcMain.on('read-memory', async (event, { address, size, outputFile, tool }) => {
     try {
-        if (!connectedStLink || !connectedStLink.openocd) {
-            mainWindow.webContents.send('output-append', '❌ No device connected\n');
-            return;
+        mainWindow.webContents.send('output-append', `📖 Reading memory from ${address}...\n`);
+
+        let result;
+        if (tool === 'stlink-org') {
+            const stLinkOrg = new OpenSourceSTLink();
+            result = await stLinkOrg.readMemory(address, size, outputFile);
+        } else {
+            const programmer = new STM32CubeProgrammer();
+            result = await programmer.readMemory(address, size, outputFile);
         }
 
-        const address = data.address;
-        const size = data.size;
-
-        mainWindow.webContents.send('output-append', `📖 Reading ${size} bytes from ${address}...\n`);
-
-        // Use OpenOCD to read memory
-        const stm32Tools = new STM32Tools(connectedStLink.openocd);
-        const memoryData = await stm32Tools.readMemory(address, size);
-
         // Send memory data to renderer
-        mainWindow.webContents.send('memory-data', { address, data: memoryData });
+        mainWindow.webContents.send('memory-data', { address, data: result.data }); // Assuming result.data contains the memory buffer
         mainWindow.webContents.send('output-append', `✅ Memory read complete\n`);
 
     } catch (error) {
@@ -1842,15 +1863,22 @@ ipcMain.on('flash-firmware', async (event, data) => {
     }
 });
 
-ipcMain.on('scan-stlinks', async (event) => {
+ipcMain.on('scan-stlinks', async (event, tool = 'cubeprogrammer') => {
     try {
-        if (!stm32Tools) {
-            stm32Tools = new STM32Tools();
+        let devices = [];
+
+        if (tool === 'stlink-org') {
+            mainWindow.webContents.send('output-append', '🔍 Scanning with Open Source ST-Link...\n');
+            const stLinkOrg = new OpenSourceSTLink();
+            devices = await stLinkOrg.listDevices();
+        } else {
+            // Default: STM32CubeProgrammer
+            if (!stm32Tools) {
+                stm32Tools = new STM32Tools();
+            }
+            mainWindow.webContents.send('output-append', '🔍 Scanning with STM32CubeProgrammer...\n');
+            devices = await stm32Tools.scanSTLink();
         }
-
-        mainWindow.webContents.send('output-append', '🔍 Scanning for ST-Link devices...\n');
-
-        const devices = await stm32Tools.scanSTLink();
 
         if (devices.length > 0) {
             const device = devices[0];
@@ -1908,17 +1936,18 @@ ipcMain.on('scan-stlinks', async (event) => {
 });
 
 // Erase chip handler
-ipcMain.on('erase-chip', async (event) => {
+ipcMain.on('erase-chip', async (event, tool) => {
     try {
-        if (!connectedStLink || !connectedStLink.openocd) {
-            mainWindow.webContents.send('output-append', '❌ No device connected\n');
-            return;
+        mainWindow.webContents.send('output-append', '🗑️ Erasing chip...\n');
+
+        let result;
+        if (tool === 'stlink-org') {
+            const stLinkOrg = new OpenSourceSTLink();
+            result = await stLinkOrg.eraseChip();
+        } else {
+            const programmer = new STM32CubeProgrammer();
+            result = await programmer.eraseChip();
         }
-
-        mainWindow.webContents.send('output-append', `🗑️ Erasing chip...\n`);
-
-        const flashManager = new FlashManager(connectedStLink.openocd);
-        await flashManager.eraseChip();
 
         mainWindow.webContents.send('output-append', `✅ Chip erased successfully\n`);
 
