@@ -625,22 +625,49 @@ async function buildProject(autoFlash = false) {
             mainWindow.webContents.send('status-bar-update', { type: 'build', value: '✅ Success' });
 
             // Auto-flash if requested and device is connected
-            if (autoFlash && connectedStLink && connectedStLink.openocd) {
+            if (autoFlash && connectedStLink) {
                 mainWindow.webContents.send('output-append', '\n⚡ Auto-flashing firmware...\n');
 
                 try {
-                    // Find built firmware (check build directory)
                     // firmwareFile is already determined above
                     if (firmwareFile && fs.existsSync(path.join(buildDir, firmwareFile))) {
                         const fullPath = path.join(buildDir, firmwareFile);
                         mainWindow.webContents.send('output-append', `📁 Found firmware: ${firmwareFile}\n`);
 
-                        const flashManager = new FlashManager(connectedStLink.openocd);
-                        await flashManager.flash(fullPath, {
-                            verify: true,
-                            reset: true,
-                            erase: true
-                        });
+                        // Check which programmer is being used
+                        if (connectedStLink.flashBinary) {
+                            // This is OpenSourceSTLink or similar that supports direct flashing
+                            console.log('[buildProject] Using direct flashBinary method');
+
+                            // Forward output events if supported
+                            if (connectedStLink.on) {
+                                const outputHandler = (data) => {
+                                    mainWindow.webContents.send('output-append', data);
+                                };
+                                connectedStLink.on('output', outputHandler);
+
+                                // Flash
+                                await connectedStLink.flashBinary(fullPath);
+
+                                // Cleanup listener
+                                connectedStLink.removeListener('output', outputHandler);
+                            } else {
+                                await connectedStLink.flashBinary(fullPath);
+                            }
+                        }
+                        else if (connectedStLink.openocd) {
+                            // This is OpenOCD based interface
+                            console.log('[buildProject] Using FlashManager via OpenOCD');
+                            const flashManager = new FlashManager(connectedStLink.openocd);
+                            await flashManager.flash(fullPath, {
+                                verify: true,
+                                reset: true,
+                                erase: true
+                            });
+                        }
+                        else {
+                            throw new Error('Unknown programmer interface');
+                        }
 
                         mainWindow.webContents.send('output-append', '✅ Firmware flashed successfully!\n');
                         mainWindow.webContents.send('flash-progress', 100);
@@ -648,14 +675,19 @@ async function buildProject(autoFlash = false) {
                         mainWindow.webContents.send('output-append', '⚠️ Could not find firmware file (.hex/.bin/.elf)\n');
                     }
                 } catch (flashErr) {
+                    console.error('[buildProject] Flash error:', flashErr);
                     mainWindow.webContents.send('output-append', `❌ Flash failed: ${flashErr.message}\n`);
                     mainWindow.webContents.send('flash-progress', 0);
                 }
             }
-        } else {
-            mainWindow.webContents.send('output-append', `\n❌ Build failed (exit code: ${code})\n`);
-            mainWindow.webContents.send('status-bar-update', { type: 'build', value: '❌ Failed' });
+            mainWindow.webContents.send('output-append', `❌ Flash failed: ${flashErr.message}\n`);
+            mainWindow.webContents.send('flash-progress', 0);
         }
+    }
+        } else {
+    mainWindow.webContents.send('output-append', `\n❌ Build failed (exit code: ${code})\n`);
+    mainWindow.webContents.send('status-bar-update', { type: 'build', value: '❌ Failed' });
+}
     });
 }
 
