@@ -977,6 +977,37 @@ ipcMain.on('debug-start', async (event) => {
 
         mainWindow.webContents.send('output-append', '✅ Connected to target\n');
 
+        // Setup GDB Event Listeners for Real-Time Updates
+        gdbBackend.on('async', async (type, data) => {
+            console.log('[GDB] Async event:', type, data);
+
+            if (type === 'stopped') {
+                // Notify UI that execution stopped
+                mainWindow.webContents.send('debug-stopped', data);
+
+                // Auto-refresh registers
+                if (registerViewer) {
+                    try {
+                        const regs = await registerViewer.readCPURegisters();
+                        // Send to separate window if open
+                        if (registerWindow) {
+                            registerWindow.webContents.send('registers-data', registerViewer.getRegisterSnapshot());
+                        }
+                        // Send to main window (for embedded view)
+                        mainWindow.webContents.send('registers-update', regs);
+                    } catch (e) {
+                        console.error('[Auto-Refresh] Registers failed:', e);
+                    }
+                }
+
+                // Auto-refresh memory (if browser is active)
+                // TODO: Implement memory auto-refresh based on active view
+
+            } else if (type === 'running') {
+                mainWindow.webContents.send('debug-running');
+            }
+        });
+
         // Load program
         await gdbBackend.load();
 
@@ -985,6 +1016,7 @@ ipcMain.on('debug-start', async (event) => {
         // Initialize tools
         flashManager = new FlashManager(openocdInterface);
         stm32Tools = new STM32Tools(openocdInterface);
+        registerViewer = new RegisterViewer(gdbBackend);
 
         // Get device info
         const deviceInfo = await stm32Tools.getDeviceInfo();
