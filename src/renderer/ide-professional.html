@@ -1720,12 +1720,32 @@
         }
 
         function downloadFirmware() {
+            console.log('[downloadFirmware] Called');
             if (!currentDevice) {
-                appendConsole('Error: No device connected', 'error');
+                console.error('[downloadFirmware] No device connected');
+                appendConsole('❌ No device connected', 'error');
                 return;
             }
-            appendConsole('Downloading firmware to device...', 'normal');
-            ipcRenderer.send('flash-binary');
+
+            if (!currentProjectPath) {
+                console.error('[downloadFirmware] No project opened');
+                appendConsole('❌ No project opened', 'error');
+                return;
+            }
+
+            // Look for firmware.bin in build directory
+            const firmwarePath = currentProjectPath + '/build/firmware.bin';
+            const toolSelect = document.getElementById('programmer-tool-select');
+            const selectedTool = toolSelect ? toolSelect.value : 'cubeprogrammer';
+
+            console.log('[downloadFirmware] Flashing:', firmwarePath);
+            appendConsole('⚡ Downloading firmware to device...', 'normal');
+
+            ipcRenderer.send('flash-binary', {
+                filePath: firmwarePath,
+                address: '0x08000000',
+                tool: selectedTool
+            });
         }
 
         function rebuildProject() {
