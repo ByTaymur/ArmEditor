@@ -1614,26 +1614,56 @@
             ipcRenderer.send('scan-stlinks', selectedTool);
         }
 
-        // Listen for auto-detection results
+        // Listen for ST-Link detection
         ipcRenderer.on('stlink-detected', (event, device) => {
+            console.log('[UI] ST-Link detected:', device);
             const statusText = document.getElementById('status-text');
-            statusText.textContent = 'ST-Link Found. Detecting Target...';
+            const connectionIndicator = document.getElementById('connection-indicator');
+            const connectionStatusText = document.getElementById('connection-status-text');
+
+            // Show connected state
+            if (statusText) {
+                statusText.textContent = 'ST-Link Connected';
+                statusText.style.color = '#4ec9b0';
+            }
+
+            // Update connection indicator  
+            if (connectionIndicator) {
+                connectionIndicator.style.background = '#4ec9b0'; // Green
+            }
+
+            if (connectionStatusText) {
+                connectionStatusText.textContent = 'Connected: ST-Link';
+            }
+
+            // Show device serial if available
+            const deviceText = document.getElementById('detected-device');
+            if (deviceText && device.serial) {
+                deviceText.textContent = 'ST-Link ' + device.serial.substring(0, 8);
+                deviceText.style.color = '#4ec9b0';
+            }
         });
 
-        ipcRenderer.on('mcu-detected', (event, mcuInfo) => {
+        // Listen for MCU auto-detection results (bonus if it works)
+        ipcRenderer.on('mcu-auto-detected', (event, data) => {
+            console.log('[UI] MCU auto-detected:', data);
             const statusText = document.getElementById('status-text');
             const deviceText = document.getElementById('detected-device');
             const idcodeText = document.getElementById('detected-idcode');
+            const connectionStatusText = document.getElementById('connection-status-text');
 
-            statusText.textContent = 'Connected';
-            statusText.style.color = '#4ec9b0'; // Green
-
-            deviceText.textContent = mcuInfo.name || 'Unknown STM32';
-            idcodeText.textContent = mcuInfo.idcode || 'N/A';
-
-            // Update connection indicator in sidebar
-            document.getElementById('connection-status-text').textContent = 'Connected: ' + (mcuInfo.name || 'STM32');
-            document.getElementById('connection-indicator').style.background = '#4ec9b0';
+            if (data.dbDevice) {
+                // Full detection successful
+                if (statusText) statusText.textContent = 'Connected';
+                if (deviceText) {
+                    deviceText.textContent = data.dbDevice.name;
+                    deviceText.style.color = '#4ec9b0';
+                }
+                if (idcodeText) idcodeText.textContent = data.detected.deviceId || 'N/A';
+                if (connectionStatusText) {
+                    connectionStatusText.textContent = 'Connected: ' + data.dbDevice.name;
+                }
+            }
         });
 
         ipcRenderer.on('detection-failed', (event, error) => {
