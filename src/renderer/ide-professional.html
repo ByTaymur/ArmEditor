@@ -965,11 +965,11 @@
         </div>
 
         <!-- CONTENT AREA -->
-        <div class="content-area" style="display: flex; flex-direction: row; overflow: hidden;">
+        <div class="content-area" style="display: flex; flex-direction: column; overflow: hidden;">
 
-            <!-- CENTER: EDITOR VIEW (Always visible, takes available space) -->
+            <!-- TOP: EDITOR VIEW (Always visible, takes available space) -->
             <div class="view active" id="editor-view"
-                style="flex: 1; display: flex; flex-direction: column; min-width: 0;">
+                style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
                 <div class="editor-view" style="height: 100%;">
                     <div class="file-explorer">
                         <div class="explorer-header">PROJECT EXPLORER</div>
@@ -991,106 +991,66 @@
                 </div>
             </div>
 
-            <!-- RIGHT: DEBUG SIDEBAR (Persistent) -->
-            <div class="debug-sidebar" id="debug-sidebar"
-                style="width: 350px; background: #252526; border-left: 1px solid #3e3e42; display: flex; flex-direction: column; overflow-y: auto;">
+            <!-- BOTTOM: DEBUG PANEL (Persistent, Horizontal) -->
+            <div class="debug-panel" id="debug-panel"
+                style="height: 300px; background: #252526; border-top: 1px solid #3e3e42; display: flex; flex-direction: row; overflow: hidden;">
 
-                <!-- Connection Status Panel -->
-                <div style="padding: 15px; border-bottom: 1px solid #3e3e42; background: #1e1e1e;">
-                    <h3 style="margin: 0 0 10px 0; font-size: 12px; color: #cccccc; text-transform: uppercase;">
-                        Connection Status</h3>
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                        <div id="connection-indicator"
-                            style="width: 10px; height: 10px; border-radius: 50%; background: #3e3e42;"></div>
-                        <span id="connection-status-text" style="color: #858585; font-size: 13px;">Disconnected</span>
-                    </div>
-
-                    <!-- Quick Actions -->
-                    <h3 style="margin: 0 0 10px 0; font-size: 12px; color: #cccccc; text-transform: uppercase;">Quick
-                        Actions</h3>
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                        <button class="btn btn-primary" onclick="connectToTarget()"
-                            style="width: 100%; text-align: left; display: flex; align-items: center; gap: 8px;">
-                            <span>⚡</span> Connect to Target
+                <!-- COLUMN 1: Connection & Quick Actions -->
+                <div
+                    style="width: 250px; border-right: 1px solid #3e3e42; display: flex; flex-direction: column; background: #1e1e1e;">
+                    <div style="padding: 10px; border-bottom: 1px solid #3e3e42;">
+                        <h3 style="margin: 0 0 5px 0; font-size: 11px; color: #cccccc; text-transform: uppercase;">
+                            Connection</h3>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                            <div id="connection-indicator"
+                                style="width: 8px; height: 8px; border-radius: 50%; background: #3e3e42;"></div>
+                            <span id="connection-status-text"
+                                style="color: #858585; font-size: 12px;">Disconnected</span>
+                        </div>
+                        <button class="btn btn-primary btn-sm" onclick="connectToTarget()"
+                            style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                            <span>⚡</span> Connect
                         </button>
                         <div id="detection-status"
-                            style="display: none; font-size: 11px; color: #858585; margin-top: 5px;">
-                            Status: <span id="status-text">Idle</span>
+                            style="display: none; font-size: 10px; color: #858585; margin-top: 5px; text-align: center;">
+                            <span id="status-text">Idle</span>
                         </div>
-                        <button class="btn btn-warning" onclick="downloadFirmware()"
-                            style="width: 100%; text-align: left;">
-                            ⬇️ Flash Firmware
-                        </button>
+                    </div>
+
+                    <div style="padding: 10px; flex: 1; overflow-y: auto;">
+                        <h3 style="margin: 0 0 5px 0; font-size: 11px; color: #cccccc; text-transform: uppercase;">
+                            Actions</h3>
+                        <div style="display: flex; flex-direction: column; gap: 5px;">
+                            <button class="btn btn-warning btn-sm" onclick="downloadFirmware()"
+                                style="width: 100%; text-align: left;">⬇️ Flash FW</button>
+                            <button class="btn btn-info btn-sm" onclick="openMemoryWindow()"
+                                style="width: 100%; text-align: left;">💾 Memory</button>
+                            <button class="btn btn-secondary btn-sm" onclick="openOptionsDialog()"
+                                style="width: 100%; text-align: left;">⚙️ Settings</button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Debug Controls -->
-                <div style="padding: 15px; border-bottom: 1px solid #3e3e42;">
-                    <h3 style="margin: 0 0 10px 0; font-size: 12px; color: #cccccc; text-transform: uppercase;">Debug
-                        Controls</h3>
-                    <div class="debug-controls" style="display: flex; gap: 5px; flex-wrap: wrap;">
+                <!-- COLUMN 2: Debug Controls & Registers -->
+                <div style="flex: 1; border-right: 1px solid #3e3e42; display: flex; flex-direction: column;">
+                    <!-- Controls Toolbar -->
+                    <div
+                        style="padding: 8px; border-bottom: 1px solid #3e3e42; background: #2d2d2d; display: flex; gap: 5px; align-items: center;">
+                        <span style="font-size: 14px; margin-right: 5px;">🐛</span>
                         <button class="btn btn-success btn-sm" onclick="debugRun()" title="Run (F5)">▶️</button>
                         <button class="btn btn-danger btn-sm" onclick="debugStop()" title="Stop (Shift+F5)">⏹️</button>
                         <button class="btn btn-warning btn-sm" onclick="debugPause()" title="Pause">⏸️</button>
+                        <div style="width: 1px; height: 20px; background: #3e3e42; margin: 0 5px;"></div>
                         <button class="btn btn-info btn-sm" onclick="debugStepOver()"
                             title="Step Over (F10)">⏭️</button>
                         <button class="btn btn-info btn-sm" onclick="debugStepInto()"
                             title="Step Into (F11)">⤵️</button>
                         <button class="btn btn-info btn-sm" onclick="debugStepOut()"
                             title="Step Out (Shift+F11)">⤴️</button>
+                        <div style="width: 1px; height: 20px; background: #3e3e42; margin: 0 5px;"></div>
                         <button class="btn btn-secondary btn-sm" onclick="debugReset()" title="Reset MCU">🔄</button>
                     </div>
-                </div>
-
-                <!-- Registers (Compact) -->
-                <div style="padding: 15px; border-bottom: 1px solid #3e3e42;">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <h3 style="margin: 0; font-size: 12px; color: #cccccc; text-transform: uppercase;">Registers
-                        </h3>
-                        <button class="btn btn-sm" onclick="refreshRegisters()"
-                            style="font-size: 10px; padding: 2px 5px;">Refresh</button>
-                    </div>
-                    <div class="register-grid" id="register-grid"
-                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 11px;">
-                        <!-- Core Registers -->
-                        <div style="display: flex; justify-content: space-between; background: #333; padding: 3px;">
-                            <span>R0</span><span style="color: #4ec9b0;">0x00000000</span></div>
-                        <div style="display: flex; justify-content: space-between; background: #333; padding: 3px;">
-                            <span>R1</span><span style="color: #4ec9b0;">0x00000000</span></div>
-                        <div style="display: flex; justify-content: space-between; background: #333; padding: 3px;">
-                            <span>PC</span><span style="color: #ce9178;">0x08000000</span></div>
-                        <div style="display: flex; justify-content: space-between; background: #333; padding: 3px;">
-                            <span>SP</span><span style="color: #ce9178;">0x20000000</span></div>
-                    </div>
-                </div>
-
-                <!-- Variables -->
-                <div style="padding: 15px; flex: 1;">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <h3 style="margin: 0; font-size: 12px; color: #cccccc; text-transform: uppercase;">Variables
-                        </h3>
-                        <button class="btn btn-sm" onclick="addVariable()"
-                            style="font-size: 10px; padding: 2px 5px;">+</button>
-                    </div>
-                    <div id="variable-list-sidebar" style="font-size: 12px; color: #858585;">
-                        No variables watched.
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- OTHER VIEWS (Hidden by default, overlay or replace editor if needed) -->
-            <div class="view" id="stlink-view" style="display: none;">
-                <div class="card" style="text-align: center; padding: 40px 20px;">
-                    <div class="card-title" style="justify-content: center; margin-bottom: 20px;">
-                        <span class="card-title-icon" style="font-size: 32px;">🔌</span>
-                    </div>
-                    <h2 style="color: #cccccc; margin-bottom: 10px;">ST-Link Connection</h2>
-                    <p style="color: #858585; margin-bottom: 30px;">
-                        Connect your ST-Link debugger to the USB port.<br>
-                        The system will automatically detect the connected STM32 device.
+                    The system will automatically detect the connected STM32 device.
                     </p>
 
                     <div id="connection-status-area">
