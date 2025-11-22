@@ -965,10 +965,12 @@
         </div>
 
         <!-- CONTENT AREA -->
-        <div class="content-area">
-            <!-- EDITOR VIEW -->
-            <div class="view active" id="editor-view">
-                <div class="editor-view">
+        <div class="content-area" style="display: flex; flex-direction: row; overflow: hidden;">
+
+            <!-- CENTER: EDITOR VIEW (Always visible, takes available space) -->
+            <div class="view active" id="editor-view"
+                style="flex: 1; display: flex; flex-direction: column; min-width: 0;">
+                <div class="editor-view" style="height: 100%;">
                     <div class="file-explorer">
                         <div class="explorer-header">PROJECT EXPLORER</div>
                         <div class="file-tree" id="file-tree">
@@ -989,8 +991,98 @@
                 </div>
             </div>
 
-            <!-- ST-LINK VIEW -->
-            <div class="view stlink-view" id="stlink-view">
+            <!-- RIGHT: DEBUG SIDEBAR (Persistent) -->
+            <div class="debug-sidebar" id="debug-sidebar"
+                style="width: 350px; background: #252526; border-left: 1px solid #3e3e42; display: flex; flex-direction: column; overflow-y: auto;">
+
+                <!-- Connection Status Panel -->
+                <div style="padding: 15px; border-bottom: 1px solid #3e3e42; background: #1e1e1e;">
+                    <h3 style="margin: 0 0 10px 0; font-size: 12px; color: #cccccc; text-transform: uppercase;">
+                        Connection Status</h3>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                        <div id="connection-indicator"
+                            style="width: 10px; height: 10px; border-radius: 50%; background: #3e3e42;"></div>
+                        <span id="connection-status-text" style="color: #858585; font-size: 13px;">Disconnected</span>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <h3 style="margin: 0 0 10px 0; font-size: 12px; color: #cccccc; text-transform: uppercase;">Quick
+                        Actions</h3>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <button class="btn btn-primary" onclick="connectToTarget()"
+                            style="width: 100%; text-align: left; display: flex; align-items: center; gap: 8px;">
+                            <span>⚡</span> Connect to Target
+                        </button>
+                        <div id="detection-status"
+                            style="display: none; font-size: 11px; color: #858585; margin-top: 5px;">
+                            Status: <span id="status-text">Idle</span>
+                        </div>
+                        <button class="btn btn-warning" onclick="downloadFirmware()"
+                            style="width: 100%; text-align: left;">
+                            ⬇️ Flash Firmware
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Debug Controls -->
+                <div style="padding: 15px; border-bottom: 1px solid #3e3e42;">
+                    <h3 style="margin: 0 0 10px 0; font-size: 12px; color: #cccccc; text-transform: uppercase;">Debug
+                        Controls</h3>
+                    <div class="debug-controls" style="display: flex; gap: 5px; flex-wrap: wrap;">
+                        <button class="btn btn-success btn-sm" onclick="debugRun()" title="Run (F5)">▶️</button>
+                        <button class="btn btn-danger btn-sm" onclick="debugStop()" title="Stop (Shift+F5)">⏹️</button>
+                        <button class="btn btn-warning btn-sm" onclick="debugPause()" title="Pause">⏸️</button>
+                        <button class="btn btn-info btn-sm" onclick="debugStepOver()"
+                            title="Step Over (F10)">⏭️</button>
+                        <button class="btn btn-info btn-sm" onclick="debugStepInto()"
+                            title="Step Into (F11)">⤵️</button>
+                        <button class="btn btn-info btn-sm" onclick="debugStepOut()"
+                            title="Step Out (Shift+F11)">⤴️</button>
+                        <button class="btn btn-secondary btn-sm" onclick="debugReset()" title="Reset MCU">🔄</button>
+                    </div>
+                </div>
+
+                <!-- Registers (Compact) -->
+                <div style="padding: 15px; border-bottom: 1px solid #3e3e42;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h3 style="margin: 0; font-size: 12px; color: #cccccc; text-transform: uppercase;">Registers
+                        </h3>
+                        <button class="btn btn-sm" onclick="refreshRegisters()"
+                            style="font-size: 10px; padding: 2px 5px;">Refresh</button>
+                    </div>
+                    <div class="register-grid" id="register-grid"
+                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 11px;">
+                        <!-- Core Registers -->
+                        <div style="display: flex; justify-content: space-between; background: #333; padding: 3px;">
+                            <span>R0</span><span style="color: #4ec9b0;">0x00000000</span></div>
+                        <div style="display: flex; justify-content: space-between; background: #333; padding: 3px;">
+                            <span>R1</span><span style="color: #4ec9b0;">0x00000000</span></div>
+                        <div style="display: flex; justify-content: space-between; background: #333; padding: 3px;">
+                            <span>PC</span><span style="color: #ce9178;">0x08000000</span></div>
+                        <div style="display: flex; justify-content: space-between; background: #333; padding: 3px;">
+                            <span>SP</span><span style="color: #ce9178;">0x20000000</span></div>
+                    </div>
+                </div>
+
+                <!-- Variables -->
+                <div style="padding: 15px; flex: 1;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h3 style="margin: 0; font-size: 12px; color: #cccccc; text-transform: uppercase;">Variables
+                        </h3>
+                        <button class="btn btn-sm" onclick="addVariable()"
+                            style="font-size: 10px; padding: 2px 5px;">+</button>
+                    </div>
+                    <div id="variable-list-sidebar" style="font-size: 12px; color: #858585;">
+                        No variables watched.
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- OTHER VIEWS (Hidden by default, overlay or replace editor if needed) -->
+            <div class="view" id="stlink-view" style="display: none;">
                 <div class="card" style="text-align: center; padding: 40px 20px;">
                     <div class="card-title" style="justify-content: center; margin-bottom: 20px;">
                         <span class="card-title-icon" style="font-size: 32px;">🔌</span>
@@ -1024,25 +1116,169 @@
                     </div>
                 </div>
             </div>
-            <select class="form-control" id="target-mcu">
-                <option value="auto" selected>🔍 Auto-Detect MCU</option>
-                <option value="stm32f0x">STM32F0xx</option>
-                <option value="stm32f1x">STM32F1xx</option>
-                <option value="stm32f2x">STM32F2xx</option>
-                <option value="stm32f3x">STM32F3xx</option>
-                <option value="stm32f4x">STM32F4xx</option>
-                <option value="stm32f7x">STM32F7xx</option>
-                <option value="stm32g0x">STM32G0xx</option>
-                <option value="stm32g4x">STM32G4xx</option>
-                <option value="stm32h7x">STM32H7xx</option>
-                <option value="stm32l0x">STM32L0xx</option>
-                <option value="stm32l1x">STM32L1xx</option>
-                <option value="stm32l4x">STM32L4xx</option>
-                <option value="stm32l5x">STM32L5xx</option>
-                <option value="stm32wbx">STM32WBxx</option>
-                <option value="stm32wlx">STM32WLxx</option>
-            </select>
+            <div class="view" id="memory-view" style="display: none;">
+                <div class="card">
+                    <div class="card-title">
+                        <span class="card-title-icon">💾</span>
+                        Memory Browser
+                    </div>
+                    <div class="memory-controls">
+                        <div class="form-group" style="margin: 0;">
+                            <label class="form-label">Start Address (Hex)</label>
+                            <input type="text" class="form-control" id="memory-address" value="0x08000000"
+                                style="width: 150px;">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label class="form-label">Size (bytes)</label>
+                            <input type="number" class="form-control" id="memory-size" value="256"
+                                style="width: 120px;">
+                        </div>
+                        <button class="btn btn-primary" onclick="readMemory()">📖 Read</button>
+                        <button class="btn btn-secondary" onclick="saveMemory()">💾 Save to File</button>
+                    </div>
+                    <div class="memory-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Address</th>
+                                    <th>+0</th>
+                                    <th>+1</th>
+                                    <th>+2</th>
+                                    <th>+3</th>
+                                    <th>+4</th>
+                                    <th>+5</th>
+                                    <th>+6</th>
+                                    <th>+7</th>
+                                    <th>+8</th>
+                                    <th>+9</th>
+                                    <th>+A</th>
+                                    <th>+B</th>
+                                    <th>+C</th>
+                                    <th>+D</th>
+                                    <th>+E</th>
+                                    <th>+F</th>
+                                    <th>ASCII</th>
+                                </tr>
+                            </thead>
+                            <tbody id="memory-table-body">
+                                <tr>
+                                    <td colspan="18" style="text-align: center; color: #858585; padding: 40px;">
+                                        Connect to ST-Link and click "Read" to view memory
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="view" id="flash-view" style="display: none;">
+                <div class="card">
+                    <div class="card-title">
+                        <span class="card-title-icon">⚡</span>
+                        Flash Download
+                    </div>
+
+                    <div class="file-drop-zone" id="drop-zone" onclick="selectFile()">
+                        <div class="drop-icon">📁</div>
+                        <div class="drop-text">Drag and drop firmware file here</div>
+                        <div class="drop-hint">Supported: .hex, .bin, .elf</div>
+                    </div>
+                    <input type="file" id="file-input" accept=".hex,.bin,.elf" style="display: none;">
+
+                    <div class="file-info" id="file-info">
+                        <div class="file-info-row">
+                            <span class="file-info-label">File Name:</span>
+                            <span class="file-info-value" id="file-name">-</span>
+                        </div>
+                        <div class="file-info-row">
+                            <span class="file-info-label">File Size:</span>
+                            <span class="file-info-value" id="file-size">-</span>
+                        </div>
+                        <div class="file-info-row">
+                            <span class="file-info-label">File Type:</span>
+                            <span class="file-info-value" id="file-type">-</span>
+                        </div>
+                        <div class="file-info-row">
+                            <span class="file-info-label">Start Address:</span>
+                            <span class="file-info-value" id="file-address">0x08000000</span>
+                        </div>
+                    </div>
+
+                    <div class="card-title" style="margin-top: 20px;">Download Options</div>
+                    <div class="flash-options">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="verify-after" checked>
+                            <label for="verify-after">Verify after programming</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="run-after" checked>
+                            <label for="run-after">Run after programming</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="full-chip-erase">
+                            <label for="full-chip-erase">Full chip erase</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="skip-erase">
+                            <label for="skip-erase">Skip flash erase</label>
+                        </div>
+                    </div>
+
+                    <div class="progress-bar" id="flash-progress">
+                        <div class="progress-fill" id="flash-progress-fill" style="width: 0%"></div>
+                    </div>
+
+                    <div class="flash-actions">
+                        <button class="btn btn-success" onclick="startDownload()" id="download-btn" disabled>
+                            ⚡ Start Programming
+                        </button>
+                        <button class="btn btn-danger" onclick="eraseChip()">
+                            🗑️ Erase Chip
+                        </button>
+                        <button class="btn btn-secondary" onclick="readDeviceMemory()">
+                            📖 Read Device Memory
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="view" id="options-view" style="display: none;">
+                <div class="card">
+                    <div class="card-title">
+                        <span class="card-title-icon">⚙️</span>
+                        Option Bytes Configuration
+                    </div>
+                    <div style="padding: 40px; text-align: center; color: #858585;">
+                        <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
+                        <div style="font-size: 14px; margin-bottom: 10px;">Option Bytes Configuration</div>
+                        <div style="font-size: 12px;">
+                            Connect to a device to configure option bytes<br>
+                            (Read Protection, Write Protection, Boot Configuration)
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
+    </div>
+    </div>
+    <select class="form-control" id="target-mcu">
+        <option value="auto" selected>🔍 Auto-Detect MCU</option>
+        <option value="stm32f0x">STM32F0xx</option>
+        <option value="stm32f1x">STM32F1xx</option>
+        <option value="stm32f2x">STM32F2xx</option>
+        <option value="stm32f3x">STM32F3xx</option>
+        <option value="stm32f4x">STM32F4xx</option>
+        <option value="stm32f7x">STM32F7xx</option>
+        <option value="stm32g0x">STM32G0xx</option>
+        <option value="stm32g4x">STM32G4xx</option>
+        <option value="stm32h7x">STM32H7xx</option>
+        <option value="stm32l0x">STM32L0xx</option>
+        <option value="stm32l1x">STM32L1xx</option>
+        <option value="stm32l4x">STM32L4xx</option>
+        <option value="stm32l5x">STM32L5xx</option>
+        <option value="stm32wbx">STM32WBxx</option>
+        <option value="stm32wlx">STM32WLxx</option>
+    </select>
     </div>
     </div>
     <button class="btn btn-primary" onclick="refreshDevices()">🔄 Refresh Devices</button>
@@ -1062,132 +1298,16 @@
     </div>
     </div>
 
-    <!-- MEMORY VIEW -->
-    <div class="view memory-view" id="memory-view">
-        <div class="card">
-            <div class="card-title">
-                <span class="card-title-icon">💾</span>
-                Memory Browser
-            </div>
-            <div class="memory-controls">
-                <div class="form-group" style="margin: 0;">
-                    <label class="form-label">Start Address (Hex)</label>
-                    <input type="text" class="form-control" id="memory-address" value="0x08000000"
-                        style="width: 150px;">
-                </div>
-                <div class="form-group" style="margin: 0;">
-                    <label class="form-label">Size (bytes)</label>
-                    <input type="number" class="form-control" id="memory-size" value="256" style="width: 120px;">
-                </div>
-                <button class="btn btn-primary" onclick="readMemory()">📖 Read</button>
-                <button class="btn btn-secondary" onclick="saveMemory()">💾 Save to File</button>
-            </div>
-            <div class="memory-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Address</th>
-                            <th>+0</th>
-                            <th>+1</th>
-                            <th>+2</th>
-                            <th>+3</th>
-                            <th>+4</th>
-                            <th>+5</th>
-                            <th>+6</th>
-                            <th>+7</th>
-                            <th>+8</th>
-                            <th>+9</th>
-                            <th>+A</th>
-                            <th>+B</th>
-                            <th>+C</th>
-                            <th>+D</th>
-                            <th>+E</th>
-                            <th>+F</th>
-                            <th>ASCII</th>
-                        </tr>
-                    </thead>
-                    <tbody id="memory-table-body">
-                        <tr>
-                            <td colspan="18" style="text-align: center; color: #858585; padding: 40px;">
-                                Connect to ST-Link and click "Read" to view memory
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    ⚡ Start Programming
+    </button>
+    <button class="btn btn-danger" onclick="eraseChip()">
+        🗑️ Erase Chip
+    </button>
+    <button class="btn btn-secondary" onclick="readDeviceMemory()">
+        📖 Read Device Memory
+    </button>
     </div>
-
-    <!-- FLASH DOWNLOAD VIEW -->
-    <div class="view flash-view" id="flash-view">
-        <div class="card">
-            <div class="card-title">
-                <span class="card-title-icon">⚡</span>
-                Flash Download
-            </div>
-
-            <div class="file-drop-zone" id="drop-zone" onclick="selectFile()">
-                <div class="drop-icon">📁</div>
-                <div class="drop-text">Drag and drop firmware file here</div>
-                <div class="drop-hint">Supported: .hex, .bin, .elf</div>
-            </div>
-            <input type="file" id="file-input" accept=".hex,.bin,.elf" style="display: none;">
-
-            <div class="file-info" id="file-info">
-                <div class="file-info-row">
-                    <span class="file-info-label">File Name:</span>
-                    <span class="file-info-value" id="file-name">-</span>
-                </div>
-                <div class="file-info-row">
-                    <span class="file-info-label">File Size:</span>
-                    <span class="file-info-value" id="file-size">-</span>
-                </div>
-                <div class="file-info-row">
-                    <span class="file-info-label">File Type:</span>
-                    <span class="file-info-value" id="file-type">-</span>
-                </div>
-                <div class="file-info-row">
-                    <span class="file-info-label">Start Address:</span>
-                    <span class="file-info-value" id="file-address">0x08000000</span>
-                </div>
-            </div>
-
-            <div class="card-title" style="margin-top: 20px;">Download Options</div>
-            <div class="flash-options">
-                <div class="checkbox-group">
-                    <input type="checkbox" id="verify-after" checked>
-                    <label for="verify-after">Verify after programming</label>
-                </div>
-                <div class="checkbox-group">
-                    <input type="checkbox" id="run-after" checked>
-                    <label for="run-after">Run after programming</label>
-                </div>
-                <div class="checkbox-group">
-                    <input type="checkbox" id="full-chip-erase">
-                    <label for="full-chip-erase">Full chip erase</label>
-                </div>
-                <div class="checkbox-group">
-                    <input type="checkbox" id="skip-erase">
-                    <label for="skip-erase">Skip flash erase</label>
-                </div>
-            </div>
-
-            <div class="progress-bar" id="flash-progress">
-                <div class="progress-fill" id="flash-progress-fill" style="width: 0%"></div>
-            </div>
-
-            <div class="flash-actions">
-                <button class="btn btn-success" onclick="startDownload()" id="download-btn" disabled>
-                    ⚡ Start Programming
-                </button>
-                <button class="btn btn-danger" onclick="eraseChip()">
-                    🗑️ Erase Chip
-                </button>
-                <button class="btn btn-secondary" onclick="readDeviceMemory()">
-                    📖 Read Device Memory
-                </button>
-            </div>
-        </div>
+    </div>
     </div>
 
     <!-- OPTION BYTES VIEW -->
