@@ -1866,23 +1866,57 @@ ipcMain.on('flash-firmware', async (event, data) => {
 ipcMain.on('scan-stlinks', async (event, tool = 'cubeprogrammer') => {
     try {
         let devices = [];
+        let toolUsed = tool;
 
         if (tool === 'stlink-org') {
             mainWindow.webContents.send('output-append', '🔍 Scanning with Open Source ST-Link...\n');
             const stLinkOrg = new OpenSourceSTLink();
+
+            // Check if stlink tools are installed
+            const isInstalled = await stLinkOrg.isInstalled();
+            if (!isInstalled) {
+                mainWindow.webContents.send('output-append', '⚠️ st-info not found. Install stlink-tools or switch to CubeProgrammer.\n');
+                event.reply('stlink-scan-complete', []);
+                return;
+            }
+
             devices = await stLinkOrg.listDevices();
         } else {
             // Default: STM32CubeProgrammer
-            if (!stm32Tools) {
-                stm32Tools = new STM32Tools();
-            }
             mainWindow.webContents.send('output-append', '🔍 Scanning with STM32CubeProgrammer...\n');
-            devices = await stm32Tools.scanSTLink();
+
+            const cubeProg = new STM32CubeProgrammer();
+            const isInstalled = await cubeProg.isInstalled();
+
+            if (!isInstalled) {
+                mainWindow.webContents.send('output-append', '⚠️ STM32_Programmer_CLI not found.\n');
+
+                // Try fallback to Open Source ST-Link
+                mainWindow.webContents.send('output-append', '🔄 Trying Open Source ST-Link as fallback...\n');
+                const stLinkOrg = new OpenSourceSTLink();
+                const stlinkInstalled = await stLinkOrg.isInstalled();
+
+                if (stlinkInstalled) {
+                    devices = await stLinkOrg.listDevices();
+                    toolUsed = 'stlink-org';
+                    mainWindow.webContents.send('output-append', '✅ Using Open Source ST-Link\n');
+                } else {
+                    mainWindow.webContents.send('output-append', '❌ No programmer tools found. Install STM32CubeProgrammer or stlink-tools.\n');
+                    event.reply('stlink-scan-complete', []);
+                    return;
+                }
+            } else {
+                // CubeProgrammer is installed, use STM32Tools
+                if (!stm32Tools) {
+                    stm32Tools = new STM32Tools();
+                }
+                devices = await stm32Tools.scanSTLink();
+            }
         }
 
         if (devices.length > 0) {
             const device = devices[0];
-            mainWindow.webContents.send('output-append', `✅ Found: ${device.serial}\n`);
+            mainWindow.webContents.send('output-append', `✅ Found: ${device.serial || device.name || 'ST-Link'}\n`);
             mainWindow.webContents.send('stlink-detected', device);
 
             // AUTO MCU DETECTION (Keil-like)
@@ -1925,11 +1959,12 @@ ipcMain.on('scan-stlinks', async (event, tool = 'cubeprogrammer') => {
                     `⚠️ Auto-detection error: ${detectionError.message}\n`);
             }
         } else {
-            mainWindow.webContents.send('output-append', '❌ No ST-Link found\n');
+            mainWindow.webContents.send('output-append', '❌ No ST-Link devices found\n');
         }
 
         event.reply('stlink-scan-complete', devices);
     } catch (error) {
+        console.error('[scan-stlinks Error]', error);
         mainWindow.webContents.send('output-append', `❌ Scan error: ${error.message}\n`);
         event.reply('stlink-scan-complete', []);
     }
