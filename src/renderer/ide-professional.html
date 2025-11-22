@@ -1815,15 +1815,21 @@
         }
 
         function buildAndFlash() {
-            if (!currentProject) {
+            if (!currentProjectPath) {
                 appendConsole('Error: No project opened', 'error');
                 return;
             }
+
+            appendConsole('🚀 Starting Build & Flash sequence...', 'normal');
+
+            // Auto-connect if not connected
             if (!currentDevice) {
-                appendConsole('Warning: No device connected. Will build only.', 'warning');
+                appendConsole('🔌 Device not connected. Auto-connecting...', 'warning');
+                connectToTarget();
             }
-            appendConsole('Building and flashing...', 'normal');
-            ipcRenderer.send('build-project', true); // With auto-flash
+
+            // Send build command with auto-flash enabled
+            ipcRenderer.send('build-project', true);
         }
 
         function flashFirmware() {
