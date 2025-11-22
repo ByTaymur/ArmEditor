@@ -2054,14 +2054,29 @@
 
         // Debug Control Functions
         function debugRun() {
+            console.log('[debugRun] ========== FUNCTION CALLED ==========');
+            console.log('[debugRun] currentDevice:', currentDevice);
+
             if (!currentDevice) {
+                console.error('[debugRun] ERROR: No device connected!');
                 appendConsole('❌ No device connected. Please connect ST-Link first.', 'error');
                 return;
             }
+            console.log('[debugRun] Device check OK');
+
+            console.log('[debugRun] Appending console message...');
             appendConsole('▶️ Starting debug session...', 'normal');
+
+            console.log('[debugRun] Sending IPC message: debug-start');
             ipcRenderer.send('debug-start');
+
+            console.log('[debugRun] Setting debugRunning = true');
             debugRunning = true;
+
+            console.log('[debugRun] Updating debug status...');
             updateDebugStatus('Running');
+
+            console.log('[debugRun] ========== FUNCTION COMPLETE ==========');
         }
 
         function debugStop() {
