@@ -1007,6 +1007,14 @@
                             <span id="connection-status-text"
                                 style="color: #858585; font-size: 12px;">Disconnected</span>
                         </div>
+
+                        <!-- Programmer Selection -->
+                        <select id="programmer-tool-select" class="form-control"
+                            style="margin-bottom: 8px; font-size: 11px; padding: 4px; width: 100%; background: #333; color: #ccc; border: 1px solid #3e3e42;">
+                            <option value="cubeprogrammer">STM32CubeProgrammer</option>
+                            <option value="stlink-org">Open Source ST-Link</option>
+                        </select>
+
                         <button class="btn btn-primary btn-sm" onclick="connectToTarget()"
                             style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 5px;">
                             <span>⚡</span> Connect
@@ -1603,7 +1611,7 @@
             const btn = document.querySelector('button[onclick="connectToTarget()"]');
             const statusText = document.getElementById('status-text');
             const detectionStatus = document.getElementById('detection-status');
-            const toolSelect = document.getElementById('programmer-tool');
+            const toolSelect = document.getElementById('programmer-tool-select');
             const selectedTool = toolSelect ? toolSelect.value : 'cubeprogrammer'; // Default
 
             // Reset UI
