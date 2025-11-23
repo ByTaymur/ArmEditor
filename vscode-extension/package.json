@@ -2,7 +2,7 @@
   "name": "hopeide",
   "displayName": "HopeIDE - ARM Embedded Development",
   "description": "Professional ARM Cortex-M debugging - Free Keil alternative for STM32",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "publisher": "hopeide",
   "icon": "resources/icon.png",
   "repository": {
