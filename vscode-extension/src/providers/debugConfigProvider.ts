@@ -57,23 +57,33 @@ export class HopeIDEConfigProvider implements vscode.DebugConfigurationProvider 
         token?: vscode.CancellationToken
     ): Promise<vscode.DebugConfiguration | undefined> {
 
-        // If no config, create default
+        // If no config, create default with auto-detection
         if (!config.type && !config.request && !config.name) {
             const configs = await this.provideDebugConfigurations(folder);
             return configs[0];
         }
 
-        // Auto-detect device if not specified
+        // Auto-detect device if not specified (UNIVERSAL!)
         if (config.type === 'hopeide' && !config.device) {
             try {
                 const device = await this.detector.detect();
                 if (device) {
                     config.device = device.name;
                     vscode.window.showInformationMessage(
-                        `Auto-detected: ${device.name}`
+                        `🎯 Auto-detected: ${device.name} (${device.family})`
                     );
+                } else {
+                    vscode.window.showWarningMessage(
+                        '⚠️ No STM32 device detected. Using default config.'
+                    );
+                    config.device = 'STM32F4'; // Generic fallback
                 }
-            } catch { }
+            } catch {
+                vscode.window.showWarningMessage(
+                    '⚠️ Device detection failed. Using default config.'
+                );
+                config.device = 'STM32F4'; // Generic fallback
+            }
         }
 
         // Find ELF file if not specified
