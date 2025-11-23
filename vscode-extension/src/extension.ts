@@ -6,9 +6,11 @@
 import * as vscode from 'vscode';
 import { BuildService } from './services/buildService';
 import { FlashService } from './services/flashService';
+import { DeviceDetector } from './services/deviceDetector';
 
 let buildService: BuildService;
 let flashService: FlashService;
+let deviceDetector: DeviceDetector;
 let outputChannel: vscode.OutputChannel;
 
 export function activate(context: vscode.ExtensionContext) {
@@ -22,6 +24,7 @@ export function activate(context: vscode.ExtensionContext) {
     // Initialize services
     buildService = new BuildService(outputChannel);
     flashService = new FlashService(outputChannel);
+    deviceDetector = new DeviceDetector();
 
     // Register commands
     registerCommands(context);
@@ -116,8 +119,28 @@ function registerCommands(context: vscode.ExtensionContext) {
             outputChannel.appendLine('');
             outputChannel.appendLine('🔍 Detecting connected STM32 device...');
 
-            // TODO: Implement device detection
-            vscode.window.showInformationMessage('Device detection coming soon!');
+            try {
+                const device = await deviceDetector.detect();
+
+                if (device) {
+                    outputChannel.appendLine('');
+                    outputChannel.appendLine('✅ Device detected!');
+                    outputChannel.appendLine(`   Name: ${device.name}`);
+                    outputChannel.appendLine(`   Family: ${device.family}`);
+                    outputChannel.appendLine(`   Chip ID: ${device.chipId}`);
+                    outputChannel.appendLine(`   Flash: ${device.flashSize} bytes`);
+
+                    vscode.window.showInformationMessage(
+                        `Found: ${device.name} (${device.family})`
+                    );
+                } else {
+                    outputChannel.appendLine('❌ No device detected');
+                    vscode.window.showWarningMessage('No STM32 device detected. Check connection.');
+                }
+            } catch (error: any) {
+                outputChannel.appendLine(`❌ Detection failed: ${error.message}`);
+                vscode.window.showErrorMessage('Device detection failed. Is ST-Link connected?');
+            }
         })
     );
 

@@ -228,9 +228,10 @@
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.80.0",
+    "@vscode/debugadapter": "^1.68.0",
+    "@vscode/debugprotocol": "^1.68.0",
     "@vscode/vsce": "^2.22.0",
     "esbuild": "^0.19.0",
     "typescript": "^5.0.0"
-  },
-  "dependencies": {}
+  }
 }
