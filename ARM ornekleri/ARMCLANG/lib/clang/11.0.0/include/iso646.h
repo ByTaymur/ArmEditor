@@ -1,0 +1,28 @@
+/* Modifications copyright (C) 2020 Arm Limited (or its affiliates). All rights reserved. */
+/*===---- iso646.h - Standard header for alternate spellings of operators---===
+ *
+ * Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+ * See https://llvm.org/LICENSE.txt for license information.
+ * SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+ *
+ *===-----------------------------------------------------------------------===
+ */
+
+#ifndef __ISO646_H
+#define __ISO646_H
+
+#ifndef __cplusplus
+#define and    &&
+#define and_eq &=
+#define bitand &
+#define bitor  |
+#define compl  ~
+#define not    !
+#define not_eq !=
+#define or     ||
+#define or_eq  |=
+#define xor    ^
+#define xor_eq ^=
+#endif
+
+#endif /* __ISO646_H */

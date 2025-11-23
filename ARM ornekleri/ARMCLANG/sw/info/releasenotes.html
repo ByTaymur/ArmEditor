@@ -1,0 +1,821 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head>
+<!-- Copyright (C) 2020 Arm Ltd. All rights reserved. -->
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Release notes for Arm Compiler 6.14.1</title>
+
+<style type="text/css">
+<!--
+body { font-family: times new roman, serif; margin: 20px; }
+h1 { font-size: xx-large; font-weight: bold; color: #0091BD; text-align: center; }
+h2 { color: #0091BD; font-size: 24px; }
+h3 { color: #0091BD; font-size: 20px; }
+h4 { color: #0091BD; font-size: 16px; }
+h5 { color: #0091BD; font-size: 14px; font-style: italic; }
+dt { font-weight: bold; }
+p { color: black; }
+span { color: black }
+.builddata { color: #0091BD; text-align: center; }
+.bookref { font-style: italic; }
+.guiref { font-weight: bold; }
+table, th, td { border: 1px solid #0091BD; border-collapse:collapse; padding-left:10px; padding-right:10px; font-size:0.9em; }
+th { background-color:#0091BD; color: white; text-align: left; }
+
+.toc {
+    list-style-type: none;
+}
+.tab { margin-left: 40px; }
+-->
+</style>
+
+</head>
+<body>
+
+<img alt="Arm Logo" src="data:image/png;base64,
+iVBORw0KGgoAAAANSUhEUgAAAIMAAAAqCAYAAACQjuhAAAAACXBIWXMAABcRAAAXEQHKJvM/AAAE
+BElEQVR42u2c23GjMBSG/zD7vpRACbiCkKGAdSoIVCC7AuwKbFVgbwX2FsCEVBC2gng7IBXsPkis
+GcLlSGAMtv4Zv3iMLkefjs4RkgEjIyOjsh60n+SxA8AD8AjAlZ+yUgAJgF9gflJRhtdSSwbmp8S2
+OI2/KdbPYxtAAOCH7INau3XqFM/MC3U6NXVyMP9E7PNc2t8DYFeUl8o+HC8DgxhAJhuiohOANZi/
+L5T1t+WZBMx/IrRpBSBqGZiHwoDsKoxX3wYg/DJAanV6ADY1E6ZKewBLMD+rgSCSMKvYftkGhaXk
+CXh8APCqAQLkTNiBx69yZg4vHm8AHBRAgBzArEOdC2kzV+GpAMA7eOyWyhLfq4GQ2/4AHu+6wyBm
+07smBGV5AIYHQhhiofHksXKG0uHbaLbYkXZyCyDsFEH+ClkDEBahQ4HGbKLMtteB/UKg+dy6Q52L
+jm22pTfNQejHDgJSRRj6bUQVEGPXkRTMXVbuBcZgURW8Ww0guBcEYSriN9y3iAaDWM8PGhVkMvrO
+P6cJGyutTSu7lnu2Tx/KNO3tyczkv741rHWOQsF7mR+nNalQINNRe0SDLfYRxOAUg9sX2fe+vcJR
+pnen0qSLNGOLTJa3r0j9d8TxmwPY1sNwzmOp+WvYOINE51fg8VY2cn5lCDIAzzVtTmRbgy9G7qaw
+sjyRpSzB408Fm+d2f6qMZ5ifgMczAB+EyfdYhMHqEHWnAGZkV8r8DMx/ll7kmiA8tba5XxCOreUx
+f6Xo4p8bA9scMsUgvgqGF6JRQ638m/mhdJnX0Jq0vd2vlmRoqEsyrQ+U8px6GEQG4Qxg1BBddvV0
+vQLztyNOTd+Iv/tJ9sSKQapVEVC0r1ddjSoaygcfmOH1W3EJo9gu6bXMwpa3VRFQ9EMmLQMZUm9X
+gCFRmCCU36YXgNGug8EZbIYJ9znk+j3lPQ8176EpdRj6DcCSWzHkLci68uB9DtbT4bMIHbc+KRiM
+1ANlA8MdreN3u0z0LccMwXRhcI3J7geGtoDHLr/27KhHMwTjhYGyhvfz1lG8vvXMEIwXBsouHeup
+7rkx/7hhoOwjOPJsZFevEBnzjxkGsTFDWSo2HY+6RyaTmEY2QXmbaEP37oPwKgtj+mnAsAdtH9+V
+QDgKIKxgTlxPCAa1swYuxDWwVSMUPA7A4w8TJ4xbdaejtzifEqYsGRGACDzOb/7+AfBdwmLSx0nD
+wPwMPA6hfgWu7mq+0URjhhyIBOKsotHdwyCA2KPbxVOjm4FBALG6gIfIjNeZIgxnDzFDPyd3ThAX
+WfbG/FOEQQCRgvkzOaNPmt5gDXELKzWmH5+6/MFX8c+l3AYAEogLrsepHQMzMOjD4ZT2JVIz+EZG
+E9U/yX9anPUqLjMAAAAASUVORK5CYII="/>
+
+
+
+
+
+
+
+<h1>Release notes for Arm Compiler 6.14.1</h1>
+
+
+
+
+
+
+
+
+
+
+
+<h2>Table of Contents</h2>
+
+<ol class="toc">
+  <li>1. <a href="#introduction">Introduction</a>
+    <ol class="toc">
+      <li>1.1. <a href="#configuration">Arm Compiler 6 Configuration</a></li>
+      <li>1.2.  <a href="#supportlevels">What's Supported in Arm Compiler 6.14.1?</a></li>
+    </ol>
+  </li>
+  <li>2. <a href="#install">Installation Instructions</a>
+    <ol class="toc">
+      <li>2.1. <a href="#install_armds">Integration into Arm Development Studio 2018.0 or later</a></li>
+      <li>2.2. <a href="#install_keil">Integration into Keil MDK 5.22 or later</a></li>
+      <li>2.3. <a href="#install_standalone">Use as a standalone toolchain installation</a></li>
+      <li>2.4. <a href="#install_linux">Installation on Linux</a></li>
+      <li>2.5. <a href="#install_windows">Installation on Windows</a></li>
+    </ol>
+  </li>
+  <li>3. <a href="#uninstall">Uninstall</a></li>
+  <li>4. <a href="#documentation">Documentation</a></li>
+  <li>5. <a href="#feedback">Feedback and Support</a></li>
+  <li>6. <a href="#history">Release History and Changes</a></li>
+</ol>
+
+
+<a name="introduction"></a>
+<h2>1. Introduction</h2>
+
+
+
+
+
+
+<p>
+This is the initial set of release notes provided at the time of the release. For the latest copy of the release notes, see <a href="https://developer.arm.com/tools-and-software/embedded/arm-compiler/downloads/version-6/6-14-1">the latest version</a> on <a href="https://developer.arm.com">https://developer.arm.com</a>.
+</p>
+
+
+
+
+<p>
+Arm Compiler 6.14.1 adds:
+</p>
+
+<ul>
+  <li>Support for Cortex-A78 and Cortex-X1.</li>
+  <li>Armv8-M:
+    <ul>
+      <li>Support for assembly for the Custom Datapath Extension (CDE).</li>
+      <li>Beta support for ACLE intrinsics for the Custom Datapath Extension (CDE).</li>
+    </ul>
+  </li>
+</ul>
+
+
+<p>
+
+Arm Compiler 6.14.1 is an update release to Arm Compiler 6.14 and is intended for use:
+
+</p>
+<ul>
+<li>In conjunction with an Arm Development Studio toolkit.</li>
+<li>In conjunction with a Keil MDK toolkit.</li>
+<li>As a standalone toolchain installation, provided you have a license for a suitable toolkit.</li>
+</ul>
+
+<p>
+Contact your sales representative or visit <a href="https://developer.arm.com/tools-and-software/embedded/arm-compiler/buy">https://developer.arm.com/tools-and-software/embedded/arm-compiler/buy</a> to enquire about a license.
+Visit <a href="https://developer.arm.com/support/licensing">https://developer.arm.com/support/licensing</a> to manage your licenses or access troubleshooting resources.
+</p>
+
+<p>
+If you are using a floating license, your license server must be running <tt>armlmd</tt> and <tt>lmgrd</tt> version 11.14.1.0 or later.
+Arm recommends that you always use the latest version of the license server software that is available from <a href="https://developer.arm.com/products/software-development-tools/license-management/downloads">https://developer.arm.com/products/software-development-tools/license-management/downloads</a>.
+</p>
+
+<a name="configuration"></a>
+<h3>1.1 Arm Compiler 6 Configuration</h3>
+
+<p>
+The Arm Compiler 6.14.1 toolchain includes the following:
+</p>
+
+<ul>
+  <li><span style="font-weight:bold">armclang:</span> Compiler and integrated assembler based on LLVM and Clang technology.</li>
+  <li><span style="font-weight:bold">armasm:</span> Legacy assembler for armasm-syntax assembly code. Use the armclang integrated assembler for all new assembly files.</li>
+  <li><span style="font-weight:bold">armar:</span> Archiver which enables sets of ELF object files to be collected together.</li>
+  <li><span style="font-weight:bold">armlink:</span> Linker that combines objects and libraries to produce an executable.</li>
+  <li><span style="font-weight:bold">fromelf:</span> Image conversion utility and dissembler.</li>
+  <li><span style="font-weight:bold">Arm C++ libraries:</span> Libraries based on the LLVM libc++ project.</li>
+  <li><span style="font-weight:bold">Arm C libraries:</span> Runtime support libraries for embedded systems.</li>
+</ul>
+
+<a name="supportlevels"></a>
+<h3>1.2 What's Supported in Arm Compiler 6.14.1?</h3>
+
+<p>
+Arm Compiler is provided as part of Arm development suites such as Arm Development Studio (Arm DS), and Keil Microcontroller Development Kit (MDK). Subject to your license terms, Arm Compiler 6.14.1 provides support for the following Arm Architectures and Processors:
+
+<table>
+<tbody>
+<tr>
+  <td style="text-align: left;"><b>Architecture</b></td>
+  <td style="text-align: left;"><b>Processors<sup>*</sup></b></td>
+</tr>
+
+<tr>
+  <td style="text-align: left;">Future</td>
+  <td style="text-align: left;">&mdash;</td>
+</tr>
+
+<tr>
+  <td rowspan="2" style="text-align: left;">Armv8-A up to 8.6-A</td>
+  <td style="text-align: left;">Neoverse N1/E1</td>
+</tr>
+<tr>
+  <td style="text-align: left;">Cortex-X1/A78/A77/76AE/76/75/73/72/65AE/65/57/55/53/35/34/32</td>
+</tr>
+
+<tr>
+  <td style="text-align: left;">Armv7-A</td>
+  <td style="text-align: left;">Cortex-A17/15/12/9/8/7/5</td>
+</tr>
+
+<tr>
+  <td style="text-align: left;">Armv8-R</td>
+  <td style="text-align: left;">Cortex-R52</td>
+</tr>
+
+<tr>
+  <td style="text-align: left;">Armv7-R</td>
+  <td style="text-align: left;">Cortex-R8/7/5/4F/4</td>
+</tr>
+
+<tr>
+  <td rowspan="2" style="text-align: left;">Armv8-M up to 8.1-M</td>
+  <td style="text-align: left;">Star</td>
+</tr>
+<tr>
+  <td style="text-align: left;">Cortex-M55/M35P/33/23</td>
+</tr>
+
+<tr>
+  <td rowspan="2" style="text-align: left;">Armv7-M</td>
+  <td style="text-align: left;">SC300</td>
+</tr>
+<tr>
+  <td style="text-align: left;">Cortex-M7/4/3</td>
+</tr>
+
+<tr>
+  <td rowspan="2" style="text-align: left;">Armv6-M</td>
+  <td style="text-align: left;">SC000</td>
+</tr>
+<tr>
+  <td style="text-align: left;">Cortex-M1/0/0+</td>
+</tr>
+
+</tbody>
+</table>
+</p>
+
+<p>
+For more information about the level of support for the Architectures and Processors, refer to the development suite documentation:
+<ul>
+  <li>Arm DS: <a href="https://developer.arm.com/tools-and-software/embedded/arm-development-studio">https://developer.arm.com/tools-and-software/embedded/arm-development-studio</a></li>
+  <li>Keil MDK: <a href="https://developer.arm.com/tools-and-software/embedded/keil-mdk">https://developer.arm.com/tools-and-software/embedded/keil-mdk</a></li>
+</ul>
+</p>
+
+<p>
+To download Arm Compiler 6.14.1, or to find configuration instructions for use with Arm DS or Keil MDK, please visit <a href="https://developer.arm.com/tools-and-software/embedded/arm-compiler/downloads/version-6">https://developer.arm.com/tools-and-software/embedded/arm-compiler/downloads/version-6</a>
+</p>
+
+<p>
+<b><sup>*</sup></b>&nbsp;Support for Future Architecture Technologies and certain Processors is available only as part of Arm DS Platinum Edition.
+Arm DS Platinum Edition is reserved for Arm partners developing the latest IP before it becomes available in devices.
+It includes all the features of Arm DS Gold, and additionally has support for the latest announced IP from Arm. Please contact Arm for more information.
+</p>
+
+<a name="install"></a>
+<h2>2. Installation Instructions</h2>
+
+<p>
+If you received Arm Compiler 6.14.1 as part of a toolkit, for example Arm DS, the toolkit installer takes care of the installation process.
+Please refer to the installation instructions for the toolkit in such cases.
+</p>
+
+<p>
+For all other cases, you must select an appropriate installation location depending on how you intend to use Arm Compiler 6.14.1:
+</p>
+<ul>
+  <li>Integrated into Arm DS 2018.0 or later.</li>
+  <li>Integrated into Keil MDK 5.22 or later.</li> 
+  <li>As a standalone toolchain installation.</li>
+</ul>
+
+<p>Unless you are using Keil MDK, Arm Compiler 6.14.1 can be installed in any location, including the default location, providing this is outside of an Arm DS product installation directory.</p>
+<p>Please refer to the important configuration instructions at <a href="https://developer.arm.com/tools-and-software/software-development-tools/license-management/resources/product-and-toolkit-configuration">https://developer.arm.com/tools-and-software/software-development-tools/license-management/resources/product-and-toolkit-configuration</a> and also the relevant sections below.</p>
+
+<a name="install_armds"></a>
+<h3>2.1. Integration into Arm Development Studio 2018.0 or later</h3>
+<p>
+You can integrate the toolchain with Arm DS by following the instructions available at <a href="https://developer.arm.com/docs/101470/latest/configure-arm-development-studio/register-a-compiler-toolchain">https://developer.arm.com/docs/101470/latest/configure-arm-development-studio/register-a-compiler-toolchain</a>.
+</p>
+
+<a name="install_keil"></a>
+<h3>2.2. Integration into Keil MDK 5.22 or later</h3>
+<p>Arm Compiler 6.14.1 must be installed underneath the ARM subdirectory of the Keil MDK installation directory. For example, if your Keil MDK installation directory is in <tt>C:\Keil_v5</tt>, the recommended installation path is <tt>C:\Keil_v5\ARM\ARMCompiler6.14.1.</tt></p>
+<p>You can integrate the toolchain into a Keil MDK project by following the instructions in the tutorial available at <a href="http://www.keil.com/support/man/docs/uv4/uv4_armcompilers.htm">http://www.keil.com/support/man/docs/uv4/uv4_armcompilers.htm</a>.</p>
+<p>Only the 32-bit variant of Arm Compiler 6.14.1 for Windows can be used with a Keil Single-User License or Keil Floating-User License.</p>
+
+<a name="install_standalone"></a>
+<h3>2.3. Use as a standalone toolchain installation</h3>
+<p>
+Ensure that the ARMLMD_LICENSE_FILE environment variable is pointing to your license file or license server.
+</p>
+
+<a name="install_linux"></a>
+<h3>2.4. Installation on Linux</h3>
+
+<p>Arm Compiler 6.14.1 has been tested on the following supported 64-bit platforms:</p>
+<ul>
+  <li>Red Hat Enterprise Linux 6.</li>
+  <li>Red Hat Enterprise Linux 7.</li>
+  <li>Red Hat Enterprise Linux 8.</li>
+  <li>Ubuntu Desktop Edition 16.04 LTS.</li>
+  <li>Ubuntu Desktop Edition 18.04 LTS.</li>
+</ul>
+<p>Arm Compiler 6.14.1 is not expected to work on older platforms.</p>
+
+<p>
+To install Arm Compiler 6.14.1, run (not <tt>source</tt>) <tt>install_x86_64.sh</tt> and follow the on-screen instructions. The installer unpacks Arm Compiler 6.14.1 into your chosen directory.
+</p>
+
+<p>
+The <tt>armclang</tt> binary is dynamically linked to a copy of libstdc++ installed under your chosen directory as part of Arm Compiler 6.14.1.
+</p>
+
+<a name="install_windows"></a>
+<h3>2.5. Installation on Windows</h3>
+
+<p>Arm Compiler 6.14.1 has been tested on the following supported 64-bit platforms:</p>
+<ul>
+  <li>Windows Server 2012.</li>
+  <li>Windows Server 2016.</li>
+  <li>Windows 8.1.</li>
+  <li>Windows 10.</li>
+</ul>
+<p>Arm Compiler 6.14.1 is not expected to work on older platforms.</p>
+<p>Arm Compiler 6.14.1 has been tested on a feature update of Windows 10 available as of May 2020. It is expected to work well on later updates.</p>
+<p>The 32-bit variant of Arm Compiler 6.14.1 for Windows is supported if and only if you are using Keil MDK on a supported 64-bit platform. 32-bit Windows platforms are not supported.</p>
+
+<p>
+To install Arm Compiler 6.14.1, run <tt>win-x86_64\setup.exe</tt> or <tt>win-x86_32\setup.exe</tt> and follow the on-screen instructions.
+If you have an earlier version of Arm Compiler 6 installed and you wish to perform an upgrade, Arm recommends that you uninstall the previous version before installing the new version of Arm Compiler 6.
+</p>
+
+<p>
+Arm Compiler 6.14.1 is built with Microsoft Visual Studio 2017 and requires the Universal C Runtime in Windows to be installed. For further information see <a href="https://support.microsoft.com/en-gb/help/2999226/update-for-universal-c-runtime-in-windows">https://support.microsoft.com/en-gb/help/2999226/update-for-universal-c-runtime-in-windows</a>.
+</p>
+
+<a name="uninstall"></a>
+<h2>3. Uninstall</h2>
+<p>
+On Linux, delete the Arm Compiler 6.14.1 installation directory.
+</p>
+<p>
+On Windows, use <span class="guiref">Programs and Features</span> in
+<span class="guiref">Control Panel</span>, select
+<span class="guiref">ARM Compiler 6.14.1</span>, and click the
+<span class="guiref">Uninstall</span> button.
+</p>
+
+
+
+
+
+
+
+
+<a name="documentation"></a>
+<h2>4. Documentation</h2>
+<p>
+<a href="https://developer.arm.com/tools-and-software/embedded/arm-compiler/documentation/version-6-14">Documentation for the Arm Compiler 6.14 release series</a> is available on <a href="https://developer.arm.com">https://developer.arm.com</a> and comprises:
+</p>
+<ul>
+  <li>User Guide.</li>
+  <li>Reference Guide.</li>
+  <li>Arm C and C++ Libaries and Floating-Point Support User Guide.</li>
+  <li>Migration and Compatibility Guide.</li>
+  <li>Errors and Warnings Reference Guide.</li>
+</ul>
+
+<p>
+In January 2018, Arm published information about the <i>Variant 1: bounds check bypass (CVE-2017-5753)</i> vulnerability. Refer to <a href="https://developer.arm.com/support/security-update/compiler-support-for-mitigations">https://developer.arm.com/support/security-update/compiler-support-for-mitigations</a> and use the <i>Migration path</i> recommendations with this Arm Compiler release to help mitigate against the vulnerability. Note that the API of the mitigation is subject to change.
+<p>
+
+<a name="feedback"></a>
+<h2>5. Feedback and Support</h2>
+
+<p>
+Your feedback is important to us, and you are welcome to send us defect reports and suggestions for improvement on any aspect of the product.
+Contact your supplier or visit <a href="https://support.developer.arm.com">https://support.developer.arm.com</a> and open a case with feedback or support issues.
+Where appropriate, please provide the <span style="white-space:nowrap"><tt>--vsn</tt></span> output from the tool, the complete content of any error message that the tools produce, and include any source code, other files, and command-lines necessary to reproduce the issue.
+</p>
+
+
+
+<a name="history"></a>
+<h2>6. Release History and Changes</h2>
+<p>The following are the releases to date of the Arm Compiler 6.14 series:</p>
+<ul>
+  <li>6.14.1 (released May 2020)</li>
+
+  
+  <li>6.14 (released February 2020)</li>
+  
+
+</ul>
+<p>Below is a summary of the enhancements and defect fixes when compared to the previous release. The information may include technical inaccuracies or typographical errors, and may change in future editions of the Release notes. Each itemized change is accompanied by a unique SDCOMP-&lt;n&gt; identifier. If you need to contact Arm about a specific issue within these release notes, please quote the appropriate identifier.</p>
+
+<h3>Changes in Arm Compiler 6.14.1</h3>
+
+
+
+
+<h4>General changes in Arm Compiler 6.14.1</h4>
+
+
+<ul>
+    <li>
+    <p>[SDCOMP-55616]&nbsp;&nbsp;Support has been added for the Cortex&#45;X1 processor. To target Cortex&#45;X1, select from the following <span style="white-space:nowrap"><tt>armclang</tt></span> options:</p>
+<ul>
+    <li><span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;target</span>=aarch64&#45;arm&#45;none&#45;eabi</tt></span> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;mcpu</span>=cortex&#45;x1</tt></span> for AArch64 state.</li>
+    <li><span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;target</span>=arm&#45;arm&#45;none&#45;eabi</tt></span> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;mcpu</span>=cortex&#45;x1</tt></span> for AArch32 state.</li>
+</ul><p></p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-55615]&nbsp;&nbsp;Support has been added for the Cortex&#45;A78 processor. To target Cortex&#45;A78, select from the following <span style="white-space:nowrap"><tt>armclang</tt></span> options:</p>
+<ul>
+    <li><span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;target</span>=aarch64&#45;arm&#45;none&#45;eabi</tt></span> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;mcpu</span>=cortex&#45;a78</tt></span> for AArch64 state.</li>
+    <li><span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;target</span>=arm&#45;arm&#45;none&#45;eabi</tt></span> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;mcpu</span>=cortex&#45;a78</tt></span> for AArch32 state.</li>
+</ul><p></p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-55611]&nbsp;&nbsp;Beta support has been added for Arm C Language Extensions &#40;ACLE&#41; intrinsics for the optional Custom Datapath Extension &#40;CDE&#41; in Armv8&#45;M and later with the Main Extension. To use the CDE intrinsics, include the <span style="white-space:nowrap"><tt>arm&#95;cde.h</tt></span> system header.</p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-55610]&nbsp;&nbsp;Assembly for the optional Custom Datapath Extension &#40;CDE&#41; for Armv8&#45;M and later with the Main Extension is now fully supported. To target CDE, select from the following options:</p>
+
+<p><span style="white-space:nowrap"><tt>armclang</tt></span>:</p>
+<ul>
+    <li><span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;target</span>=arm&#45;arm&#45;none&#45;eabi</tt></span> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;march</span>=armv8&#45;m.main+cdecp</tt></span><span style="white-space:nowrap"><tt><em>N</em></tt></span>, where <span style="white-space:nowrap"><tt><em>N</em></tt></span> is in the range 0&#45;7, for an Armv8&#45;M target with the Main Extension.</li>
+    <li><span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;target</span>=arm&#45;arm&#45;none&#45;eabi</tt></span> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;march</span>=armv8.1&#45;m.main+cdecp</tt></span><span style="white-space:nowrap"><tt><em>N</em></tt></span>, where <span style="white-space:nowrap"><tt><em>N</em></tt></span> is in the range 0&#45;7, for an Armv8.1&#45;M target with the Main Extension.</li>
+</ul>
+
+
+<p><span style="white-space:nowrap"><tt>fromelf</tt></span>:</p>
+<ul>
+    <li><span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;cpu</span>=8&#45;M.main</tt></span> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;coproc</span></tt></span><span style="white-space:nowrap"><tt><em>N</em></tt></span><span style="white-space:nowrap"><tt>=<em>value</em></tt></span>, where <span style="white-space:nowrap"><tt><em>N</em></tt></span> is in the range 0&#45;7, and <span style="white-space:nowrap"><tt><em>value</em></tt></span> is <span style="white-space:nowrap"><tt>cde</tt></span> or <span style="white-space:nowrap"><tt>CDE</tt></span>, for an Armv8&#45;M target with the Main Extension.</li>
+    <li><span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;cpu</span>=8.1&#45;M.main</tt></span> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;coproc</span></tt></span><span style="white-space:nowrap"><tt><em>N</em></tt></span><span style="white-space:nowrap"><tt>=<em>value</em></tt></span>, where <span style="white-space:nowrap"><tt><em>N</em></tt></span> is in the range 0&#45;7, and <span style="white-space:nowrap"><tt><em>value</em></tt></span> is <span style="white-space:nowrap"><tt>cde</tt></span> or <span style="white-space:nowrap"><tt>CDE</tt></span>, for an Armv8.1&#45;M target with the Main Extension.</li>
+</ul><p></p>
+    </li>
+</ul>
+
+
+
+<h4>Defect fixes in Arm Compiler 6.14.1</h4>
+
+
+
+<h5>Compiler and integrated assembler (armclang)</h5>
+<ul>
+
+    
+    <li>
+    <p>[SDCOMP-55798]&nbsp;&nbsp;In certain circumstances, when compiling for T32 state, the compiler could generate incorrect code for an access to a 64&#45;bit <b><span style="white-space:nowrap"><tt>volatile</tt></span></b> variable that is located on the stack. This has been fixed.</p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-55241]&nbsp;&nbsp;In certain circumstances, when compiling for an Armv8.1&#45;M target with the M&#45;profile Vector Extension &#40;MVE&#41; at any optimization level except <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;O0</span></tt></span>, the compiler could generate incorrect code for a loop that contains a call to a <span style="white-space:nowrap"><tt>vctp*&#40;&#41;</tt></span> intrinsic. This has been fixed.</p>
+    </li>
+    
+
+</ul>
+
+
+
+
+<h4>Known issues in Arm Compiler 6.14.1</h4>
+
+
+<ul>
+
+    
+    <li>
+    <p>[SDCOMP-54724]&nbsp;&nbsp;In certain circumstances, when compiling with <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;ffixed</span>&#45;r6</tt></span>, the compiler can generate code that incorrectly fails to fulfil stack alignment requirements.</p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-54513]&nbsp;&nbsp;In certain circumstances, nested calls to the M&#45;profile Vector Extension intrinsics can result in slow compilation and high memory usage at compile time. To avoid this issue, do not use nested calls to the M&#45;profile Vector Extension intrinsics.</p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-54391]&nbsp;&nbsp;When compiling with <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;fstack</span>&#45;protector&#45;strong</tt></span> at <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;O0</span></tt></span>, the compiler incorrectly fails to enable stack protection for functions containing certain kinds of address-taking of non-array local variables. To avoid this issue, compile with <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;fstack</span>&#45;protector&#45;all</tt></span> instead of <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;fstack</span>&#45;protector&#45;strong</tt></span>.</p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-50470]&nbsp;&nbsp;The compiler incorrectly fails to report an error for a function call that involves invalid default argument promotion for the <span style="white-space:nowrap"><tt>&#95;Float16</tt></span> data type.</p>
+    </li>
+    
+
+</ul>
+
+
+
+
+
+
+
+<h3>Changes in Arm Compiler 6.14</h3>
+
+
+<p>
+Changes are listed since the previous feature release, Arm Compiler 6.13.
+</p>
+
+
+
+<h4>General changes in Arm Compiler 6.14</h4>
+
+
+<ul>
+
+    
+    <li>
+    <p>[SDCOMP-55145]&nbsp;&nbsp;Automatic vectorization for the optional M&#45;profile Vector Extension &#40;MVE&#41; in Armv8.1&#45;M is now fully supported.</p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-55144]&nbsp;&nbsp;Intrinsics for the Matrix Multiply Extension in Armv8.6&#45;A are now fully supported. This extension is optional in Armv8.2&#45;A to Armv8.5&#45;A. To target the Matrix Multiply Extension, select from the following <span style="white-space:nowrap"><tt>armclang</tt></span> options where &lt;<em>ext</em>&gt; is 2 or later:</p>
+<ul>
+    <li><span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;target</span>=aarch64&#45;arm&#45;none&#45;eabi</tt></span> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;march</span>=armv8.&lt;<em>ext</em>&gt;&#45;a&#43;i8mm</tt></span> to enable matrix multiplication instructions for 8&#45;bit integer operations for AArch64 state.</li>
+    <li><span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;target</span>=aarch64&#45;arm&#45;none&#45;eabi</tt></span> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;march</span>=armv8.&lt;<em>ext</em>&gt;&#45;a&#43;f32mm</tt></span> to enable matrix multiplication instructions for 32&#45;bit single&#45;precision floating&#45;point operations for AArch64 state.</li>
+    <li><span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;target</span>=aarch64&#45;arm&#45;none&#45;eabi</tt></span> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;march</span>=armv8.&lt;<em>ext</em>&gt;&#45;a&#43;f64mm</tt></span> to enable matrix multiplication instructions for 64&#45;bit double&#45;precision floating&#45;point operations for AArch64 state.</li>
+    <li><span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;target</span>=arm&#45;arm&#45;none&#45;eabi</tt></span> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;march</span>=armv8.&lt;<em>ext</em>&gt;&#45;a&#43;i8mm</tt></span> to enable matrix multiplication instructions for 8&#45;bit integer operations for AArch32 state.</li>
+</ul><p></p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-55143]&nbsp;&nbsp;Intrinsics for the BFloat16 Extension in Armv8.6&#45;A are now fully supported. This extension is optional in Armv8.2&#45;A to Armv8.5&#45;A. To target BFloat16, select from the following <span style="white-space:nowrap"><tt>armclang</tt></span> options where &lt;<em>ext</em>&gt; is 2 or later:</p>
+<ul>
+    <li><span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;target</span>=aarch64&#45;arm&#45;none&#45;eabi</tt></span> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;march</span>=armv8.&lt;<em>ext</em>&gt;&#45;a&#43;bf16</tt></span> for AArch64 state.</li>
+    <li><span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;target</span>=arm&#45;arm&#45;none&#45;eabi</tt></span> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;march</span>=armv8.&lt;<em>ext</em>&gt;&#45;a&#43;bf16</tt></span> for AArch32 state.</li>
+</ul><p></p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-55142]&nbsp;&nbsp;Assembly for the Armv8.6&#45;A architecture is now fully supported. To target Armv8.6&#45;A, select from the following <span style="white-space:nowrap"><tt>armclang</tt></span> options:</p>
+<ul>
+    <li><span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;target</span>=aarch64&#45;arm&#45;none&#45;eabi</tt></span> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">-march</span>=armv8.6&#45;a</tt></span> for AArch64 state.</li>
+    <li><span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;target</span>=arm&#45;arm&#45;none&#45;eabi</tt></span> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">-march</span>=armv8.6&#45;a</tt></span> for AArch32 state.</li>
+</ul><p></p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-54946]&nbsp;&nbsp;Support has been added for the Cortex&#45;M55 processor. To target a specific feature set configuration of Cortex&#45;M55, select from the following options:</p>
+<div class='table-wrap'>
+<table class='confluenceTable'><tbody>
+<tr>
+<td class='confluenceTd'> <b>Integer MVE</b> </td>
+<td class='confluenceTd'> <b>Half&#45;precision and Single&#45;precision Floating&#45;point MVE</b> </td>
+<td class='confluenceTd'> <b>Scalar Floating&#45;point</b> </td>
+<td class='confluenceTd'> <b><span style="white-space:nowrap"><tt>armclang</tt></span></b>                                                          </td>
+<td class='confluenceTd'> <b><span style="white-space:nowrap"><tt>armlink</tt></span> and <span style="white-space:nowrap"><tt>fromelf</tt></span></b> </td>
+</tr>
+<tr>
+<td class='confluenceTd'> Included     </td>
+<td class='confluenceTd'> Included                                                   </td>
+<td class='confluenceTd'> Included                </td>
+<td class='confluenceTd'> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;target</span>=arm&#45;arm&#45;none&#45;eabi</tt></span> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;mcpu</span>=cortex&#45;m55</tt></span>              </td>
+<td class='confluenceTd'> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;cpu</span>=Cortex&#45;M55</tt></span> </td>
+</tr>
+<tr>
+<td class='confluenceTd'> Included     </td>
+<td class='confluenceTd'> Not included                                               </td>
+<td class='confluenceTd'> Included                </td>
+<td class='confluenceTd'> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;target</span>=arm&#45;arm&#45;none&#45;eabi</tt></span> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;mcpu</span>=cortex&#45;m55&#43;nomve.fp</tt></span>    </td>
+<td class='confluenceTd'> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;cpu</span>=Cortex&#45;M55.no_mvefp</tt></span> </td>
+</tr>
+<tr>
+<td class='confluenceTd'> Included     </td>
+<td class='confluenceTd'> Not included                                               </td>
+<td class='confluenceTd'> Not included            </td>
+<td class='confluenceTd'> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;target</span>=arm&#45;arm&#45;none&#45;eabi</tt></span> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;mcpu</span>=cortex&#45;m55&#43;nofp</tt></span>        </td>
+<td class='confluenceTd'> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;cpu</span>=Cortex&#45;M55.no_fp</tt></span> </td>
+</tr>
+<tr>
+<td class='confluenceTd'> Not included </td>
+<td class='confluenceTd'> Not included                                               </td>
+<td class='confluenceTd'> Included                </td>
+<td class='confluenceTd'> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;target</span>=arm&#45;arm&#45;none&#45;eabi</tt></span> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;mcpu</span>=cortex&#45;m55&#43;nomve</tt></span>       </td>
+<td class='confluenceTd'> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;cpu</span>=Cortex&#45;M55.no_mve</tt></span> </td>
+</tr>
+<tr>
+<td class='confluenceTd'> Not included </td>
+<td class='confluenceTd'> Not included                                               </td>
+<td class='confluenceTd'> Not included            </td>
+<td class='confluenceTd'> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;target</span>=arm&#45;arm&#45;none&#45;eabi</tt></span> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;mcpu</span>=cortex&#45;m55&#43;nofp&#43;nomve</tt></span> </td>
+<td class='confluenceTd'> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;cpu</span>=Cortex&#45;M55.no_mve.no_fp</tt></span> </td>
+</tr>
+</tbody></table>
+</div>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-54871]&nbsp;&nbsp;Support has been added for the Cortex&#45;A34 processor. To target Cortex&#45;A34, select from the following options:</p>
+
+<p><span style="white-space:nowrap"><tt>armclang</tt></span>:</p>
+<ul>
+    <li><span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;target</span>=aarch64&#45;arm&#45;none&#45;eabi</tt></span> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;mcpu</span>=cortex&#45;a34</tt></span></li>
+</ul>
+
+
+<p><span style="white-space:nowrap"><tt>armasm</tt></span>, <span style="white-space:nowrap"><tt>armlink</tt></span>, and <span style="white-space:nowrap"><tt>fromelf</tt></span>:</p>
+<ul>
+    <li><span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;cpu</span>=8&#45;A.64</tt></span></li>
+</ul><p></p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-54826]&nbsp;&nbsp;Beta support has been added for assembly for the optional Custom Datapath Extension &#40;CDE&#41; for Armv8&#45;M and later with the Main Extension. To target CDE, select from the following options:</p>
+
+<p><span style="white-space:nowrap"><tt>armclang</tt></span>:</p>
+<ul>
+    <li><span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;target</span>=arm&#45;arm&#45;none&#45;eabi</tt></span> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;march</span>=armv8&#45;m.main+cdecp</tt></span><span style="white-space:nowrap"><tt><em>N</em></tt></span>, where <span style="white-space:nowrap"><tt><em>N</em></tt></span> is in the range 0&#45;7, for an Armv8&#45;M target with the Main Extension.</li>
+    <li><span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;target</span>=arm&#45;arm&#45;none&#45;eabi</tt></span> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;march</span>=armv8.1&#45;m.main+cdecp</tt></span><span style="white-space:nowrap"><tt><em>N</em></tt></span>, where <span style="white-space:nowrap"><tt><em>N</em></tt></span> is in the range 0&#45;7, for an Armv8.1&#45;M target with the Main Extension.</li>
+</ul>
+
+
+<p><span style="white-space:nowrap"><tt>fromelf</tt></span>:</p>
+<ul>
+    <li><span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;cpu</span>=8&#45;M.main</tt></span> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;coproc</span></tt></span><span style="white-space:nowrap"><tt><em>N</em></tt></span><span style="white-space:nowrap"><tt>=<em>value</em></tt></span>, where <span style="white-space:nowrap"><tt><em>N</em></tt></span> is in the range 0&#45;7, and <span style="white-space:nowrap"><tt><em>value</em></tt></span> is <span style="white-space:nowrap"><tt>cde</tt></span> or <span style="white-space:nowrap"><tt>CDE</tt></span>, for an Armv8&#45;M target with the Main Extension.</li>
+    <li><span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;cpu</span>=8.1&#45;M.main</tt></span> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;coproc</span></tt></span><span style="white-space:nowrap"><tt><em>N</em></tt></span><span style="white-space:nowrap"><tt>=<em>value</em></tt></span>, where <span style="white-space:nowrap"><tt><em>N</em></tt></span> is in the range 0&#45;7, and <span style="white-space:nowrap"><tt><em>value</em></tt></span> is <span style="white-space:nowrap"><tt>cde</tt></span> or <span style="white-space:nowrap"><tt>CDE</tt></span>, for an Armv8.1&#45;M target with the Main Extension.</li>
+</ul><p></p>
+    </li>
+    
+
+</ul>
+
+
+
+<h4>Enhancements in Arm Compiler 6.14</h4>
+
+
+
+<h5>Compiler and integrated assembler (armclang)</h5>
+<ul>
+
+    
+    <li>
+    <p>[SDCOMP-54955]&nbsp;&nbsp;Alpha support has been added for automatic loop tail predication when compiling for a target with the M&#45;profile Vector Extension. To enable automatic loop tail predication, compile with <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;mllvm</span></tt></span> <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;disable</span>&#45;mve&#45;tail&#45;predication=false</tt></span>.</p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-49669]&nbsp;&nbsp;Support has been added for the <span style="white-space:nowrap"><tt>&#95;&#95;FILE&#95;NAME&#95;&#95;</tt></span> predefined macro, which contains the filename part of the value of the <span style="white-space:nowrap"><tt>&#95;&#95;FILE&#95;&#95;</tt></span> predefined macro.</p>
+    </li>
+    
+
+</ul>
+
+
+
+
+<h4>Defect fixes in Arm Compiler 6.14</h4>
+
+
+
+<h5>Compiler and integrated assembler (armclang)</h5>
+<ul>
+
+    
+    <li>
+    <p>[SDCOMP-55088]&nbsp;&nbsp;In certain circumstances, two identical invocations of the compiler could incorrectly result in the compiler generating different but valid sequences of instructions. This has been fixed.</p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-54534]&nbsp;&nbsp;In certain circumstances, when compiling for AArch64 state, the compiler could incorrectly fail to generate a build attribute which specifies that the output object requires flush&#45;to&#45;zero mode enabled for floating&#45;point operations. Subsequently, the linker could incorrectly select implementations of floating&#45;point library functions that do not have flush&#45;to&#45;zero mode enabled. This has been fixed.</p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-54466]&nbsp;&nbsp;The compiler incorrectly failed to report an error when the size of the translation unit is greater than the maximum acceptable size of 2GB, including when the size only exceeds this limit during preprocessing. This has been fixed. The compiler now reports <span style="white-space:nowrap"><tt>fatal</tt></span> <span style="white-space:nowrap"><tt>error:</tt></span> <span style="white-space:nowrap"><tt>sorry,</tt></span> <span style="white-space:nowrap"><tt>this</tt></span> <span style="white-space:nowrap"><tt>include</tt></span> <span style="white-space:nowrap"><tt>generates</tt></span> <span style="white-space:nowrap"><tt>a</tt></span> <span style="white-space:nowrap"><tt>translation</tt></span> <span style="white-space:nowrap"><tt>unit</tt></span> <span style="white-space:nowrap"><tt>too</tt></span> <span style="white-space:nowrap"><tt>large</tt></span> <span style="white-space:nowrap"><tt>for</tt></span> <span style="white-space:nowrap"><tt>Clang</tt></span> <span style="white-space:nowrap"><tt>to</tt></span> <span style="white-space:nowrap"><tt>process</tt></span>.</p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-54427]&nbsp;&nbsp;In rare circumstances, when compiling with <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;fsanitize</span>=memtag</tt></span>, the compiler could generate incorrect memory tagging code. Subsequently, this could result in spurious memory tagging exceptions against addresses in the stack area. This has been fixed.</p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-54406]&nbsp;&nbsp;In certain circumstances, when compiling for AArch32 state with <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;mfloat</span>&#45;abi=soft</tt></span> or for a target that does not support a hardware floating&#45;point unit, and either at <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;Ofast</span></tt></span>, with <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;ffast</span>&#45;math</tt></span>, or with <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;ffp</span>&#45;mode=fast</tt></span>, the compiler could incorrectly report <span style="white-space:nowrap"><tt>error:</tt></span> <span style="white-space:nowrap"><tt>clang</tt></span> <span style="white-space:nowrap"><tt>frontend</tt></span> <span style="white-space:nowrap"><tt>command</tt></span> <span style="white-space:nowrap"><tt>failed</tt></span> <span style="white-space:nowrap"><tt>due</tt></span> <span style="white-space:nowrap"><tt>to</tt></span> <span style="white-space:nowrap"><tt>signal</tt></span>. This has been fixed.</p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-54351]&nbsp;&nbsp;In certain circumstances, when compiling at any optimization level except <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;O0</span></tt></span>, the compiler could incorrectly assume that an offset used in a pointer arithmetic operation <span style="white-space:nowrap"><tt>O</tt></span> is never negative, and subsequently generate incorrect code for calculations involving <span style="white-space:nowrap"><tt>O</tt></span>. This has been fixed.</p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-54294]&nbsp;&nbsp;In certain circumstances, when compiling for AArch64 state, the compiler could incorrectly generate different but valid sequences of branch instructions when compiling with <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;g</span></tt></span> or <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;gdwarf</span>&#45;<em>version</em></tt></span> versus when compiling without <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;g</span></tt></span> or <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;gdwarf</span>&#45;<em>version</em></tt></span>. This has been fixed.</p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-54255]&nbsp;&nbsp;In certain circumstances, when compiling at any optimization level except <span style="white-space:nowrap"><tt><span style="white-space:nowrap">-O0</span></tt></span> for AArch32 state and a target that supports the half-precision floating-point (FP16) extension, and the code contains a variable of <span style="white-space:nowrap"><tt>_Float16</tt></span> type, the compiler could incorrectly report <span style="white-space:nowrap"><tt>fatal</tt></span> <span style="white-space:nowrap"><tt>error:</tt></span> <span style="white-space:nowrap"><tt>error</tt></span> <span style="white-space:nowrap"><tt>in</tt></span> <span style="white-space:nowrap"><tt>backend:</tt></span> <span style="white-space:nowrap"><tt>Cannot</tt></span> <span style="white-space:nowrap"><tt>select:</tt></span> <span style="white-space:nowrap"><tt>&lt;value&gt;</tt></span>.  This has been fixed.</p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-54190]&nbsp;&nbsp;When assembling for AArch64 state and an Armv8&#45;A target with the Statistical Profiling Extension &#40;SPE&#41;, the inline assembler and integrated assembler incorrectly failed to report an error for an <span style="white-space:nowrap"><tt>MSR</tt></span> instruction that specifies <span style="white-space:nowrap"><tt>CurrentEL</tt></span>, <span style="white-space:nowrap"><tt>ICH&#95;MISR&#95;EL2</tt></span>, <span style="white-space:nowrap"><tt>PMBIDR&#95;EL1</tt></span>, or <span style="white-space:nowrap"><tt>PMSIDR&#95;EL1</tt></span> as the system register to be accessed. This has been fixed. The inline assembler and integrated assembler now report <span style="white-space:nowrap"><tt>error:</tt></span> <span style="white-space:nowrap"><tt>expected</tt></span> <span style="white-space:nowrap"><tt>writable</tt></span> <span style="white-space:nowrap"><tt>system</tt></span> <span style="white-space:nowrap"><tt>register</tt></span> <span style="white-space:nowrap"><tt>or</tt></span> <span style="white-space:nowrap"><tt>pstate</tt></span>.</p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-54141]&nbsp;&nbsp;In certain circumstances, when compiling a program that contains a function or variable that is annotated with <span style="white-space:nowrap"><tt>&#95;&#95;attribute&#95;&#95;&#40;&#40;section&#40;".ARM.&#95;&#95;at&#95;&lt;address&gt;"&#41;&#41;&#41;</tt></span>, the compiler could incorrectly mark the section containing that function or variable as mergeable. Subsequently, at link&#45;time, the linker could report <span style="white-space:nowrap"><tt>Error:</tt></span> <span style="white-space:nowrap"><tt>L6975E:</tt></span> <span style="white-space:nowrap"><tt>&lt;file&gt;&#40;.ARM.&#95;&#95;at&#95;&lt;address&gt;&#41;</tt></span> <span style="white-space:nowrap"><tt>cannot</tt></span> <span style="white-space:nowrap"><tt>have</tt></span> <span style="white-space:nowrap"><tt>a</tt></span> <span style="white-space:nowrap"><tt>required</tt></span> <span style="white-space:nowrap"><tt>base</tt></span> <span style="white-space:nowrap"><tt>and</tt></span> <span style="white-space:nowrap"><tt>SHF&#95;MERGE</tt></span>. This has been fixed.</p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-54010]&nbsp;&nbsp;In certain circumstances, when compiling at any optimization level except <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;O0</span></tt></span> and for T32 state, the compiler could incorrectly generate an <span style="white-space:nowrap"><tt>UNPREDICTABLE</tt></span> <span style="white-space:nowrap"><tt>ADD</tt></span> or <span style="white-space:nowrap"><tt>SUB</tt></span> instruction that specifies the stack pointer &#40;SP&#41; as the destination operand but not as the source operand. This has been fixed.</p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-53822]&nbsp;&nbsp;In certain circumstances, when compiling for AArch64 state with <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;mno</span>&#45;unaligned&#45;access</tt></span> at <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;O0</span></tt></span>, the compiler could incorrectly generate code containing unaligned memory accesses. This has been fixed.</p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-53743]&nbsp;&nbsp;In certain circumstances, when compiling for AArch64 state with <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;mbranch</span>&#45;protection=bti</tt></span> or <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;mbranch</span>&#45;protection=standard</tt></span>, the compiler could incorrectly report <span style="white-space:nowrap"><tt>fatal</tt></span> <span style="white-space:nowrap"><tt>error:</tt></span> <span style="white-space:nowrap"><tt>error</tt></span> <span style="white-space:nowrap"><tt>in</tt></span> <span style="white-space:nowrap"><tt>backend:</tt></span> <span style="white-space:nowrap"><tt>fixup</tt></span> <span style="white-space:nowrap"><tt>value</tt></span> <span style="white-space:nowrap"><tt>out</tt></span> <span style="white-space:nowrap"><tt>of</tt></span> <span style="white-space:nowrap"><tt>range</tt></span>. This has been fixed.</p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-51231]&nbsp;&nbsp;When compiling for AArch32 state without <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;g</span></tt></span> or <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;gdwarf</span>&#45;<em>version</em></tt></span>, the compiler incorrectly failed to generate a <span style="white-space:nowrap"><tt>.debug&#95;frame</tt></span> section containing stack frame unwinding debug information. This has been fixed. </p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-50543]&nbsp;&nbsp;In rare circumstances, when compiling with <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;mcmse</span></tt></span> and the program contains a function call via a function pointer that is annotated with <span style="white-space:nowrap"><tt>&#95;&#95;attribute&#95;&#95;&#40;&#40;cmse&#95;nonsecure&#95;call&#41;&#41;</tt></span>, the compiler could incorrectly report <span style="white-space:nowrap"><tt>error:</tt></span> <span style="white-space:nowrap"><tt>clang</tt></span> <span style="white-space:nowrap"><tt>frontend</tt></span> <span style="white-space:nowrap"><tt>command</tt></span> <span style="white-space:nowrap"><tt>failed</tt></span> <span style="white-space:nowrap"><tt>due</tt></span> <span style="white-space:nowrap"><tt>to</tt></span> <span style="white-space:nowrap"><tt>signal</tt></span>. This has been fixed.</p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-46159]&nbsp;&nbsp;When compiling with <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;mcmse</span></tt></span>, the compiler incorrectly failed to clear the upper 16 bits of a register used for a variable of <span style="white-space:nowrap"><tt>&#95;&#95;fp16</tt></span> or <span style="white-space:nowrap"><tt>&#95;Float16</tt></span> type that is passed as a parameter to a function annotated with <span style="white-space:nowrap"><tt>&#95;&#95;attribute&#95;&#95;&#40;&#40;cmse&#95;nonsecure&#95;call&#41;&#41;</tt></span> or returned from a function annotated with <span style="white-space:nowrap"><tt>&#95;&#95;attribute&#95;&#95;&#40;&#40;cmse&#95;nonsecure&#95;entry&#41;&#41;</tt></span>. This has been fixed.</p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-30463]&nbsp;&nbsp;When compiling with <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;mcmse</span></tt></span>, the compiler incorrectly failed to clear any unused bits of registers used for a variable of <b><span style="white-space:nowrap"><tt>struct</tt></span></b> type that is passed as a parameter to a function annotated with <span style="white-space:nowrap"><tt>&#95;&#95;attribute&#95;&#95;&#40;&#40;cmse&#95;nonsecure&#95;call&#41;&#41;</tt></span> or returned from a function annotated with <span style="white-space:nowrap"><tt>&#95;&#95;attribute&#95;&#95;&#40;&#40;cmse&#95;nonsecure&#95;entry&#41;&#41;</tt></span>. This has been fixed.</p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-30440]&nbsp;&nbsp;In certain circumstances, when compiling with C&#43;&#43; exceptions enabled, with <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;g</span></tt></span> or <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;gdwarf</span>&#45;<em>version</em></tt></span>, and for AArch64 state, the compiler could incorrectly fail to generate a <span style="white-space:nowrap"><tt>.debug&#95;frame</tt></span> section containing stack frame unwinding debug information. This has been fixed.</p>
+    </li>
+    
+
+</ul>
+
+<h5>Legacy assembler (armasm)</h5>
+<ul>
+
+    
+    <li>
+    <p>[SDCOMP-55207]&nbsp;&nbsp;When assembling for AArch64 state and an Armv8.2&#45;A or later target, the legacy assembler incorrectly fails to report an error for an <span style="white-space:nowrap"><tt>MSR</tt></span> instruction that specifies <span style="white-space:nowrap"><tt>CurrentEL</tt></span>, <span style="white-space:nowrap"><tt>ICH&#95;MISR&#95;EL2</tt></span>, <span style="white-space:nowrap"><tt>PMBIDR&#95;EL1</tt></span>, or <span style="white-space:nowrap"><tt>PMSIDR&#95;EL1</tt></span> as the system register to be accessed. This has been fixed. The legacy assembler now reports <span style="white-space:nowrap"><tt>Error:</tt></span> <span style="white-space:nowrap"><tt>A1616E:</tt></span> <span style="white-space:nowrap"><tt>Instruction,</tt></span> <span style="white-space:nowrap"><tt>offset,</tt></span> <span style="white-space:nowrap"><tt>immediate</tt></span> <span style="white-space:nowrap"><tt>or</tt></span> <span style="white-space:nowrap"><tt>register</tt></span> <span style="white-space:nowrap"><tt>combination</tt></span> <span style="white-space:nowrap"><tt>is</tt></span> <span style="white-space:nowrap"><tt>not</tt></span> <span style="white-space:nowrap"><tt>supported</tt></span> <span style="white-space:nowrap"><tt>by</tt></span> <span style="white-space:nowrap"><tt>the</tt></span> <span style="white-space:nowrap"><tt>current</tt></span> <span style="white-space:nowrap"><tt>instruction</tt></span> <span style="white-space:nowrap"><tt>set</tt></span> or <span style="white-space:nowrap"><tt>Error:</tt></span> <span style="white-space:nowrap"><tt>A1805E:</tt></span> <span style="white-space:nowrap"><tt>Register</tt></span> <span style="white-space:nowrap"><tt>is</tt></span> <span style="white-space:nowrap"><tt>Read&#45;Only</tt></span>.</p>
+    </li>
+    
+
+</ul>
+
+<h5>Linker (armlink)</h5>
+<ul>
+
+    
+    <li>
+    <p>[SDCOMP-46190]&nbsp;&nbsp;In certain circumstances, when linking with <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;&#45;no</span>&#95;remove</tt></span>, the linker could incorrectly remove ELF sections that contain debug information. This has been fixed.</p>
+    </li>
+    
+
+</ul>
+
+<h5>Libraries and system headers</h5>
+<ul>
+
+    
+    <li>
+    <p>[SDCOMP-54710]&nbsp;&nbsp;The microlib implementations of the <span style="white-space:nowrap"><tt>snprintf&#40;&#41;</tt></span> and <span style="white-space:nowrap"><tt>vsnprintf&#40;&#41;</tt></span> functions incorrectly always returned zero instead of the number of characters to be written to the buffer &#40;not counting the terminating null character&#41; when called with a buffer size of zero. This has been fixed.</p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-54589]&nbsp;&nbsp;The <span style="white-space:nowrap"><tt>arm&#95;mve.h</tt></span> system header incorrectly failed to define the <span style="white-space:nowrap"><tt>vreinterpretq&#95;s64&#95;&#42;&#40;&#41;</tt></span>, <span style="white-space:nowrap"><tt>vreinterpretq&#95;u64&#95;&#42;&#40;&#41;</tt></span>, <span style="white-space:nowrap"><tt>vreinterpretq&#95;&#42;&#95;s64&#40;&#41;</tt></span>, and <span style="white-space:nowrap"><tt>vreinterpretq&#95;&#42;&#95;u64&#40;&#41;</tt></span> M&#45;profile Vector Extension intrinsics. This has been fixed.</p>
+    </li>
+    
+
+</ul>
+
+<h5>Fromelf</h5>
+<ul>
+
+    
+    <li>
+    <p>[SDCOMP-54453]&nbsp;&nbsp;When disassembling an ELF file that contains a <span style="white-space:nowrap"><tt>BFCSEL</tt></span> instruction and a relocation of type <span style="white-space:nowrap"><tt>R&#95;ARM&#95;THM&#95;BF12</tt></span>, the <span style="white-space:nowrap"><tt>fromelf</tt></span> utility incorrectly reported the type of the relocation as <span style="white-space:nowrap"><tt>R&#95;ARM&#95;THM&#95;BF13</tt></span>. This has been fixed.</p>
+    </li>
+    
+
+</ul>
+
+
+
+
+<h4>Known issues in Arm Compiler 6.14</h4>
+
+
+<ul>
+
+    
+    <li>
+    <p>[SDCOMP-54724]&nbsp;&nbsp;In certain circumstances, when compiling with <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;ffixed</span>&#45;r6</tt></span>, the compiler can generate code that incorrectly fails to fulfil stack alignment requirements.</p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-54513]&nbsp;&nbsp;In certain circumstances, nested calls to the M&#45;profile Vector Extension intrinsics can result in slow compilation and high memory usage at compile time. To avoid this issue, do not use nested calls to the M&#45;profile Vector Extension intrinsics.</p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-54391]&nbsp;&nbsp;When compiling with <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;fstack</span>&#45;protector&#45;strong</tt></span> at <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;O0</span></tt></span>, the compiler incorrectly fails to enable stack protection for functions containing certain kinds of address-taking of non-array local variables. To avoid this issue, compile with <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;fstack</span>&#45;protector&#45;all</tt></span> instead of <span style="white-space:nowrap"><tt><span style="white-space:nowrap">&#45;fstack</span>&#45;protector&#45;strong</tt></span>.</p>
+    </li>
+    
+    <li>
+    <p>[SDCOMP-50470]&nbsp;&nbsp;The compiler incorrectly fails to report an error for a function call that involves invalid default argument promotion for the <span style="white-space:nowrap"><tt>&#95;Float16</tt></span> data type.</p>
+    </li>
+    
+
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+</body></html>
