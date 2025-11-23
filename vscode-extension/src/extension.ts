@@ -160,15 +160,20 @@ function registerCommands(context: vscode.ExtensionContext, devicesProvider: Dev
                     outputChannel.appendLine(`   Chip ID: ${device.chipId}`);
                     outputChannel.appendLine(`   Flash: ${device.flashSize} bytes`);
 
+                    // Refresh tree to show detected device
+                    devicesProvider.refresh();
+
                     vscode.window.showInformationMessage(
                         `Found: ${device.name} (${device.family})`
                     );
                 } else {
                     outputChannel.appendLine('❌ No device detected');
+                    devicesProvider.refresh(); // Refresh to show "No device"
                     vscode.window.showWarningMessage('No STM32 device detected. Check connection.');
                 }
             } catch (error: any) {
                 outputChannel.appendLine(`❌ Detection failed: ${error.message}`);
+                devicesProvider.refresh(); // Refresh to show error
                 vscode.window.showErrorMessage('Device detection failed. Is ST-Link connected?');
             }
         })
