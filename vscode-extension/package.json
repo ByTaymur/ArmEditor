@@ -1,0 +1,240 @@
+{
+  "name": "hopeide",
+  "displayName": "HopeIDE - ARM Embedded Development",
+  "description": "Professional ARM Cortex-M debugging - Free Keil alternative for STM32",
+  "version": "1.3.0",
+  "publisher": "hopeide",
+  "icon": "resources/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ByTaymur/ArmEditor"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Debuggers",
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "stm32",
+    "arm",
+    "cortex-m",
+    "embedded",
+    "debugging",
+    "openocd",
+    "gdb"
+  ],
+  "activationEvents": [
+    "onCommand:hopeide.build",
+    "onCommand:hopeide.flash",
+    "onCommand:hopeide.detectDevice",
+    "onDebug"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "hopeide.build",
+        "title": "HopeIDE: Build Project",
+        "icon": "$(tools)"
+      },
+      {
+        "command": "hopeide.flash",
+        "title": "HopeIDE: Flash Device",
+        "icon": "$(zap)"
+      },
+      {
+        "command": "hopeide.clean",
+        "title": "HopeIDE: Clean Build",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "hopeide.detectDevice",
+        "title": "HopeIDE: Detect STM32 Device",
+        "icon": "$(search)"
+      },
+      {
+        "command": "hopeide.showRegisters",
+        "title": "HopeIDE: Show Registers",
+        "icon": "$(list-ordered)"
+      },
+      {
+        "command": "hopeide.showMemory",
+        "title": "HopeIDE: Show Memory Viewer",
+        "icon": "$(circuit-board)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "hopeide.build",
+          "group": "navigation",
+          "when": "resourceExtname == .c || resourceExtname == .cpp"
+        },
+        {
+          "command": "hopeide.flash",
+          "group": "navigation",
+          "when": "resourceExtname == .c || resourceExtname == .cpp"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "HopeIDE",
+      "properties": {
+        "hopeide.toolchain.path": {
+          "type": "string",
+          "default": "/usr/bin",
+          "description": "Path to ARM toolchain (arm-none-eabi-gcc)"
+        },
+        "hopeide.openocd.path": {
+          "type": "string",
+          "default": "openocd",
+          "description": "Path to OpenOCD executable"
+        },
+        "hopeide.gdb.path": {
+          "type": "string",
+          "default": "gdb-multiarch",
+          "description": "Path to GDB (gdb-multiarch or arm-none-eabi-gdb)"
+        },
+        "hopeide.stlink.interface": {
+          "type": "string",
+          "default": "stlink",
+          "enum": [
+            "stlink",
+            "stlink-v2",
+            "stlink-v3"
+          ],
+          "description": "ST-Link interface type"
+        },
+        "hopeide.debug.swd.speed": {
+          "type": "number",
+          "default": 4000,
+          "description": "SWD speed in kHz"
+        },
+        "hopeide.flash.verify": {
+          "type": "boolean",
+          "default": true,
+          "description": "Verify flash after programming"
+        },
+        "hopeide.flash.resetAfter": {
+          "type": "boolean",
+          "default": true,
+          "description": "Reset device after flashing"
+        }
+      }
+    },
+    "debuggers": [
+      {
+        "type": "hopeide",
+        "label": "HopeIDE ARM Debugger",
+        "program": "./out/debugAdapter.js",
+        "runtime": "node",
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "program"
+            ],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "Path to .elf file",
+                "default": "${workspaceFolder}/build/${workspaceFolderBasename}.elf"
+              },
+              "device": {
+                "type": "string",
+                "description": "Target device (auto-detected if not specified, e.g., STM32F407VGT6)",
+                "default": ""
+              },
+              "interface": {
+                "type": "string",
+                "description": "Debug interface",
+                "enum": [
+                  "swd",
+                  "jtag"
+                ],
+                "default": "swd"
+              },
+              "svdFile": {
+                "type": "string",
+                "description": "Path to SVD file for peripheral view"
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "hopeide",
+            "request": "launch",
+            "name": "HopeIDE: Debug STM32 (Auto-Detect)",
+            "program": "${workspaceFolder}/build/${workspaceFolderBasename}.elf",
+            "interface": "swd"
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "HopeIDE: Debug STM32 (Auto-Detect)",
+            "description": "Auto-detect device and debug STM32",
+            "body": {
+              "type": "hopeide",
+              "request": "launch",
+              "name": "HopeIDE: Debug STM32 (Auto-Detect)",
+              "program": "^\"${1:\\${workspaceFolder}/build/\\${workspaceFolderBasename}.elf}\"",
+              "interface": "swd"
+            }
+          }
+        ]
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "hopeide-explorer",
+          "title": "HopeIDE",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "hopeide-explorer": [
+        {
+          "id": "hopeide.devices",
+          "name": "STM32 Devices"
+        },
+        {
+          "id": "hopeide.registers",
+          "name": "Registers",
+          "type": "webview"
+        },
+        {
+          "id": "hopeide.memory",
+          "name": "Memory Viewer",
+          "type": "webview"
+        },
+        {
+          "id": "hopeide.peripherals",
+          "name": "Peripherals (SVD)",
+          "when": "debugType == 'hopeide'"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "lint": "eslint src --ext ts",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.80.0",
+    "@vscode/debugadapter": "^1.68.0",
+    "@vscode/debugprotocol": "^1.68.0",
+    "@vscode/vsce": "^2.22.0",
+    "esbuild": "^0.19.0",
+    "typescript": "^5.0.0"
+  }
+}

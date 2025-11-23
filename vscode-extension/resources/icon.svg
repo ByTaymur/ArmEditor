@@ -1,0 +1,40 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="128" height="128" fill="#0078D4" rx="20"/>
+  
+  <!-- Microchip Icon -->
+  <g transform="translate(24, 24)">
+    <!-- Chip body -->
+    <rect x="20" y="20" width="40" height="40" fill="#ffffff" rx="4"/>
+    
+    <!-- Pins left -->
+    <rect x="10" y="24" width="10" height="4" fill="#ffffff"/>
+    <rect x="10" y="32" width="10" height="4" fill="#ffffff"/>
+    <rect x="10" y="40" width="10" height="4" fill="#ffffff"/>
+    <rect x="10" y="48" width="10" height="4" fill="#ffffff"/>
+    
+    <!-- Pins right -->
+    <rect x="60" y="24" width="10" height="4" fill="#ffffff"/>
+    <rect x="60" y="32" width="10" height="4" fill="#ffffff"/>
+    <rect x="60" y="40" width="10" height="4" fill="#ffffff"/>
+    <rect x="60" y="48" width="10" height="4" fill="#ffffff"/>
+    
+    <!-- Pins top -->
+    <rect x="24" y="10" width="4" height="10" fill="#ffffff"/>
+    <rect x="32" y="10" width="4" height="10" fill="#ffffff"/>
+    <rect x="40" y="10" width="4" height="10" fill="#ffffff"/>
+    <rect x="48" y="10" width="4" height="10" fill="#ffffff"/>
+    
+    <!-- Pins bottom -->
+    <rect x="24" y="60" width="4" height="10" fill="#ffffff"/>
+    <rect x="32" y="60" width="4" height="10" fill="#ffffff"/>
+    <rect x="40" y="60" width="4" height="10" fill="#ffffff"/>
+    <rect x="48" y="60" width="4" height="10" fill="#ffffff"/>
+    
+    <!-- ARM logo (simplified) -->
+    <text x="40" y="45" font-family="Arial" font-size="12" font-weight="bold" fill="#0078D4" text-anchor="middle">ARM</text>
+  </g>
+  
+  <!-- Hope text -->
+  <text x="64" y="110" font-family="Arial" font-size="16" font-weight="bold" fill="#ffffff" text-anchor="middle">HOPE</text>
+</svg>
