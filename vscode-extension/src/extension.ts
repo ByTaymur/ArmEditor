@@ -9,6 +9,7 @@ import { FlashService } from './services/flashService';
 import { DeviceDetector } from './services/deviceDetector';
 import { RegisterViewerProvider } from './providers/registerViewerProvider';
 import { MemoryViewerProvider } from './providers/memoryViewerProvider';
+import { DevicesTreeProvider } from './providers/devicesTreeProvider';
 
 let buildService: BuildService;
 let flashService: FlashService;
@@ -28,6 +29,12 @@ export function activate(context: vscode.ExtensionContext) {
     flashService = new FlashService(outputChannel);
     deviceDetector = new DeviceDetector();
 
+    // Register tree provider for devices
+    const devicesProvider = new DevicesTreeProvider();
+    context.subscriptions.push(
+        vscode.window.registerTreeDataProvider('hopeide.devices', devicesProvider)
+    );
+
     // Register webview providers
     const registerProvider = new RegisterViewerProvider(context.extensionUri);
     const memoryProvider = new MemoryViewerProvider(context.extensionUri);
@@ -40,10 +47,10 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.registerWebviewViewProvider('hopeide.memory', memoryProvider)
     );
 
-    outputChannel.appendLine('✅ Webview providers registered');
+    outputChannel.appendLine('✅ All providers registered (Devices, Registers, Memory)');
 
     // Register commands
-    registerCommands(context);
+    registerCommands(context, devicesProvider);
 
     // Show welcome message
     vscode.window.showInformationMessage(
@@ -56,7 +63,14 @@ export function activate(context: vscode.ExtensionContext) {
     });
 }
 
-function registerCommands(context: vscode.ExtensionContext) {
+function registerCommands(context: vscode.ExtensionContext, devicesProvider: DevicesTreeProvider) {
+    // Refresh devices command
+    context.subscriptions.push(
+        vscode.commands.registerCommand('hopeide.refreshDevices', () => {
+            devicesProvider.refresh();
+        })
+    );
+
     // Build command
     context.subscriptions.push(
         vscode.commands.registerCommand('hopeide.build', async () => {
