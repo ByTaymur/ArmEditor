@@ -10,6 +10,7 @@ import { DeviceDetector } from './services/deviceDetector';
 import { RegisterViewerProvider } from './providers/registerViewerProvider';
 import { MemoryViewerProvider } from './providers/memoryViewerProvider';
 import { DevicesTreeProvider } from './providers/devicesTreeProvider';
+import { HopeIDEConfigProvider } from './providers/debugConfigProvider';
 
 let buildService: BuildService;
 let flashService: FlashService;
@@ -47,7 +48,13 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.registerWebviewViewProvider('hopeide.memory', memoryProvider)
     );
 
-    outputChannel.appendLine('✅ All providers registered (Devices, Registers, Memory)');
+    // Register debug configuration provider (AUTO-DETECT!)
+    const debugConfigProvider = new HopeIDEConfigProvider();
+    context.subscriptions.push(
+        vscode.debug.registerDebugConfigurationProvider('hopeide', debugConfigProvider)
+    );
+
+    outputChannel.appendLine('✅ All providers registered (Devices, Registers, Memory, Debug Config)');
 
     // Register commands
     registerCommands(context, devicesProvider);
