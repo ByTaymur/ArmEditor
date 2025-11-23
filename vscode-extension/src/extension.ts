@@ -7,6 +7,8 @@ import * as vscode from 'vscode';
 import { BuildService } from './services/buildService';
 import { FlashService } from './services/flashService';
 import { DeviceDetector } from './services/deviceDetector';
+import { RegisterViewerProvider } from './providers/registerViewerProvider';
+import { MemoryViewerProvider } from './providers/memoryViewerProvider';
 
 let buildService: BuildService;
 let flashService: FlashService;
@@ -25,6 +27,20 @@ export function activate(context: vscode.ExtensionContext) {
     buildService = new BuildService(outputChannel);
     flashService = new FlashService(outputChannel);
     deviceDetector = new DeviceDetector();
+
+    // Register webview providers
+    const registerProvider = new RegisterViewerProvider(context.extensionUri);
+    const memoryProvider = new MemoryViewerProvider(context.extensionUri);
+
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider('hopeide.registers', registerProvider)
+    );
+
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider('hopeide.memory', memoryProvider)
+    );
+
+    outputChannel.appendLine('✅ Webview providers registered');
 
     // Register commands
     registerCommands(context);

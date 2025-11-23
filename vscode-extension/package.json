@@ -207,7 +207,12 @@
         {
           "id": "hopeide.registers",
           "name": "Registers",
-          "when": "debugType == 'hopeide'"
+          "type": "webview"
+        },
+        {
+          "id": "hopeide.memory",
+          "name": "Memory Viewer",
+          "type": "webview"
         },
         {
           "id": "hopeide.peripherals",
