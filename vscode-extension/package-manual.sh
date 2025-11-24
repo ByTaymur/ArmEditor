@@ -5,6 +5,10 @@ echo "📦 Creating HopeIDE VSIX package manually..."
 
 cd "$(dirname "$0")"
 
+# Extract version from package.json
+VERSION=$(grep '"version"' package.json | head -1 | sed 's/.*"version": "\(.*\)".*/\1/')
+echo "📌 Version: $VERSION"
+
 # Ensure compilation
 echo "🔨 Compiling TypeScript..."
 npm run compile
@@ -40,12 +44,12 @@ cat > vsix-temp/[Content_Types].xml << 'EOF'
 </Types>
 EOF
 
-# Create extension.vsixmanifest
-cat > vsix-temp/extension.vsixmanifest << 'EOF'
+# Create extension.vsixmanifest with dynamic version
+cat > vsix-temp/extension.vsixmanifest << EOF
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011">
     <Metadata>
-        <Identity Id="hopeide" Version="1.0.0" Language="en-US" Publisher="hopeide"/>
+        <Identity Id="hopeide" Version="$VERSION" Language="en-US" Publisher="hopeide"/>
         <DisplayName>HopeIDE - ARM Embedded Development</DisplayName>
         <Description>Professional ARM Cortex-M debugging - Free Keil alternative for STM32</Description>
         <Tags>stm32,arm,cortex-m,embedded,debugging</Tags>
@@ -63,20 +67,20 @@ cat > vsix-temp/extension.vsixmanifest << 'EOF'
 </PackageManifest>
 EOF
 
-# Create ZIP (VSIX is just a ZIP)
+# Create ZIP (VSIX is just a ZIP) with dynamic version
 cd vsix-temp
-zip -r ../hopeide-1.0.0.vsix . -x "*.DS_Store"
+zip -r ../hopeide-$VERSION.vsix . -x "*.DS_Store"
 cd ..
 
 # Cleanup
 rm -rf vsix-temp
 
-if [ -f hopeide-1.0.0.vsix ]; then
-    echo "✅ VSIX package created: hopeide-1.0.0.vsix"
-    ls -lh hopeide-1.0.0.vsix
+if [ -f hopeide-$VERSION.vsix ]; then
+    echo "✅ VSIX package created: hopeide-$VERSION.vsix"
+    ls -lh hopeide-$VERSION.vsix
     echo ""
     echo "📦 To install:"
-    echo "   code --install-extension hopeide-1.0.0.vsix"
+    echo "   code --install-extension hopeide-$VERSION.vsix"
 else
     echo "❌ Failed to create VSIX package"
     exit 1
