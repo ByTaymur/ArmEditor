@@ -17,35 +17,56 @@ export class HopeIDEConfigProvider implements vscode.DebugConfigurationProvider 
 
     /**
      * Provide initial debug configurations
+     * Called when user clicks "Add Configuration" in launch.json
      */
     async provideDebugConfigurations(
         folder: vscode.WorkspaceFolder | undefined
     ): Promise<vscode.DebugConfiguration[]> {
         if (!folder) {
-            return [];
+            // Return default config even without folder
+            return [{
+                type: 'hopeide',
+                request: 'launch',
+                name: 'HopeIDE: Debug STM32 (Auto-Detect)',
+                program: '${workspaceFolder}/build/${workspaceFolderBasename}.elf',
+                interface: 'swd'
+            }];
         }
 
-        // Try to detect device
-        let deviceName = 'STM32F407VGT6'; // Default
+        // Try to detect device (but don't fail if not found)
+        let deviceName = '';
         try {
             const device = await this.detector.detect();
             if (device) {
                 deviceName = device.name;
             }
-        } catch { }
+        } catch {
+            // Silent fail - will auto-detect later
+        }
 
         // Find ELF file
         const elfPath = this.findElfFile(folder.uri.fsPath);
+        const programPath = elfPath
+            ? elfPath.replace(folder.uri.fsPath, '${workspaceFolder}')
+            : '${workspaceFolder}/build/${workspaceFolderBasename}.elf';
 
-        return [{
+        // Return config - device will be auto-detected if empty
+        const config: vscode.DebugConfiguration = {
             type: 'hopeide',
             request: 'launch',
-            name: 'HopeIDE: Debug STM32',
-            program: elfPath || '${workspaceFolder}/build/firmware.elf',
-            device: deviceName,
-            interface: 'swd',
-            servertype: 'openocd'
-        }];
+            name: deviceName
+                ? `HopeIDE: Debug ${deviceName}`
+                : 'HopeIDE: Debug STM32 (Auto-Detect)',
+            program: programPath,
+            interface: 'swd'
+        };
+
+        // Only add device if detected
+        if (deviceName) {
+            config.device = deviceName;
+        }
+
+        return [config];
     }
 
     /**
