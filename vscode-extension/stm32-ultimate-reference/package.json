@@ -1,0 +1,153 @@
+{
+  "name": "stm32-ultimate-complete",
+  "displayName": "STM32 Ultimate Complete",
+  "description": "Complete STM32 Development - Live Watch 10Hz, Variable Monitor with Charts, GDB Viewer, Auto Setup",
+  "version": "8.0.0",
+  "publisher": "stm32",
+  "engines": {
+    "vscode": "^1.105.0"
+  },
+  "categories": [
+    "Debuggers"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "stm32.setup",
+        "title": "🚀 Setup Project",
+        "category": "STM32"
+      },
+      {
+        "command": "stm32.variableMonitor",
+        "title": "📊 Variable Monitor (Charts)",
+        "category": "STM32"
+      },
+      {
+        "command": "stm32.gdbViewer",
+        "title": "🔍 GDB Viewer",
+        "category": "STM32"
+      },
+      {
+        "command": "stm32.buildDebug",
+        "title": "🐛 Build Debug",
+        "category": "STM32"
+      },
+      {
+        "command": "stm32.buildRelease",
+        "title": "📦 Build Release",
+        "category": "STM32"
+      },
+      {
+        "command": "stm32.buildO0",
+        "title": "⚡ Build O0",
+        "category": "STM32"
+      },
+      {
+        "command": "stm32.buildOg",
+        "title": "🐛 Build Og",
+        "category": "STM32"
+      },
+      {
+        "command": "stm32.buildO2",
+        "title": "⚙️ Build O2",
+        "category": "STM32"
+      },
+      {
+        "command": "stm32.buildO3",
+        "title": "🚀 Build O3",
+        "category": "STM32"
+      },
+      {
+        "command": "stm32.buildOs",
+        "title": "📦 Build Os",
+        "category": "STM32"
+      },
+      {
+        "command": "stm32.clean",
+        "title": "🗑️ Clean",
+        "category": "STM32"
+      },
+      {
+        "command": "stm32.flash",
+        "title": "⚡ Flash",
+        "category": "STM32"
+      },
+      {
+        "command": "stm32.fullFlash",
+        "title": "🚀 Full Flash",
+        "category": "STM32"
+      },
+      {
+        "command": "stm32.erase",
+        "title": "🔥 Erase",
+        "category": "STM32"
+      },
+      {
+        "command": "stm32.reset",
+        "title": "🔄 Reset",
+        "category": "STM32"
+      },
+      {
+        "command": "stm32.size",
+        "title": "📊 Size",
+        "category": "STM32"
+      },
+      {
+        "command": "stm32.connect",
+        "title": "🔌 Connect",
+        "category": "STM32"
+      },
+      {
+        "command": "stm32.disconnect",
+        "title": "🔴 Disconnect",
+        "category": "STM32"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "stm32",
+          "title": "STM32",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "stm32": [
+        {
+          "id": "stm32.setup",
+          "name": "⚙️ SETUP"
+        },
+        {
+          "id": "stm32.build",
+          "name": "🔨 BUILD"
+        },
+        {
+          "id": "stm32.optimize",
+          "name": "⚡ OPTIMIZE"
+        },
+        {
+          "id": "stm32.flash",
+          "name": "⚡ FLASH"
+        },
+        {
+          "id": "stm32.monitor",
+          "name": "📊 MONITOR"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^18.19.130",
+    "@types/vscode": "^1.105.0",
+    "@vscode/vsce": "^3.6.2",
+    "typescript": "^5.9.3"
+  }
+}
