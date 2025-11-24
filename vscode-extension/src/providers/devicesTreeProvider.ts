@@ -57,6 +57,13 @@ export class DevicesTreeProvider implements vscode.TreeDataProvider<vscode.TreeI
             detect.command = { command: 'hopeide.detectDevice', title: 'Detect' };
             items.push(detect);
 
+            // Start Debug - NEW!
+            const startDebug = new vscode.TreeItem('Start Debug', vscode.TreeItemCollapsibleState.None);
+            startDebug.iconPath = new vscode.ThemeIcon('debug-start', new vscode.ThemeColor('debugIcon.startForeground'));
+            startDebug.command = { command: 'workbench.action.debug.start', title: 'Start Debug' };
+            startDebug.tooltip = 'Start debugging with HopeIDE';
+            items.push(startDebug);
+
             // DEVICES Header
             const devicesHeader = new vscode.TreeItem('📱 CONNECTED DEVICES', vscode.TreeItemCollapsibleState.None);
             devicesHeader.contextValue = 'header';
