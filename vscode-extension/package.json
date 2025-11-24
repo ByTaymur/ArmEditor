@@ -2,7 +2,7 @@
   "name": "hopeide",
   "displayName": "HopeIDE - ARM Embedded Development",
   "description": "Professional ARM Cortex-M debugging - Free Keil alternative for STM32",
-  "version": "1.4.0",
+  "version": "1.4.3",
   "publisher": "hopeide",
   "icon": "resources/icon.png",
   "repository": {
@@ -54,6 +54,21 @@
         "command": "hopeide.detectDevice",
         "title": "HopeIDE: Detect STM32 Device",
         "icon": "$(search)"
+      },
+      {
+        "command": "hopeide.size",
+        "title": "HopeIDE: Size Analysis",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "hopeide.reset",
+        "title": "HopeIDE: Reset Device",
+        "icon": "$(debug-restart)"
+      },
+      {
+        "command": "hopeide.erase",
+        "title": "HopeIDE: Erase Chip",
+        "icon": "$(flame)"
       },
       {
         "command": "hopeide.showRegisters",

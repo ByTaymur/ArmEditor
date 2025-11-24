@@ -4,6 +4,8 @@
  */
 
 import * as vscode from 'vscode';
+import * as fs from 'fs';
+import * as path from 'path';
 import { BuildService } from './services/buildService';
 import { FlashService } from './services/flashService';
 import { DeviceDetector } from './services/deviceDetector';
@@ -97,6 +99,66 @@ function registerCommands(context: vscode.ExtensionContext, devicesProvider: Dev
 
             if (success) {
                 vscode.window.showInformationMessage('✅ Build successful!');
+
+                // Auto-create .vscode files after successful build
+                const vscodeDir = path.join(workspaceFolder.uri.fsPath, '.vscode');
+                const launchPath = path.join(vscodeDir, 'launch.json');
+                const tasksPath = path.join(vscodeDir, 'tasks.json');
+
+                // Create .vscode directory if not exists
+                if (!fs.existsSync(vscodeDir)) {
+                    fs.mkdirSync(vscodeDir, { recursive: true });
+                }
+
+                // Find ELF file
+                const buildDir = path.join(workspaceFolder.uri.fsPath, 'build');
+                let elfFile = '';
+                if (fs.existsSync(buildDir)) {
+                    const files = fs.readdirSync(buildDir);
+                    const elf = files.find((f: string) => f.endsWith('.elf'));
+                    if (elf) {
+                        elfFile = `\${workspaceFolder}/build/${elf}`;
+                    }
+                }
+
+                if (!elfFile) {
+                    elfFile = '${workspaceFolder}/build/${workspaceFolderBasename}.elf';
+                }
+
+                // Create launch.json if not exists or update it
+                if (!fs.existsSync(launchPath)) {
+                    const launchJson = {
+                        version: '0.2.0',
+                        configurations: [{
+                            type: 'hopeide',
+                            request: 'launch',
+                            name: 'HopeIDE: Debug STM32',
+                            program: elfFile,
+                            interface: 'swd'
+                        }]
+                    };
+                    fs.writeFileSync(launchPath, JSON.stringify(launchJson, null, 2));
+                    outputChannel.appendLine('✅ Created .vscode/launch.json');
+                }
+
+                // Create tasks.json if not exists
+                if (!fs.existsSync(tasksPath)) {
+                    const tasksJson = {
+                        version: '2.0.0',
+                        tasks: [{
+                            label: 'Build STM32',
+                            type: 'shell',
+                            command: 'make',
+                            group: {
+                                kind: 'build',
+                                isDefault: true
+                            },
+                            problemMatcher: ['$gcc']
+                        }]
+                    };
+                    fs.writeFileSync(tasksPath, JSON.stringify(tasksJson, null, 2));
+                    outputChannel.appendLine('✅ Created .vscode/tasks.json');
+                }
             } else {
                 vscode.window.showErrorMessage('❌ Build failed. Check output for details.');
             }
@@ -145,6 +207,48 @@ function registerCommands(context: vscode.ExtensionContext, devicesProvider: Dev
 
             if (success) {
                 vscode.window.showInformationMessage('✅ Clean successful!');
+            }
+        })
+    );
+
+    // Size analysis
+    context.subscriptions.push(
+        vscode.commands.registerCommand('hopeide.size', async () => {
+            const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+            if (!workspaceFolder) {
+                vscode.window.showErrorMessage('No workspace folder open');
+                return;
+            }
+
+            const terminal = vscode.window.createTerminal('HopeIDE Size');
+            terminal.show();
+            terminal.sendText('arm-none-eabi-size -A build/*.elf');
+        })
+    );
+
+    // Reset device
+    context.subscriptions.push(
+        vscode.commands.registerCommand('hopeide.reset', async () => {
+            const terminal = vscode.window.createTerminal('HopeIDE Reset');
+            terminal.show();
+            terminal.sendText('openocd -f interface/stlink.cfg -f target/stm32f4x.cfg -c "init" -c "reset run" -c "exit"');
+            vscode.window.showInformationMessage('🔄 Resetting device...');
+        })
+    );
+
+    // Erase chip
+    context.subscriptions.push(
+        vscode.commands.registerCommand('hopeide.erase', async () => {
+            const result = await vscode.window.showWarningMessage(
+                '⚠️ This will erase the entire chip! Continue?',
+                'Yes', 'No'
+            );
+
+            if (result === 'Yes') {
+                const terminal = vscode.window.createTerminal('HopeIDE Erase');
+                terminal.show();
+                terminal.sendText('openocd -f interface/stlink.cfg -f target/stm32f4x.cfg -c "init" -c "reset halt" -c "flash erase_sector 0 0 last" -c "exit"');
+                vscode.window.showInformationMessage('🔥 Erasing chip...');
             }
         })
     );
