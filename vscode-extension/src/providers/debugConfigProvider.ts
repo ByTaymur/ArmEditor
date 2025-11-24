@@ -81,7 +81,12 @@ export class HopeIDEConfigProvider implements vscode.DebugConfigurationProvider 
         // If no config, create default with auto-detection
         if (!config.type && !config.request && !config.name) {
             const configs = await this.provideDebugConfigurations(folder);
-            return configs[0];
+            config = configs[0];
+        }
+
+        // Auto-create .vscode folder and files if needed
+        if (folder && config.type === 'hopeide') {
+            await this.ensureVSCodeFiles(folder);
         }
 
         // Auto-detect device if not specified (UNIVERSAL!)
@@ -116,6 +121,55 @@ export class HopeIDEConfigProvider implements vscode.DebugConfigurationProvider 
         }
 
         return config;
+    }
+
+    /**
+     * Ensure .vscode/launch.json and tasks.json exist
+     */
+    private async ensureVSCodeFiles(folder: vscode.WorkspaceFolder): Promise<void> {
+        const fs = require('fs');
+        const path = require('path');
+
+        const vscodeDir = path.join(folder.uri.fsPath, '.vscode');
+        const launchPath = path.join(vscodeDir, 'launch.json');
+        const tasksPath = path.join(vscodeDir, 'tasks.json');
+
+        // Create .vscode directory if not exists
+        if (!fs.existsSync(vscodeDir)) {
+            fs.mkdirSync(vscodeDir, { recursive: true });
+        }
+
+        // Create launch.json if not exists
+        if (!fs.existsSync(launchPath)) {
+            const configs = await this.provideDebugConfigurations(folder);
+            const launchJson = {
+                version: '0.2.0',
+                configurations: configs
+            };
+            fs.writeFileSync(launchPath, JSON.stringify(launchJson, null, 2));
+            vscode.window.showInformationMessage('✅ Created .vscode/launch.json');
+        }
+
+        // Create tasks.json if not exists
+        if (!fs.existsSync(tasksPath)) {
+            const tasksJson = {
+                version: '2.0.0',
+                tasks: [
+                    {
+                        label: 'Build STM32',
+                        type: 'shell',
+                        command: 'make',
+                        group: {
+                            kind: 'build',
+                            isDefault: true
+                        },
+                        problemMatcher: ['$gcc']
+                    }
+                ]
+            };
+            fs.writeFileSync(tasksPath, JSON.stringify(tasksJson, null, 2));
+            vscode.window.showInformationMessage('✅ Created .vscode/tasks.json');
+        }
     }
 
     /**
